@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "status": "phase-1-placeholders",
+  "tileSize": 32,
+  "assets": [
+    { "id": "hotel-lobby", "path": "tiles/hotel-lobby.webp", "kind": "tileset", "grid": [32, 32], "placeholder": true },
+    { "id": "hotel-rooms", "path": "tiles/hotel-rooms.webp", "kind": "tileset", "grid": [32, 32], "placeholder": true },
+    { "id": "elise", "path": "characters/elise.png", "kind": "spritesheet", "frame": [32, 48], "anchor": [0.5, 0.82], "collision": [18, 14], "placeholder": true },
+    { "id": "marta", "path": "characters/marta.png", "kind": "spritesheet", "frame": [32, 48], "anchor": [0.5, 0.82], "collision": [18, 14], "placeholder": true },
+    { "id": "augusto", "path": "characters/augusto.png", "kind": "spritesheet", "frame": [32, 48], "anchor": [0.5, 0.82], "collision": [18, 14], "placeholder": true },
+    { "id": "raul", "path": "characters/raul.png", "kind": "spritesheet", "frame": [32, 48], "anchor": [0.5, 0.82], "collision": [18, 14], "placeholder": true }
+  ]
+}

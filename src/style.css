@@ -1,0 +1,16 @@
+:root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; background: #090a10; }
+* { box-sizing: border-box; }
+html, body, #game-shell, #game { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #090a10; }
+canvas { display: block; margin: auto; }
+#portrait-warning { display: none; position: fixed; inset: 0; z-index: 100; background: radial-gradient(circle at 50% 35%, #24213a, #090a10 65%); align-items: center; justify-content: center; flex-direction: column; text-align: center; gap: .65rem; padding: 2rem; }
+#portrait-warning span { font-size: 3rem; color: #d4ad5d; }
+#portrait-warning strong { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; color: #f1e9d4; }
+#portrait-warning small { color: #aaa6b5; }
+#touch-controls { display: none; position: fixed; inset: 0; z-index: 20; pointer-events: none; padding: max(18px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left)); }
+#joystick { pointer-events: auto; position: absolute; left: max(22px, env(safe-area-inset-left)); bottom: max(22px, env(safe-area-inset-bottom)); width: 116px; height: 116px; border: 1px solid #d4ad5d88; border-radius: 50%; background: #10111bbb; box-shadow: 0 0 30px #0008 inset; touch-action: none; }
+#stick { position: absolute; width: 48px; height: 48px; left: 34px; top: 34px; border-radius: 50%; background: #d4ad5dbb; box-shadow: 0 3px 12px #0008; }
+#touch-interact, #touch-journal { pointer-events: auto; position: absolute; border: 1px solid #d4ad5d; color: #f2e8d0; background: #191824dd; font-weight: 700; letter-spacing: .08em; touch-action: manipulation; }
+#touch-interact { right: max(26px, env(safe-area-inset-right)); bottom: max(28px, env(safe-area-inset-bottom)); width: 76px; height: 76px; border-radius: 50%; font-size: 1.35rem; }
+#touch-journal { right: max(118px, calc(env(safe-area-inset-right) + 118px)); bottom: max(47px, calc(env(safe-area-inset-bottom) + 47px)); padding: .7rem .8rem; border-radius: 7px; font-size: .62rem; }
+@media (pointer: coarse) and (orientation: landscape) { #touch-controls { display: block; } }
+@media (orientation: portrait) { #portrait-warning { display: flex; } #game, #touch-controls { visibility: hidden; } }
