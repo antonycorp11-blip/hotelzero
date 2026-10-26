@@ -4,8 +4,8 @@ export interface AreaDefinition { id: AreaId; name: string; x: number; y: number
 export interface DoorDefinition { id: string; x: number; y: number; to: AreaId; label: string; permission?: Permission }
 
 export const AREAS: AreaDefinition[] = [
-  { id: 'lobby', name: 'LOBBY', x: 0, y: 0, width: 860, height: 600, color: 0x26242b },
-  { id: 'corridor', name: 'CORREDOR LESTE', x: 860, y: 120, width: 760, height: 320, color: 0x22232b },
+  { id: 'lobby', name: 'LOBBY', x: -700, y: 0, width: 1560, height: 1100, color: 0x26242b },
+  { id: 'corridor', name: 'CORREDOR LESTE', x: 860, y: 120, width: 1160, height: 320, color: 0x22232b },
   { id: 'room201', name: 'QUARTO 201', x: 980, y: -300, width: 280, height: 420, color: 0x2a2428 },
   { id: 'room202', name: 'QUARTO 202', x: 1320, y: -300, width: 280, height: 420, color: 0x25232d },
   { id: 'office', name: 'ESCRITÓRIO', x: 60, y: -330, width: 330, height: 330, color: 0x2d2724 },

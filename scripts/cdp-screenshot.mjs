@@ -42,13 +42,26 @@ await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 640, y: 430, 
 await delay(1600);
 await screenshot('game-generated-art');
 await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'd', code: 'KeyD', windowsVirtualKeyCode: 68 });
-await delay(4900);
+await delay(300);
+const first = await send('Runtime.evaluate', {expression: `qaGame.scene.getScene('Hotel').player.frame.name`, returnByValue:true});
+await delay(150);
+const second = await send('Runtime.evaluate', {expression: `qaGame.scene.getScene('Hotel').player.frame.name`, returnByValue:true});
+if (first.result.value === second.result.value) throw new Error('Walk animation did not advance');
+console.log('Walking frames:', first.result.value, second.result.value);
+await delay(4450);
 await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'd', code: 'KeyD', windowsVirtualKeyCode: 68 });
 await delay(250);
 await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'e', code: 'KeyE', windowsVirtualKeyCode: 69 });
 await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'e', code: 'KeyE', windowsVirtualKeyCode: 69 });
 await delay(500);
 await screenshot('dialogue-generated-art');
+await send('Runtime.evaluate', {expression: `qaGame.scene.getScene('Hotel').closeDialogue(); qaGame.scene.getScene('Hotel').player.setPosition(-350, 510);`});
+await delay(500);
+await screenshot('reading-lounge-cartoon');
+await send('Emulation.setDeviceMetricsOverride', {width: 844, height: 390, deviceScaleFactor: 1, mobile: true});
+await send('Emulation.setTouchEmulationEnabled', {enabled: true, maxTouchPoints: 1});
+await delay(500);
+await screenshot('mobile-cartoon');
 const state = await send('Runtime.evaluate', {
   expression: `JSON.stringify({title:document.title,canvas:[...document.querySelectorAll('canvas')].map(c=>[c.width,c.height]),save:Boolean(localStorage.getItem('hotel-zero-save-v1'))})`,
   returnByValue: true,

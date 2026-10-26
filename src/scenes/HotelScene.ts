@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { dressHotel } from '../world/HotelDecor';
 import { gameStore } from '../core/GameStore';
 import { formatTime } from '../core/time';
 import type { AreaId, CharacterId, DialogueChoice, DialogueNode, Permission, RunState } from '../core/types';
@@ -41,19 +42,33 @@ export class HotelScene extends Phaser.Scene {
   private touchVector = new Phaser.Math.Vector2();
   private touchInteract = false;
   private touchCleanup: Array<() => void> = [];
+  private roomCovers: Array<{ area: AreaId; cover: Phaser.GameObjects.Rectangle }> = [];
 
   constructor() { super('Hotel'); }
 
   create(): void {
     const run = gameStore.run ?? gameStore.newRun();
-    this.physics.world.setBounds(0, -360, 1640, 980);
-    this.cameras.main.setBounds(0, -360, 1640, 980);
+    this.targets = []; this.npcs = []; this.roomCovers = []; this.routineStage = ''; this.dialogueOpen = false;
+    this.minuteAccumulator = 0; this.autosaveAccumulator = 0;
+    this.physics.world.setBounds(-700, -360, 2740, 1480);
+    this.cameras.main.setBounds(-700, -360, 2740, 1480);
     this.buildWorld();
     this.buildInteractables();
     this.createActors(run);
     this.createHud(run);
     this.setupInput();
     this.updateRoutines(true);
+    this.time.addEvent({ delay: 8000, loop: true, callback: () => {
+      if (this.dialogueOpen) return;
+      this.npcs.forEach(npc => {
+        if (this.tweens.isTweening(npc.sprite)) return;
+        const direction = npc.sprite.getData('patrolRight') ? -1 : 1;
+        npc.sprite.setData('patrolRight', direction > 0);
+        npc.sprite.play(`${npc.id}-${direction > 0 ? 'right' : 'left'}`, true);
+        this.tweens.add({targets: npc.sprite, x: npc.sprite.x + 36 * direction, duration: 900,
+          onComplete: () => { npc.sprite.anims.stop(); npc.sprite.setFrame(`${npc.id}-down`); }});
+      });
+    }});
     this.cameras.main.fadeIn(650, 5, 5, 9);
     this.showToast(`RUN ${run.index} · Você desperta como ${CHARACTERS[run.bodyId].name}.`);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanupTouch());
@@ -64,12 +79,17 @@ export class HotelScene extends Phaser.Scene {
     if (!run || run.ended) return;
     this.handleMovement();
     this.updateAreaFromPosition(run);
+    this.roomCovers.forEach(({ area, cover }) => cover.setVisible(run.area !== area));
+    this.npcs.forEach(npc => {
+      const room = AREAS.find(area => npc.sprite.x > area.x && npc.sprite.x < area.x + area.width && npc.sprite.y > area.y && npc.sprite.y < area.y + area.height);
+      npc.sprite.setVisible(!room || ['lobby', 'corridor'].includes(room.id) || run.area === room.id);
+    });
     this.updateProximity();
     if (!this.dialogueOpen) {
       const speed = this.shiftKey.isDown ? 4 : 1;
       this.minuteAccumulator += delta * speed;
-      while (this.minuteAccumulator >= 1500) {
-        this.minuteAccumulator -= 1500;
+      while (this.minuteAccumulator >= 7000) {
+        this.minuteAccumulator -= 7000;
         run.minute += 1;
         this.processTimeline(run);
       }
@@ -103,6 +123,10 @@ export class HotelScene extends Phaser.Scene {
     this.furniture(1460, -150, 150, 80, 'bed', 190, 235);
     this.furniture(220, -165, 160, 68, 'manager-desk', 230, 180);
     this.furniture(625, -165, 180, 60, 'security-monitors', 230, 190);
+    dressHotel(this);
+    AREAS.filter(area => !['lobby', 'corridor'].includes(area.id)).forEach(area => {
+      this.roomCovers.push({area: area.id, cover: this.add.rectangle(area.x + area.width / 2, area.y + area.height / 2 - 20, area.width, area.height - 40, 0x0b111b).setDepth(9)});
+    });
   }
 
   private addAreaWalls(id: AreaId, x: number, y: number, width: number, height: number): void {
@@ -113,11 +137,15 @@ export class HotelScene extends Phaser.Scene {
       object.setData('wall', true);
     };
     wall(x + width / 2, y + 8, width, 16);
+    this.add.rectangle(x + width / 2, y + 32, width - 32, 48, 0x264649).setStrokeStyle(2, 0x967247).setDepth(3);
+    for (let px = x + 44; px < x + width - 30; px += 68) {
+      this.add.rectangle(px, y + 32, 52, 30, 0x1c353b).setStrokeStyle(1, 0x56716b).setDepth(3);
+    }
     wall(x + width / 2, y + height - 8, width, 16);
     if (id !== 'corridor') wall(x + 8, y + height / 2, 16, height);
     if (id === 'lobby') {
       wall(x + width - 8, y + 60, 16, 120);
-      wall(x + width - 8, y + 520, 16, 160);
+      wall(x + width - 8, y + 770, 16, 660);
     } else if (id !== 'corridor') {
       wall(x + width - 8, y + height / 2, 16, height);
     } else {
@@ -126,8 +154,8 @@ export class HotelScene extends Phaser.Scene {
   }
 
   private furniture(x: number, y: number, width: number, height: number, frame: string, artWidth: number, artHeight: number): void {
-    const texture = frame === 'sofa' ? 'sofa-standalone' : 'props-atlas';
-    this.add.image(x, y, texture, frame === 'sofa' ? undefined : frame).setDisplaySize(artWidth, artHeight).setDepth(4);
+    const texture = 'props-atlas';
+    this.add.image(x, y, texture, frame).setDisplaySize(artWidth, artHeight).setDepth(4);
     const object = this.add.rectangle(x, y, width, height, 0x000000, 0.001).setDepth(4);
     this.physics.add.existing(object, true);
     object.setData('wall', true);
@@ -135,7 +163,7 @@ export class HotelScene extends Phaser.Scene {
 
   private buildInteractables(): void {
     DOORS.forEach((door) => {
-      this.add.image(door.x, door.y - 25, 'hotel-atlas', 'door-closed').setDisplaySize(100, 100).setDepth(6);
+      this.add.image(door.x, door.y - 25, 'props-atlas', 'door-closed').setDisplaySize(100, 100).setDepth(6);
       this.targets.push({
         id: door.id, label: `Entrar — ${door.label}`, x: door.x, y: door.y,
         action: () => this.useDoor(door.to, door.permission, door.id),
@@ -161,6 +189,12 @@ export class HotelScene extends Phaser.Scene {
     this.add.image(590, 210, 'props-atlas', 'service-bell').setDisplaySize(58, 58).setDepth(7);
     this.targets.push({ id: 'bell', label: 'Tocar a campainha três vezes', x: 590, y: 210, action: () => this.ringBell() });
     this.targets.push({ id: 'hallway', label: 'Seguir para o corredor leste', x: 842, y: 280, action: () => { if (gameStore.run) gameStore.run.area = 'corridor'; } });
+    this.targets.push({id: 'reading', label: 'Ler o livro abandonado', x: -350, y: 400,
+      action: () => this.showToast('Todas as páginas terminam na mesma frase: “O hóspede ainda não saiu.” A última está quente.')});
+    this.targets.push({id: 'luggage', label: 'Examinar as malas sem dono', x: 570, y: 800,
+      action: () => this.showToast('Doze malas. Onze etiquetas. Na última, só há uma marca onde deveria estar seu nome.')});
+    this.targets.push({id: 'tea', label: 'Examinar o chá servido', x: 170, y: 890,
+      action: () => this.showToast('O chá ainda está quente. A xícara tem a impressão de um sexto dedo.')});
   }
 
   private addMarker(x: number, y: number): void {
@@ -168,8 +202,8 @@ export class HotelScene extends Phaser.Scene {
   }
 
   private createActors(run: RunState): void {
-    this.player = this.physics.add.sprite(run.x, run.y, 'character-atlas', `${run.bodyId}-down`).setDepth(20).setDisplaySize(58, 60);
-    this.player.setCollideWorldBounds(true).setSize(110, 70).setOffset(100, 220);
+    this.player = this.physics.add.sprite(run.x, run.y, 'character-atlas', `${run.bodyId}-down`).setDepth(20).setDisplaySize(76, 80);
+    this.player.setCollideWorldBounds(true).setSize(46, 24).setOffset(55, 125);
     this.children.list.filter((child) => child.getData?.('wall')).forEach((wall) => this.physics.add.collider(this.player, wall as Phaser.GameObjects.GameObject));
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
     this.cameras.main.setZoom(1);
@@ -179,7 +213,7 @@ export class HotelScene extends Phaser.Scene {
     };
     (Object.keys(CHARACTERS) as CharacterId[]).filter((id) => id !== run.bodyId).forEach((id) => {
       const pos = starts[id];
-      const sprite = this.physics.add.sprite(pos.x, pos.y, 'character-atlas', `${id}-down`).setDepth(19).setDisplaySize(58, 60);
+      const sprite = this.physics.add.sprite(pos.x, pos.y, 'character-atlas', `${id}-down`).setDepth(19).setDisplaySize(76, 80);
       sprite.setImmovable(true);
       const target: InteractionTarget = { id: `npc-${id}`, label: `Falar com ${CHARACTERS[id].name}`, x: pos.x, y: pos.y, action: () => this.talkTo(id) };
       this.targets.push(target);
@@ -190,7 +224,7 @@ export class HotelScene extends Phaser.Scene {
   private createHud(run: RunState): void {
     const top = this.add.rectangle(640, 41, 1230, 58, 0x090a10, 0.9).setScrollFactor(0).setStrokeStyle(1, 0x5e4d33).setDepth(100);
     const character = CHARACTERS[run.bodyId];
-    this.add.image(62, 41, 'portrait-atlas', run.bodyId).setDisplaySize(52, 52).setScrollFactor(0).setDepth(101);
+    this.add.image(62, 41, 'character-atlas', `${run.bodyId}-down`).setDisplaySize(52, 52).setScrollFactor(0).setDepth(101);
     this.hudStatus = this.add.text(98, 26, `${character.name.toUpperCase()} · ${character.role}\nMENTE ${run.mental}   SUSPEITA ${run.suspicion}`, { fontFamily: 'Inter', fontSize: '12px', color: '#d9cdb6', lineSpacing: 5 }).setScrollFactor(0).setDepth(101);
     this.hudTime = this.add.text(640, 24, formatTime(run.minute), { fontFamily: 'Cormorant Garamond', fontSize: '30px', color: '#e8d8b6' }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(101);
     this.locationText = this.add.text(1218, 30, 'LOBBY', { fontFamily: 'Inter', fontSize: '11px', color: '#8f8a98', letterSpacing: 2 }).setOrigin(1, 0).setScrollFactor(0).setDepth(101);
@@ -236,7 +270,7 @@ export class HotelScene extends Phaser.Scene {
   private cleanupTouch(): void { this.touchCleanup.forEach((cleanup) => cleanup()); this.touchCleanup = []; }
 
   private handleMovement(): void {
-    if (this.dialogueOpen) { this.player.setVelocity(0); return; }
+    if (this.dialogueOpen) { this.player.setVelocity(0); this.player.anims.stop(); return; }
     let x = this.touchVector.x; let y = this.touchVector.y;
     if (this.cursors.left.isDown || this.wasd.A.isDown) x -= 1;
     if (this.cursors.right.isDown || this.wasd.D.isDown) x += 1;
@@ -245,7 +279,8 @@ export class HotelScene extends Phaser.Scene {
     const velocity = new Phaser.Math.Vector2(x, y).normalize().scale(170);
     this.player.setVelocity(velocity.x, velocity.y);
     const direction = Math.abs(x) > Math.abs(y) ? (x > 0 ? 'right' : 'left') : y < 0 ? 'up' : 'down';
-    if (x || y) this.player.setFrame(`${gameStore.run!.bodyId}-${direction}`);
+    if (x || y) this.player.play(`${gameStore.run!.bodyId}-${direction}`, true);
+    else this.player.anims.stop();
     this.player.setFlipX(false);
   }
 
@@ -355,7 +390,7 @@ export class HotelScene extends Phaser.Scene {
     const choices = (node.choices ?? []).filter((choice) => !choice.requires || choice.requires(gameStore.run!, gameStore.meta));
     const panel = this.add.rectangle(640, 525, 1120, 300, 0x0d0e15, 0.97).setStrokeStyle(2, 0x8d7043).setScrollFactor(0);
     const portraitId = node.speaker.toLowerCase();
-    const portrait = this.add.image(215, 525, 'portrait-atlas', portraitId).setDisplaySize(230, 220).setScrollFactor(0);
+    const portrait = this.add.image(215, 525, 'character-atlas', `${portraitId}-down`).setDisplaySize(230, 220).setScrollFactor(0);
     const speaker = this.add.text(340, 405, node.speaker.toUpperCase(), { fontFamily: 'Cormorant Garamond', fontSize: '27px', color: '#d7ad62', letterSpacing: 3 }).setScrollFactor(0);
     const body = this.add.text(340, 448, node.text, { fontFamily: 'Inter', fontSize: '17px', color: '#ece5d8', wordWrap: { width: 760 }, lineSpacing: 6 }).setScrollFactor(0);
     const objects: Phaser.GameObjects.GameObject[] = [panel, portrait, speaker, body];
@@ -381,7 +416,7 @@ export class HotelScene extends Phaser.Scene {
     this.overlay?.destroy();
     this.overlay = undefined;
     const panel = this.add.rectangle(640, 550, 1120, 235, 0x0d0e15, 0.97).setStrokeStyle(2, 0x8d7043).setScrollFactor(0);
-    const portrait = this.add.image(215, 550, 'portrait-atlas', speaker.toLowerCase()).setDisplaySize(230, 220).setScrollFactor(0);
+    const portrait = this.add.image(215, 550, 'character-atlas', `${speaker.toLowerCase()}-down`).setDisplaySize(230, 220).setScrollFactor(0);
     const name = this.add.text(340, 462, speaker.toUpperCase(), { fontFamily: 'Cormorant Garamond', fontSize: '25px', color: '#d7ad62' }).setScrollFactor(0);
     const response = this.add.text(340, 510, choice.response, { fontFamily: 'Inter', fontSize: '17px', color: '#ece5d8', wordWrap: { width: 760 }, lineSpacing: 7 }).setScrollFactor(0);
     const continueText = this.add.text(1135, 630, 'CONTINUAR  ›', { fontFamily: 'Inter', fontSize: '13px', color: '#d7ad62' }).setOrigin(1).setScrollFactor(0).setInteractive({ useHandCursor: true });
@@ -453,7 +488,14 @@ export class HotelScene extends Phaser.Scene {
       if (npc.id === 'raul') destination = (run.flags.raulDistracted || stage === 'late') ? { x: 980, y: 300 } : { x: 610, y: -100 };
       if (npc.id === 'marta') destination = run.flags.martaWarned ? { x: 520, y: 350 } : stage === 'critical' ? { x: 1430, y: 270 } : { x: 1280, y: 280 };
       if (npc.id === 'elise') destination = { x: 465, y: 235 };
-      this.tweens.add({ targets: npc.sprite, x: destination.x, y: destination.y, duration: 1800, ease: 'Sine.easeInOut' });
+      const dx = destination.x - npc.sprite.x, dy = destination.y - npc.sprite.y;
+      const distance = Math.hypot(dx, dy);
+      if (distance < 2) return;
+      const facing = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+      this.tweens.killTweensOf(npc.sprite);
+      npc.sprite.play(`${npc.id}-${facing}`, true);
+      this.tweens.add({ targets: npc.sprite, x: destination.x, y: destination.y, duration: distance / 100 * 1000,
+        onComplete: () => { npc.sprite.anims.stop(); npc.sprite.setFrame(`${npc.id}-down`); } });
     });
   }
 
