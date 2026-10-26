@@ -5,7 +5,7 @@
 - `src/scenes`: fluxo visível (boot, menu, hotel, diário, mapa mental e resumo).
 - `src/core`: store do jogo, save local versionado, tipos, relógio, seed e barramento de eventos.
 - `src/data`: personagens, áreas, itens e grafo narrativo. Renderização não contém a verdade narrativa.
-- `public/assets/manifest.json`: contrato de substituição dos placeholders por arte final.
+- `public/assets/manifest.json`: inventário dos atlas gerados e contrato de evolução da arte.
 
 ## Recorte jogável
 
@@ -15,7 +15,8 @@ O save persiste conhecimento, histórico de runs, seed, eventos e run ativa em `
 
 ## Próximas etapas
 
-1. Trocar placeholders pelo primeiro tileset modular e spritesheets direcionais.
-2. Adicionar sistema completo de furtividade, linha de visão e suspeita por testemunha.
-3. Expandir a run até 03h17 e integrar cozinha, serviço e subsolo.
-4. Incluir os oito personagens restantes e cenários autorais de possessão.
+1. Converter o atlas de ambiente em tileset 32×32 com autotiling e variações de dano.
+2. Adicionar frames de caminhada aos sprites direcionais atuais.
+3. Adicionar sistema completo de furtividade, linha de visão e suspeita por testemunha.
+4. Expandir a run até 03h17 e integrar cozinha, serviço e subsolo.
+5. Incluir os oito personagens restantes e cenários autorais de possessão.

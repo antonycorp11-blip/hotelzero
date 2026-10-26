@@ -86,18 +86,23 @@ export class HotelScene extends Phaser.Scene {
 
   private buildWorld(): void {
     AREAS.forEach((area) => {
-      this.add.rectangle(area.x + area.width / 2, area.y + area.height / 2, area.width, area.height, area.color);
+      const floorFrame: Record<AreaId, string> = {
+        lobby: 'floor-marble', corridor: 'floor-carpet', room201: 'floor-parquet',
+        room202: 'floor-carpet', office: 'floor-parquet', security: 'floor-service',
+      };
+      this.add.tileSprite(area.x + area.width / 2, area.y + area.height / 2, area.width, area.height, 'floor-atlas', floorFrame[area.id]).setTileScale(0.42).setAlpha(0.76);
+      this.add.rectangle(area.x + area.width / 2, area.y + area.height / 2, area.width, area.height, area.color, 0.22);
       const grid = this.add.grid(area.x + area.width / 2, area.y + area.height / 2, area.width, area.height, 48, 48, 0x000000, 0, 0x90866f, 0.055);
       grid.setDepth(1);
       this.add.text(area.x + 24, area.y + 20, area.name, { fontFamily: 'Inter', fontSize: '11px', color: '#8b816f', letterSpacing: 3 }).setDepth(2);
       this.addAreaWalls(area.id, area.x, area.y, area.width, area.height);
     });
-    this.furniture(430, 180, 400, 48, 0x4b3829, 'RECEPÇÃO');
-    this.furniture(420, 430, 180, 60, 0x35313a, 'SOFÁ');
-    this.furniture(1120, -150, 150, 80, 0x44372f, 'CAMA');
-    this.furniture(1460, -150, 150, 80, 0x3b3443, 'CAMA');
-    this.furniture(220, -165, 160, 68, 0x44362c, 'MESA');
-    this.furniture(625, -165, 180, 60, 0x25333a, 'MONITORES');
+    this.furniture(430, 180, 400, 48, 'reception-desk', 470, 250);
+    this.furniture(420, 430, 180, 60, 'sofa', 245, 170);
+    this.furniture(1120, -150, 150, 80, 'bed', 190, 235);
+    this.furniture(1460, -150, 150, 80, 'bed', 190, 235);
+    this.furniture(220, -165, 160, 68, 'manager-desk', 230, 180);
+    this.furniture(625, -165, 180, 60, 'security-monitors', 230, 190);
   }
 
   private addAreaWalls(id: AreaId, x: number, y: number, width: number, height: number): void {
@@ -120,15 +125,17 @@ export class HotelScene extends Phaser.Scene {
     }
   }
 
-  private furniture(x: number, y: number, width: number, height: number, color: number, label: string): void {
-    const object = this.add.rectangle(x, y, width, height, color).setStrokeStyle(2, 0x8f7651, 0.35).setDepth(4);
+  private furniture(x: number, y: number, width: number, height: number, frame: string, artWidth: number, artHeight: number): void {
+    const texture = frame === 'sofa' ? 'sofa-standalone' : 'props-atlas';
+    this.add.image(x, y, texture, frame === 'sofa' ? undefined : frame).setDisplaySize(artWidth, artHeight).setDepth(4);
+    const object = this.add.rectangle(x, y, width, height, 0x000000, 0.001).setDepth(4);
     this.physics.add.existing(object, true);
-    this.add.text(x, y, label, { fontFamily: 'Inter', fontSize: '9px', color: '#a29784', letterSpacing: 2 }).setOrigin(0.5).setDepth(5);
+    object.setData('wall', true);
   }
 
   private buildInteractables(): void {
     DOORS.forEach((door) => {
-      this.add.rectangle(door.x, door.y, 74, 18, 0x8e6e42).setStrokeStyle(2, 0xd4ad5d).setDepth(6);
+      this.add.image(door.x, door.y - 25, 'hotel-atlas', 'door-closed').setDisplaySize(100, 100).setDepth(6);
       this.targets.push({
         id: door.id, label: `Entrar — ${door.label}`, x: door.x, y: door.y,
         action: () => this.useDoor(door.to, door.permission, door.id),
@@ -143,12 +150,15 @@ export class HotelScene extends Phaser.Scene {
     returns.forEach((door) => this.targets.push({ ...door, action: () => this.teleport(door.to) }));
 
     this.addMarker(330, 205);
+    this.add.image(330, 205, 'props-atlas', 'guest-ledger').setDisplaySize(64, 64).setDepth(7);
     this.targets.push({ id: 'ledger', label: 'Examinar arquivos da recepção', x: 330, y: 215, action: () => this.inspectLedger() });
     this.addMarker(1040, -65);
     this.targets.push({ id: 'fiber', label: 'Examinar mancha junto à cama', x: 1040, y: -65, available: () => !gameStore.has('fiber_found'), action: () => this.inspectFiber() });
     this.addMarker(700, -205);
+    this.add.image(700, -205, 'props-atlas', 'fuse-box').setDisplaySize(82, 82).setDepth(7);
     this.targets.push({ id: 'breaker', label: 'Examinar quadro elétrico', x: 700, y: -205, action: () => this.inspectBreaker() });
     this.addMarker(590, 210);
+    this.add.image(590, 210, 'props-atlas', 'service-bell').setDisplaySize(58, 58).setDepth(7);
     this.targets.push({ id: 'bell', label: 'Tocar a campainha três vezes', x: 590, y: 210, action: () => this.ringBell() });
     this.targets.push({ id: 'hallway', label: 'Seguir para o corredor leste', x: 842, y: 280, action: () => { if (gameStore.run) gameStore.run.area = 'corridor'; } });
   }
@@ -158,18 +168,18 @@ export class HotelScene extends Phaser.Scene {
   }
 
   private createActors(run: RunState): void {
-    this.player = this.physics.add.sprite(run.x, run.y, `character-${run.bodyId}`).setDepth(20);
-    this.player.setCollideWorldBounds(true).setCircle(12, 6, 17);
+    this.player = this.physics.add.sprite(run.x, run.y, 'character-atlas', `${run.bodyId}-down`).setDepth(20).setDisplaySize(58, 60);
+    this.player.setCollideWorldBounds(true).setSize(110, 70).setOffset(100, 220);
     this.children.list.filter((child) => child.getData?.('wall')).forEach((wall) => this.physics.add.collider(this.player, wall as Phaser.GameObjects.GameObject));
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
-    this.cameras.main.setZoom(1.12);
+    this.cameras.main.setZoom(1);
 
     const starts: Record<CharacterId, { x: number; y: number }> = {
       elise: { x: 465, y: 235 }, marta: { x: 1280, y: 280 }, augusto: { x: 250, y: -100 }, raul: { x: 610, y: -100 },
     };
     (Object.keys(CHARACTERS) as CharacterId[]).filter((id) => id !== run.bodyId).forEach((id) => {
       const pos = starts[id];
-      const sprite = this.physics.add.sprite(pos.x, pos.y, `character-${id}`).setDepth(19);
+      const sprite = this.physics.add.sprite(pos.x, pos.y, 'character-atlas', `${id}-down`).setDepth(19).setDisplaySize(58, 60);
       sprite.setImmovable(true);
       const target: InteractionTarget = { id: `npc-${id}`, label: `Falar com ${CHARACTERS[id].name}`, x: pos.x, y: pos.y, action: () => this.talkTo(id) };
       this.targets.push(target);
@@ -180,7 +190,8 @@ export class HotelScene extends Phaser.Scene {
   private createHud(run: RunState): void {
     const top = this.add.rectangle(640, 41, 1230, 58, 0x090a10, 0.9).setScrollFactor(0).setStrokeStyle(1, 0x5e4d33).setDepth(100);
     const character = CHARACTERS[run.bodyId];
-    this.hudStatus = this.add.text(48, 26, `${character.name.toUpperCase()} · ${character.role}\nMENTE ${run.mental}   SUSPEITA ${run.suspicion}`, { fontFamily: 'Inter', fontSize: '12px', color: '#d9cdb6', lineSpacing: 5 }).setScrollFactor(0).setDepth(101);
+    this.add.image(62, 41, 'portrait-atlas', run.bodyId).setDisplaySize(52, 52).setScrollFactor(0).setDepth(101);
+    this.hudStatus = this.add.text(98, 26, `${character.name.toUpperCase()} · ${character.role}\nMENTE ${run.mental}   SUSPEITA ${run.suspicion}`, { fontFamily: 'Inter', fontSize: '12px', color: '#d9cdb6', lineSpacing: 5 }).setScrollFactor(0).setDepth(101);
     this.hudTime = this.add.text(640, 24, formatTime(run.minute), { fontFamily: 'Cormorant Garamond', fontSize: '30px', color: '#e8d8b6' }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(101);
     this.locationText = this.add.text(1218, 30, 'LOBBY', { fontFamily: 'Inter', fontSize: '11px', color: '#8f8a98', letterSpacing: 2 }).setOrigin(1, 0).setScrollFactor(0).setDepth(101);
     this.prompt = this.add.text(640, 646, '', { fontFamily: 'Inter', fontSize: '15px', color: '#f0e5cc', backgroundColor: '#101119dd', padding: { x: 18, y: 10 } }).setOrigin(0.5).setScrollFactor(0).setDepth(110);
@@ -233,7 +244,9 @@ export class HotelScene extends Phaser.Scene {
     if (this.cursors.down.isDown || this.wasd.S.isDown) y += 1;
     const velocity = new Phaser.Math.Vector2(x, y).normalize().scale(170);
     this.player.setVelocity(velocity.x, velocity.y);
-    if (x) this.player.setFlipX(x < 0);
+    const direction = Math.abs(x) > Math.abs(y) ? (x > 0 ? 'right' : 'left') : y < 0 ? 'up' : 'down';
+    if (x || y) this.player.setFrame(`${gameStore.run!.bodyId}-${direction}`);
+    this.player.setFlipX(false);
   }
 
   private updateProximity(): void {
@@ -245,7 +258,9 @@ export class HotelScene extends Phaser.Scene {
       if (!best) return target;
       return distance < Phaser.Math.Distance.Between(this.player.x, this.player.y, best.x, best.y) ? target : best;
     }, undefined);
-    this.prompt.setText(this.dialogueOpen || !this.activeTarget ? '' : `[ E ]  ${this.activeTarget.label}`);
+    const showPrompt = !this.dialogueOpen && Boolean(this.activeTarget);
+    this.prompt.setVisible(showPrompt);
+    if (showPrompt) this.prompt.setText(`[ E ]  ${this.activeTarget!.label}`);
   }
 
   private interact(): void {
@@ -339,12 +354,14 @@ export class HotelScene extends Phaser.Scene {
     this.player.setVelocity(0);
     const choices = (node.choices ?? []).filter((choice) => !choice.requires || choice.requires(gameStore.run!, gameStore.meta));
     const panel = this.add.rectangle(640, 525, 1120, 300, 0x0d0e15, 0.97).setStrokeStyle(2, 0x8d7043).setScrollFactor(0);
-    const speaker = this.add.text(116, 405, node.speaker.toUpperCase(), { fontFamily: 'Cormorant Garamond', fontSize: '27px', color: '#d7ad62', letterSpacing: 3 }).setScrollFactor(0);
-    const body = this.add.text(116, 448, node.text, { fontFamily: 'Inter', fontSize: '17px', color: '#ece5d8', wordWrap: { width: 1000 }, lineSpacing: 6 }).setScrollFactor(0);
-    const objects: Phaser.GameObjects.GameObject[] = [panel, speaker, body];
+    const portraitId = node.speaker.toLowerCase();
+    const portrait = this.add.image(215, 525, 'portrait-atlas', portraitId).setDisplaySize(230, 220).setScrollFactor(0);
+    const speaker = this.add.text(340, 405, node.speaker.toUpperCase(), { fontFamily: 'Cormorant Garamond', fontSize: '27px', color: '#d7ad62', letterSpacing: 3 }).setScrollFactor(0);
+    const body = this.add.text(340, 448, node.text, { fontFamily: 'Inter', fontSize: '17px', color: '#ece5d8', wordWrap: { width: 760 }, lineSpacing: 6 }).setScrollFactor(0);
+    const objects: Phaser.GameObjects.GameObject[] = [panel, portrait, speaker, body];
     choices.forEach((choice, index) => {
       const y = 530 + index * 48;
-      const option = this.add.text(132, y, `${index + 1}. ${choice.text}`, { fontFamily: 'Inter', fontSize: '15px', color: '#bbb3a5', backgroundColor: '#171822', padding: { x: 12, y: 8 }, fixedWidth: 980 }).setScrollFactor(0).setInteractive({ useHandCursor: true });
+      const option = this.add.text(340, y, `${index + 1}. ${choice.text}`, { fontFamily: 'Inter', fontSize: '15px', color: '#bbb3a5', backgroundColor: '#171822', padding: { x: 12, y: 8 }, fixedWidth: 770 }).setScrollFactor(0).setInteractive({ useHandCursor: true });
       option.on('pointerover', () => option.setColor('#ffffff'));
       option.on('pointerout', () => option.setColor('#bbb3a5'));
       option.on('pointerdown', () => this.chooseDialogue(choice, node.speaker));
@@ -364,11 +381,12 @@ export class HotelScene extends Phaser.Scene {
     this.overlay?.destroy();
     this.overlay = undefined;
     const panel = this.add.rectangle(640, 550, 1120, 235, 0x0d0e15, 0.97).setStrokeStyle(2, 0x8d7043).setScrollFactor(0);
-    const name = this.add.text(116, 462, speaker.toUpperCase(), { fontFamily: 'Cormorant Garamond', fontSize: '25px', color: '#d7ad62' }).setScrollFactor(0);
-    const response = this.add.text(116, 510, choice.response, { fontFamily: 'Inter', fontSize: '17px', color: '#ece5d8', wordWrap: { width: 1000 }, lineSpacing: 7 }).setScrollFactor(0);
+    const portrait = this.add.image(215, 550, 'portrait-atlas', speaker.toLowerCase()).setDisplaySize(230, 220).setScrollFactor(0);
+    const name = this.add.text(340, 462, speaker.toUpperCase(), { fontFamily: 'Cormorant Garamond', fontSize: '25px', color: '#d7ad62' }).setScrollFactor(0);
+    const response = this.add.text(340, 510, choice.response, { fontFamily: 'Inter', fontSize: '17px', color: '#ece5d8', wordWrap: { width: 760 }, lineSpacing: 7 }).setScrollFactor(0);
     const continueText = this.add.text(1135, 630, 'CONTINUAR  ›', { fontFamily: 'Inter', fontSize: '13px', color: '#d7ad62' }).setOrigin(1).setScrollFactor(0).setInteractive({ useHandCursor: true });
     continueText.on('pointerdown', () => this.closeDialogue());
-    this.overlay = this.add.container(0, 0, [panel, name, response, continueText]).setDepth(300);
+    this.overlay = this.add.container(0, 0, [panel, portrait, name, response, continueText]).setDepth(300);
     this.input.keyboard!.once('keydown-SPACE', () => this.closeDialogue());
     this.input.keyboard!.once('keydown-ENTER', () => this.closeDialogue());
   }

@@ -20,7 +20,7 @@ class Store {
       id: uid('run'), index, seed, bodyId, minute: 23 * 60 + 40,
       area: character.initialArea,
       x: bodyId === 'elise' ? 420 : 1020,
-      y: bodyId === 'elise' ? 390 : 280,
+      y: bodyId === 'elise' ? 330 : 280,
       inventory: [...character.inventory], flags: {}, suspicion: 0,
       health: 100, mental: 100, events: [], ended: false,
     };
