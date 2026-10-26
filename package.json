@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
+    "deploy": "npm run build && wrangler deploy",
+    "preview:cloudflare": "npm run build && wrangler dev",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
@@ -15,6 +17,7 @@
   "devDependencies": {
     "typescript": "^5.7.3",
     "vite": "^6.1.0",
-    "vitest": "^3.0.7"
+    "vitest": "^3.0.7",
+    "wrangler": "4.153.0"
   }
 }
