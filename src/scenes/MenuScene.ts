@@ -41,6 +41,9 @@ export class MenuScene extends Phaser.Scene {
     this.add.text(width / 2, height - 42, 'WASD / SETAS · E INTERAGIR · J DIÁRIO · M MAPA MENTAL · SHIFT ACELERAR', {
       fontFamily: 'Inter', fontSize: '12px', color: '#666572', letterSpacing: 1,
     }).setOrigin(0.5);
+    this.add.text(width - 24, height - 24, 'VERSÃO CARTOON · BUILD 4', {
+      fontFamily: 'Inter', fontSize: '10px', color: '#9b7b49', letterSpacing: 1,
+    }).setOrigin(1, 1);
   }
 
   private button(x: number, y: number, label: string, callback: () => void): void {
