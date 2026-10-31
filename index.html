@@ -6,140 +6,176 @@
 <title>Vale Pixelado — MVP Medieval 3D</title>
 <style>
   :root{
-    --ink:#1b1410; --paper:#f3e3c3; --paper2:#e2c99a; --wood:#6b4426; --gold:#f2c14e;
-    --red:#d64545; --green:#58b84a;
+    --bg:rgba(18,16,14,.82); --bg2:rgba(255,255,255,.07); --line:rgba(255,255,255,.14);
+    --txt:#f3ead8; --mut:#b9ad97; --gold:#f2c14e; --red:#e04848; --green:#6fcf5a;
+    --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
+    --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%;overflow:hidden;background:#9fd4f0;
-    font-family:"Courier New",ui-monospace,monospace;font-weight:bold;color:var(--ink);
-    user-select:none;-webkit-user-select:none;touch-action:none}
-  #game{position:fixed;inset:0;width:100vw;height:100vh;display:block;
-    image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;cursor:crosshair}
-  .panel{background:var(--paper);border:3px solid var(--ink);
-    box-shadow:inset -3px -3px 0 var(--paper2),inset 3px 3px 0 #fff6e0,4px 4px 0 rgba(0,0,0,.35)}
-  button{font:inherit;cursor:pointer;color:var(--ink);background:var(--gold);border:3px solid var(--ink);
-    box-shadow:inset -3px -3px 0 #c48d22,inset 3px 3px 0 #ffe08a;padding:6px 10px}
-  button:active{transform:translateY(2px)}
-  button:disabled{background:#b9ab90;box-shadow:inset -3px -3px 0 #998b70;cursor:default;color:#5a5040}
+  html,body{margin:0;height:100%;overflow:hidden;background:#9fd4f0;color:var(--txt);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+  #game{position:fixed;inset:0;width:100vw;height:100vh;display:block;touch-action:none;cursor:crosshair}
+  #game.pixel{image-rendering:pixelated;image-rendering:crisp-edges}
+  button{font:inherit;cursor:pointer;color:var(--txt);background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:7px 12px}
+  button:hover:not(:disabled){background:rgba(255,255,255,.14)}
+  button:active:not(:disabled){transform:translateY(1px)}
+  button.primary{background:var(--gold);color:#2a1d08;border-color:#ffd97a;font-weight:700}
+  button.primary:hover:not(:disabled){background:#ffd36a}
+  button:disabled{opacity:.45;cursor:default}
 
-  /* ---------- HUD ---------- */
+  /* ---------- HUD (compacto) ---------- */
   #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
-  #topLeft{position:absolute;left:12px;top:12px;padding:8px 10px;min-width:220px}
-  #hpLabel{font-size:14px;margin-bottom:4px}
-  #hpBar{height:14px;background:#3a1d1d;border:3px solid var(--ink);position:relative}
-  #hpFill{position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--red);
-    box-shadow:inset 0 -4px 0 #9b2c2c,inset 0 3px 0 #ff8a8a;transition:width .15s}
-  #res{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:13px}
-  .chip{display:flex;align-items:center;gap:4px;padding:2px 5px;background:#fff3d6;border:2px solid var(--ink)}
-  .chip i,.ires i{display:inline-block;width:10px;height:10px;border:2px solid var(--ink)}
+  #status{position:absolute;left:calc(10px + var(--safe-l));top:calc(10px + var(--safe-t));display:flex;flex-direction:column;gap:6px}
+  #hpBar{position:relative;width:170px;height:12px;border-radius:7px;background:rgba(0,0,0,.55);
+    border:1px solid rgba(255,255,255,.25);overflow:hidden}
+  #hpFill{position:absolute;inset:0;width:100%;background:linear-gradient(#ff6b6b,#c93030);transition:width .2s}
+  #hpBar.low #hpFill{animation:pulse .8s infinite alternate}
+  @keyframes pulse{to{filter:brightness(1.6)}}
+  #hpText{position:absolute;inset:0;font-size:9px;line-height:11px;text-align:center;font-weight:700;text-shadow:0 1px 2px #000}
+  #res{display:flex;gap:4px;flex-wrap:wrap;max-width:260px}
+  .chip{display:flex;align-items:center;gap:3px;padding:1px 6px 1px 4px;border-radius:9px;background:rgba(0,0,0,.45);
+    font-size:12px;font-weight:600;text-shadow:0 1px 1px #000}
+  .chip.zero{opacity:.45}
   .chip.bump{animation:bump .35s}
-  @keyframes bump{50%{transform:scale(1.25);background:#fff}}
-  #topRight{position:absolute;right:12px;top:12px;display:flex;gap:8px;pointer-events:auto}
-  #hint{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);padding:5px 10px;font-size:14px;display:none}
-  #toast{position:absolute;left:50%;top:18%;transform:translateX(-50%);padding:8px 14px;font-size:15px;
-    display:none;text-align:center}
-  #controls{position:absolute;left:12px;bottom:12px;padding:8px 30px 8px 10px;font-size:12px;line-height:1.55;
-    max-width:min(420px,calc(100vw - 24px));pointer-events:auto}
-  #controls b{color:#7a2d10}
-  #closeHelp{position:absolute;right:4px;top:4px;padding:0 6px;font-size:12px}
-  #stats{font-size:11px;margin-top:6px;opacity:.85}
+  @keyframes bump{50%{transform:scale(1.3);background:rgba(242,193,78,.6)}}
+  #topRight{position:absolute;right:calc(10px + var(--safe-r));top:calc(10px + var(--safe-t));display:flex;gap:6px;pointer-events:auto}
+  .iconbtn{width:38px;height:38px;padding:0;border-radius:50%;background:rgba(0,0,0,.45);font-size:17px;display:flex;align-items:center;justify-content:center}
+  #hint{position:absolute;left:50%;bottom:24%;transform:translateX(-50%);padding:4px 10px;border-radius:6px;
+    background:rgba(0,0,0,.5);font-size:13px;display:none;white-space:nowrap}
+  #toast{position:absolute;left:50%;top:calc(14px + var(--safe-t));transform:translateX(-50%);padding:6px 14px;border-radius:8px;
+    background:var(--bg);border:1px solid var(--line);font-size:13px;display:none;text-align:center;max-width:calc(100vw - 120px)}
+  #controls{position:absolute;left:calc(10px + var(--safe-l));bottom:calc(10px + var(--safe-b));padding:8px 12px;border-radius:8px;
+    background:rgba(0,0,0,.45);font-size:12px;line-height:1.6;max-width:min(380px,calc(100vw - 20px));transition:opacity .6s}
+  #controls.hide{opacity:0}
+  #controls b{color:var(--gold)}
 
   /* ---------- efeitos ---------- */
   #fx{position:fixed;inset:0;pointer-events:none;z-index:4;overflow:hidden}
   .ft{position:absolute;left:0;top:0;white-space:nowrap;font-weight:900;
-    text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,2px 2px #000;will-change:transform,opacity}
+    text-shadow:0 0 3px #000,1px 1px 0 #000,-1px -1px 0 #000;will-change:transform,opacity}
   #vignette{position:fixed;inset:0;pointer-events:none;z-index:3;opacity:0;
-    background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(200,0,0,.65) 100%)}
+    background:radial-gradient(ellipse at center,rgba(0,0,0,0) 50%,rgba(200,0,0,.55) 100%)}
   #death{position:fixed;inset:0;z-index:8;display:none;align-items:center;justify-content:center;
-    background:rgba(40,0,0,.45);color:#fff;font-size:28px;text-shadow:3px 3px 0 #000;text-align:center}
+    background:rgba(40,0,0,.45);font-size:26px;font-weight:800;text-shadow:0 2px 6px #000;text-align:center}
 
   /* ---------- inventário ---------- */
-  #inv{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;
-    width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;padding:14px;display:none}
-  #inv.open{display:block}
-  #inv h2{margin:0 0 8px;font-size:18px;display:flex;justify-content:space-between;align-items:center}
-  #inv h3{margin:12px 0 6px;font-size:14px;border-bottom:3px solid var(--ink);padding-bottom:3px}
-  .ires-wrap{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px}
-  .ires{display:flex;align-items:center;gap:5px}
-  .row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px;
-    border:2px solid var(--ink);background:#fff3d6;margin-bottom:6px;font-size:13px}
-  .row small{display:block;font-weight:normal;opacity:.8}
-  .row .btns{display:flex;gap:6px;flex-shrink:0}
-  .row button{padding:3px 8px;font-size:12px}
-  .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-  .slot{border:2px solid var(--ink);background:#fff3d6;padding:6px;font-size:12px;text-align:center;min-height:52px}
-  .slot b{display:block;font-size:11px;opacity:.7;margin-bottom:3px}
+  #invWrap{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.45);padding:calc(12px + var(--safe-t)) calc(12px + var(--safe-r)) calc(12px + var(--safe-b)) calc(12px + var(--safe-l))}
+  #invWrap.open{display:flex}
+  #inv{width:100%;max-width:780px;max-height:100%;display:flex;flex-direction:column;background:var(--bg);
+    border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.5);overflow:hidden;
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  #inv header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+  #inv header h2{margin:0;font-size:17px}
+  #inv header small{color:var(--mut);font-weight:400;margin-left:8px;font-size:12px}
+  #invClose{width:34px;height:34px;padding:0;border-radius:50%;font-size:16px}
+  .inv-grid{display:grid;grid-template-columns:250px 1fr;gap:16px;padding:14px 16px;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+  .inv-grid h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+  .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+  .slot{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 4px;text-align:center;cursor:pointer;min-height:76px}
+  .slot .ico{font-size:24px;line-height:30px}
+  .slot .lb{font-size:10px;color:var(--mut);text-transform:uppercase}
+  .slot .nm{font-size:11px;font-weight:600;margin-top:2px}
+  .slot.empty .ico{opacity:.25}
+  #invStats{font-size:12px;color:var(--mut);margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap}
+  #invStats b{color:var(--txt)}
+  .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .res-grid div{display:flex;align-items:center;gap:6px;background:var(--bg2);border-radius:8px;padding:6px 8px;font-size:13px}
+  .res-grid b{margin-left:auto}
+  .recipes{display:flex;flex-direction:column;gap:8px}
+  .card{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px}
+  .card.equipped{border-color:rgba(242,193,78,.7);background:rgba(242,193,78,.1)}
+  .card .ico{font-size:28px;width:40px;text-align:center;flex-shrink:0}
+  .card .info{flex:1;min-width:0}
+  .card .info b{font-size:14px}
+  .card .info small{display:block;color:var(--mut);font-size:12px;margin:1px 0 4px}
+  .cost{display:flex;gap:4px;flex-wrap:wrap}
+  .cost span{font-size:11px;padding:1px 6px;border-radius:8px;background:rgba(0,0,0,.3)}
+  .cost .ok{color:var(--green)} .cost .no{color:#ff8a8a}
+  .card .btns{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+  .card .btns button{min-width:92px;font-size:13px;padding:7px 10px}
+  @media (max-width:640px){
+    .inv-grid{grid-template-columns:1fr;padding:12px}
+    #invWrap{padding:0}
+    #inv{max-width:none;height:100%;border-radius:0;border:0}
+    #inv header{padding-top:calc(12px + var(--safe-t))}
+  }
 
   /* ---------- toque ---------- */
   #touchUI{position:fixed;inset:0;pointer-events:none;z-index:6;display:none}
   body.touch #touchUI{display:block}
   #joyBase{position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;
-    border:3px solid rgba(255,255,255,.7);background:rgba(0,0,0,.18);display:none}
-  #joyKnob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;
-    background:rgba(255,255,255,.75);border:3px solid var(--ink)}
-  #joyHelp{position:absolute;left:28px;bottom:120px;color:#fff;font-size:12px;text-shadow:2px 2px 0 #000;opacity:.8}
-  .tbtn{position:absolute;pointer-events:auto;border-radius:50%;font-size:30px;display:flex;align-items:center;justify-content:center;padding:0;touch-action:none}
-  #btnAtk{right:22px;bottom:34px;width:86px;height:86px}
-  #btnPot{right:120px;bottom:30px;width:56px;height:56px;font-size:22px}
-  body.touch #controls{font-size:11px;bottom:140px}
+    border:2px solid rgba(255,255,255,.6);background:rgba(0,0,0,.18);display:none}
+  #joyKnob{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;
+    background:rgba(255,255,255,.7)}
+  .tbtn{position:absolute;pointer-events:auto;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;
+    touch-action:none;background:rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.5)}
+  #btnAtk{right:calc(20px + var(--safe-r));bottom:calc(30px + var(--safe-b));width:80px;height:80px;font-size:32px}
+  #btnPot{right:calc(112px + var(--safe-r));bottom:calc(26px + var(--safe-b));width:52px;height:52px;font-size:22px}
+  body.touch #controls{bottom:calc(130px + var(--safe-b))}
+  @media (max-width:600px){ #hpBar{width:130px} #res{max-width:200px} .chip{font-size:11px} }
 
   /* ---------- tela inicial / erro ---------- */
-  #start{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
-    background:rgba(20,30,20,.45)}
-  #start .panel{padding:22px 26px;text-align:center;max-width:min(440px,calc(100vw - 32px))}
+  #start{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(10,14,10,.45)}
+  #start .box{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:24px 28px;text-align:center;max-width:min(420px,calc(100vw - 32px))}
   #start h1{margin:0 0 6px;font-size:26px;letter-spacing:1px}
-  #start p{margin:6px 0 16px;font-size:13px;font-weight:normal;line-height:1.5}
-  #start button{font-size:18px;padding:10px 26px}
+  #start p{margin:6px 0 18px;font-size:14px;color:var(--mut);line-height:1.5}
+  #start button{font-size:17px;padding:10px 34px}
   #err{position:fixed;left:8px;right:8px;bottom:8px;z-index:99;background:#300;color:#fbb;padding:8px;
-    font-size:12px;white-space:pre-wrap;display:none;max-height:40vh;overflow:auto}
-  @media (max-width:600px){
-    #topLeft{min-width:0;padding:6px 8px}
-    #res{font-size:11px;gap:4px}
-    #controls{display:none}
-    body.touch #controls.show{display:block}
-  }
+    font-size:12px;white-space:pre-wrap;display:none;max-height:40vh;overflow:auto;font-family:monospace}
 </style>
 </head>
 <body>
 
 <div id="hud">
-  <div id="topLeft" class="panel">
-    <div id="hpLabel">♥ VIDA <span id="hpText">20/20</span></div>
-    <div id="hpBar"><div id="hpFill"></div></div>
+  <div id="status">
+    <div id="hpBar"><div id="hpFill"></div><div id="hpText">20/20</div></div>
     <div id="res"></div>
-    <div id="stats"></div>
   </div>
-  <div id="topRight"><button id="btnInv">🎒 <span class="lbl">Inventário (I)</span></button></div>
-  <div id="hint" class="panel"></div>
-  <div id="toast" class="panel"></div>
-  <div id="controls" class="panel">
-    <button id="closeHelp" title="Fechar (H)">×</button>
-    <div id="controlsText"></div>
+  <div id="topRight">
+    <button class="iconbtn" id="btnPixel" title="Modo pixel (P)">▦</button>
+    <button class="iconbtn" id="btnHelp" title="Ajuda (H)">?</button>
+    <button class="iconbtn" id="btnInv" title="Inventário (I)">🎒</button>
   </div>
+  <div id="hint"></div>
+  <div id="toast"></div>
+  <div id="controls"></div>
 </div>
 <div id="fx"></div>
 <div id="vignette"></div>
-<div id="death"><div>VOCÊ CAIU!<br><span style="font-size:15px">Renascendo no acampamento...</span></div></div>
+<div id="death"><div>VOCÊ CAIU!<br><span style="font-size:14px;font-weight:500">Renascendo no acampamento...</span></div></div>
 
-<div id="inv" class="panel">
-  <h2>Inventário &amp; Forja <button id="invClose">× Fechar</button></h2>
-  <div id="invBody"></div>
+<div id="invWrap">
+  <div id="inv">
+    <header><h2>Inventário<small>jogo pausado</small></h2><button id="invClose" title="Fechar (I / Esc)">✕</button></header>
+    <div class="inv-grid">
+      <section>
+        <h3>Equipado</h3>
+        <div class="slots" id="invSlots"></div>
+        <div id="invStats"></div>
+        <h3>Recursos</h3>
+        <div class="res-grid" id="invRes"></div>
+      </section>
+      <section>
+        <h3>Forja e itens</h3>
+        <div class="recipes" id="invRecipes"></div>
+      </section>
+    </div>
+  </div>
 </div>
 
 <div id="touchUI">
   <div id="joyBase"><div id="joyKnob"></div></div>
-  <div id="joyHelp">← arraste para mover · arraste à direita para girar a câmera</div>
   <button id="btnPot" class="tbtn" title="Poção">🧪</button>
   <button id="btnAtk" class="tbtn" title="Atacar / coletar">⚔</button>
 </div>
 
 <div id="start">
-  <div class="panel">
+  <div class="box">
     <h1>⚔ VALE PIXELADO</h1>
-    <p>MVP de RPG medieval 3D em estética pixelada.<br>
-       Colete madeira e pedra, derrote lobos, esqueletos e slimes,
+    <p>Colete madeira e pedra, derrote lobos, esqueletos e slimes,
        e forje seu equipamento.</p>
-    <button id="btnStart">JOGAR</button>
+    <button id="btnStart" class="primary">JOGAR</button>
   </div>
 </div>
 <div id="err"></div>
@@ -168,7 +204,6 @@ import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
    ===================================================================== */
 const TAU = Math.PI * 2;
 const IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-const PIXEL = IS_TOUCH ? 2.5 : 3;          // fator de "pixelização" (render em baixa resolução)
 if (IS_TOUCH) document.body.classList.add('touch');
 
 let seed = 20261031;                         // RNG determinístico para gerar o mundo
@@ -190,24 +225,26 @@ const $ = id => document.getElementById(id);
 /* =====================================================================
    RENDERER, CENA, LUZ
    ===================================================================== */
-const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
-renderer.setPixelRatio(1);
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.domElement.id = 'game';
 document.body.prepend(renderer.domElement);
+const canvas = renderer.domElement;
 
 const SKY = 0x9fd4f0;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(SKY);
-scene.fog = new THREE.Fog(SKY, 32, 78);
+scene.fog = new THREE.Fog(SKY, 34, 82);
 
 const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 220);
 
+// Modo pixel opcional (tecla P): renderiza em baixa resolução + texturas "nearest"
+let pixelMode = false;
 function resize() {
   const w = innerWidth, h = innerHeight;
-  // Renderiza em resolução reduzida; o CSS estica com image-rendering:pixelated
-  renderer.setSize(Math.ceil(w / PIXEL), Math.ceil(h / PIXEL), false);
+  if (pixelMode) { renderer.setPixelRatio(1); renderer.setSize(Math.ceil(w / 3), Math.ceil(h / 3), false); }
+  else { renderer.setPixelRatio(Math.min(devicePixelRatio || 1, IS_TOUCH ? 1.5 : 2)); renderer.setSize(w, h, false); }
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
 }
@@ -216,94 +253,104 @@ resize();
 
 const hemi = new THREE.HemisphereLight(0xdcefff, 0x5a7a3a, 1.15);
 scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xfff0d0, 2.3);
+const sun = new THREE.DirectionalLight(0xfff0d0, 2.4);
 sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.mapSize.set(IS_TOUCH ? 1024 : 2048, IS_TOUCH ? 1024 : 2048);
 const sc = sun.shadow.camera;
 sc.left = -26; sc.right = 26; sc.top = 26; sc.bottom = -26; sc.near = 1; sc.far = 120;
-sun.shadow.bias = -0.0006;
+sun.shadow.bias = -0.0005;
 sun.shadow.normalBias = 0.03;
 scene.add(sun, sun.target);
 const SUN_OFFSET = new THREE.Vector3(28, 45, 18);
 
 /* =====================================================================
-   TEXTURAS PIXELADAS (geradas em canvas, sem imagens externas)
+   TEXTURAS (geradas em canvas, sem imagens externas)
    ===================================================================== */
+const ALL_TEX = [];
+function applyFilter(t) {
+  t.magFilter = pixelMode ? THREE.NearestFilter : THREE.LinearFilter;
+  t.minFilter = pixelMode ? THREE.NearestMipmapNearestFilter : THREE.LinearMipmapLinearFilter;
+  t.needsUpdate = true;
+}
 function makeTex(size, painter, rep = 1) {
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const g = c.getContext('2d');
   painter(g, size);
   const t = new THREE.CanvasTexture(c);
-  t.magFilter = THREE.NearestFilter;
-  t.minFilter = THREE.NearestMipmapNearestFilter;
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(rep, rep);
   t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  applyFilter(t);
+  ALL_TEX.push(t);
   return t;
 }
 function px(g, x, y, c) { g.fillStyle = c; g.fillRect(x, y, 1, 1); }
 function noise(g, s, pal) { for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) px(g, x, y, pal[(rnd() * pal.length) | 0]); }
+function blotches(g, s, color, n, rmin, rmax) {
+  g.fillStyle = color;
+  for (let i = 0; i < n; i++) { g.beginPath(); g.arc(rnd() * s, rnd() * s, rr(rmin, rmax), 0, TAU); g.fill(); }
+}
 
 const TEX = {
-  grass: makeTex(64, (g, s) => {
-    noise(g, s, ['#5c9e3b', '#5c9e3b', '#54933a', '#67aa42', '#4c8a33', '#6fb247']);
-    for (let i = 0; i < 90; i++) { const x = rnd() * s | 0, y = rnd() * s | 0; px(g, x, y, '#3f7a2b'); px(g, x, (y + 1) % s, '#3f7a2b'); }
-    for (let i = 0; i < 40; i++) px(g, rnd() * s | 0, rnd() * s | 0, '#86c45a');
-    for (let i = 0; i < 6; i++) px(g, rnd() * s | 0, rnd() * s | 0, ['#f4e35a', '#ffffff', '#e86a6a'][i % 3]);
-  }, 30),
-  bark: makeTex(16, (g, s) => {
+  grass: makeTex(128, (g, s) => {
+    noise(g, s, ['#5c9e3b', '#5c9e3b', '#57963a', '#64a740', '#518d35', '#6aad44']);
+    blotches(g, s, 'rgba(40,90,25,.18)', 50, 4, 12);
+    blotches(g, s, 'rgba(140,200,90,.12)', 40, 3, 9);
+    for (let i = 0; i < 380; i++) { const x = rnd() * s | 0, y = rnd() * s | 0; g.fillStyle = rnd() < .5 ? '#3f7a2b' : '#7fc055'; g.fillRect(x, y, 1, 3); }
+    for (let i = 0; i < 8; i++) px(g, rnd() * s | 0, rnd() * s | 0, ['#f4e35a', '#ffffff', '#e86a6a'][i % 3]);
+  }, 40),
+  bark: makeTex(32, (g, s) => {
     noise(g, s, ['#6b4426', '#5c3920', '#734a2a', '#62401f']);
     for (let x = 0; x < s; x += 4) for (let y = 0; y < s; y++) if (rnd() < .7) px(g, x + (rnd() < .3 ? 1 : 0), y, '#472c17');
   }),
-  leaf: makeTex(16, (g, s) => {
+  leaf: makeTex(32, (g, s) => {
     noise(g, s, ['#3f8a32', '#367a2c', '#4a9a3a', '#2f6c27']);
-    for (let i = 0; i < 18; i++) px(g, rnd() * s | 0, rnd() * s | 0, '#6cbb4f');
-    for (let i = 0; i < 10; i++) px(g, rnd() * s | 0, rnd() * s | 0, '#24561e');
+    blotches(g, s, 'rgba(120,200,90,.35)', 14, 1, 3);
+    blotches(g, s, 'rgba(20,60,20,.35)', 10, 1, 3);
   }),
-  pine: makeTex(16, (g, s) => {
+  pine: makeTex(32, (g, s) => {
     noise(g, s, ['#2d6a3a', '#275e33', '#337540', '#21522c']);
     for (let y = 1; y < s; y += 3) for (let x = 0; x < s; x++) if (rnd() < .5) px(g, x, y, '#1a4223');
   }),
-  stone: makeTex(16, (g, s) => {
+  stone: makeTex(32, (g, s) => {
     noise(g, s, ['#8a8f96', '#7d828a', '#959aa1', '#83888f']);
-    for (let i = 0; i < 12; i++) px(g, rnd() * s | 0, rnd() * s | 0, '#5d6168');
-    for (let i = 0; i < 10; i++) px(g, rnd() * s | 0, rnd() * s | 0, '#b4b8bd');
-    let x = 3, y = 2; for (let i = 0; i < 9; i++) { px(g, x, y, '#55595f'); x += rnd() < .5 ? 1 : 0; y++; }
+    blotches(g, s, 'rgba(60,64,70,.25)', 10, 1, 4);
+    blotches(g, s, 'rgba(210,214,220,.2)', 10, 1, 3);
+    let x = 6, y = 3; for (let i = 0; i < 18; i++) { px(g, x, y, '#55595f'); x += rnd() < .5 ? 1 : 0; y++; }
   }),
-  skin: makeTex(8, (g, s) => noise(g, s, ['#e0ac7e', '#e0ac7e', '#d9a173', '#e6b68a'])),
-  tunic: makeTex(16, (g, s) => {
+  fabric: makeTex(32, (g, s) => {
     noise(g, s, ['#3d5a99', '#38548f', '#4262a3']);
-    for (let x = 0; x < s; x++) { px(g, x, s - 1, '#e0b84a'); px(g, x, s - 2, '#b8902e'); }
+    for (let y = 0; y < s; y += 2) for (let x = 0; x < s; x++) if ((x + y) % 4 === 0) px(g, x, y, 'rgba(255,255,255,.08)');
   }),
-  pants: makeTex(8, (g, s) => noise(g, s, ['#5b4a3a', '#544434', '#625040'])),
-  boots: makeTex(8, (g, s) => noise(g, s, ['#3a2618', '#33211a', '#422c1c'])),
-  hair: makeTex(8, (g, s) => noise(g, s, ['#4a2c17', '#3f2513', '#55331b'])),
-  cape: makeTex(16, (g, s) => {
+  pants: makeTex(32, (g, s) => noise(g, s, ['#5b4a3a', '#544434', '#625040'])),
+  boots: makeTex(32, (g, s) => { noise(g, s, ['#3a2618', '#33211a', '#422c1c']); blotches(g, s, 'rgba(255,220,180,.06)', 8, 2, 5); }),
+  cape: makeTex(32, (g, s) => {
     noise(g, s, ['#a52a2a', '#982626', '#b03030']);
-    for (let y = 0; y < s; y++) px(g, 0, y, '#6d1919');
+    for (let x = 0; x < s; x += 6) for (let y = 0; y < s; y++) px(g, x, y, 'rgba(0,0,0,.12)');
   }),
-  leather: makeTex(16, (g, s) => {
+  leather: makeTex(32, (g, s) => {
     noise(g, s, ['#8a5a2b', '#7f5226', '#946231']);
-    for (let i = 1; i < s - 1; i += 2) { px(g, i, 1, '#d8b47a'); px(g, i, s - 2, '#d8b47a'); px(g, 1, i, '#d8b47a'); px(g, s - 2, i, '#d8b47a'); }
+    blotches(g, s, 'rgba(60,30,10,.18)', 10, 2, 5);
+    for (let i = 2; i < s - 2; i += 3) { px(g, i, 2, '#d8b47a'); px(g, i, s - 3, '#d8b47a'); }
   }),
-  metal: makeTex(16, (g, s) => {
+  metal: makeTex(32, (g, s) => {
     noise(g, s, ['#9aa3ad', '#8e97a1', '#a6aeb7']);
     for (let i = 0; i < s; i++) { px(g, i, i, '#d9dee3'); px(g, (i + 1) % s, i, '#c4cad0'); }
-    for (let i = 0; i < s; i++) { px(g, i, 0, '#5f666e'); px(g, 0, i, '#5f666e'); }
   }),
-  plank: makeTex(16, (g, s) => {
+  plank: makeTex(32, (g, s) => {
     noise(g, s, ['#b98a4e', '#ad7f45', '#c29457']);
-    for (let y = 3; y < s; y += 5) for (let x = 0; x < s; x++) if (rnd() < .8) px(g, x, y, '#8a6232');
+    for (let y = 3; y < s; y += 6) for (let x = 0; x < s; x++) if (rnd() < .8) px(g, x, y, '#8a6232');
   }),
-  fur: makeTex(16, (g, s) => {
+  fur: makeTex(32, (g, s) => {
     noise(g, s, ['#7d7f86', '#73757c', '#888a91', '#6a6c72']);
-    for (let i = 0; i < 20; i++) { const x = rnd() * s | 0, y = rnd() * s | 0; px(g, x, y, '#4f5156'); px(g, x, (y + 1) % s, '#4f5156'); }
+    for (let i = 0; i < 60; i++) { const x = rnd() * s | 0, y = rnd() * s | 0; g.fillStyle = '#4f5156'; g.fillRect(x, y, 1, 3); }
   }),
-  bone: makeTex(8, (g, s) => { noise(g, s, ['#e8e2cf', '#ded7c1', '#f2ecdb']); px(g, 2, 3, '#b5ad95'); px(g, 5, 6, '#b5ad95'); }),
-  slime: makeTex(16, (g, s) => {
+  bone: makeTex(16, (g, s) => { noise(g, s, ['#e8e2cf', '#ded7c1', '#f2ecdb']); px(g, 4, 6, '#b5ad95'); px(g, 10, 12, '#b5ad95'); }),
+  slime: makeTex(32, (g, s) => {
     noise(g, s, ['#6fdc6f', '#63cf63', '#79e679']);
-    for (let i = 0; i < 6; i++) px(g, rnd() * s | 0, rnd() * s | 0, '#c8ffc8');
+    blotches(g, s, 'rgba(220,255,220,.4)', 6, 1, 2);
   }),
 };
 
@@ -316,13 +363,18 @@ const M = {
   pine: lam(TEX.pine, { flatShading: true }),
   bush: lam(TEX.leaf, { flatShading: true, color: 0xb8e0a0 }),
   stone: lam(TEX.stone, { flatShading: true }),
-  skin: lam(TEX.skin), tunic: lam(TEX.tunic), pants: lam(TEX.pants), boots: lam(TEX.boots),
-  hair: lam(TEX.hair), cape: lam(TEX.cape), leather: lam(TEX.leather), metal: lam(TEX.metal),
+  skin: new THREE.MeshLambertMaterial({ color: 0xe2ad86 }),
+  hair: new THREE.MeshLambertMaterial({ color: 0x4a2c17 }),
+  tunic: lam(TEX.fabric), pants: lam(TEX.pants), boots: lam(TEX.boots),
+  cape: lam(TEX.cape, { side: THREE.DoubleSide }), leather: lam(TEX.leather), metal: lam(TEX.metal),
   plank: lam(TEX.plank), fur: lam(TEX.fur), bone: lam(TEX.bone),
   slime: lam(TEX.slime, { transparent: true, opacity: 0.82 }),
   slimeCore: new THREE.MeshLambertMaterial({ color: 0x2f8f3a }),
   gold: new THREE.MeshLambertMaterial({ color: 0xe0b84a }),
   dark: new THREE.MeshBasicMaterial({ color: 0x1a1210 }),
+  eyeWhite: new THREE.MeshBasicMaterial({ color: 0xf2efe6 }),
+  iris: new THREE.MeshBasicMaterial({ color: 0x3a2a1c }),
+  lips: new THREE.MeshLambertMaterial({ color: 0xa8604f }),
   redEye: new THREE.MeshBasicMaterial({ color: 0xff3b2f }),
   yellowEye: new THREE.MeshBasicMaterial({ color: 0xffd23a }),
   fire1: new THREE.MeshBasicMaterial({ color: 0xff7a1a }),
@@ -334,11 +386,10 @@ const M = {
 
 /* ---------- geometrias compartilhadas (cache) ---------- */
 const geoCache = new Map();
-function boxGeo(w, h, d) {
-  const k = w + '_' + h + '_' + d;
-  if (!geoCache.has(k)) geoCache.set(k, new THREE.BoxGeometry(w, h, d));
-  return geoCache.get(k);
-}
+function cached(key, make) { if (!geoCache.has(key)) geoCache.set(key, make()); return geoCache.get(key); }
+const boxGeo = (w, h, d) => cached(`b${w}_${h}_${d}`, () => new THREE.BoxGeometry(w, h, d));
+const capGeo = (r, len) => cached(`c${r}_${len}`, () => new THREE.CapsuleGeometry(r, len, 4, 10));
+const latheGeo = (key, pts, seg = 16) => cached('l' + key, () => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg));
 function mesh(geo, mat, x = 0, y = 0, z = 0, shadow = true) {
   const m = new THREE.Mesh(geo, mat);
   m.position.set(x, y, z);
@@ -346,14 +397,18 @@ function mesh(geo, mat, x = 0, y = 0, z = 0, shadow = true) {
   return m;
 }
 const box = (w, h, d, mat, x, y, z) => mesh(boxGeo(w, h, d), mat, x, y, z);
+const cap = (r, len, mat, x, y, z) => mesh(capGeo(r, len), mat, x, y, z);
 function group(x = 0, y = 0, z = 0, parent) {
   const g = new THREE.Group(); g.position.set(x, y, z);
   if (parent) parent.add(g);
   return g;
 }
+const SPH = new THREE.SphereGeometry(1, 20, 14);
+const DOME = new THREE.SphereGeometry(1, 20, 10, 0, TAU, 0, Math.PI / 2);
+function ball(rx, ry, rz, mat, x, y, z, geo = SPH) { const m = mesh(geo, mat, x, y, z); m.scale.set(rx, ry, rz); return m; }
 
 const G = {
-  trunk: new THREE.CylinderGeometry(0.22, 0.32, 1.8, 6),
+  trunk: new THREE.CylinderGeometry(0.22, 0.32, 1.8, 7),
   oakTop: new THREE.IcosahedronGeometry(1.25, 0),
   oakTop2: new THREE.IcosahedronGeometry(0.85, 0),
   pineA: new THREE.ConeGeometry(1.35, 1.8, 7),
@@ -410,16 +465,13 @@ function findSpot(minDist, avoidCenter = 7, range = PLAY - 2) {
 
 function buildTree(pine) {
   const g = new THREE.Group();
-  const trunk = mesh(G.trunk, M.bark, 0, 0.9, 0);
-  g.add(trunk);
+  g.add(mesh(G.trunk, M.bark, 0, 0.9, 0));
   if (pine) {
     g.add(mesh(G.pineA, M.pine, 0, 2.1, 0), mesh(G.pineB, M.pine, 0, 2.95, 0), mesh(G.pineC, M.pine, 0, 3.65, 0));
   } else {
-    const t1 = mesh(G.oakTop, M.leaf, 0, 2.45, 0);
-    const t2 = mesh(G.oakTop2, M.leaf, 0.55, 2.95, 0.25);
     const t3 = mesh(G.oakTop2, M.leaf, -0.5, 2.7, -0.35);
     t3.scale.setScalar(0.8);
-    g.add(t1, t2, t3);
+    g.add(mesh(G.oakTop, M.leaf, 0, 2.45, 0), mesh(G.oakTop2, M.leaf, 0.55, 2.95, 0.25), t3);
   }
   return g;
 }
@@ -434,8 +486,7 @@ function buildRock() {
   return g;
 }
 function addResource(kind, x, z) {
-  const pine = kind === 'tree' && rnd() < 0.45;
-  const obj = kind === 'tree' ? buildTree(pine) : buildRock();
+  const obj = kind === 'tree' ? buildTree(rnd() < 0.45) : buildRock();
   const s = kind === 'tree' ? rr(0.85, 1.25) : rr(0.8, 1.25);
   obj.scale.setScalar(s);
   obj.rotation.y = rnd() * TAU;
@@ -446,20 +497,19 @@ function addResource(kind, x, z) {
   obstacles.push(ob);
   placed.push({ x, z, r: r + 0.6 });
   const maxHp = kind === 'tree' ? 4 : 5;
-  resources.push({ kind, obj, x, z, r, ob, hp: maxHp, maxHp, baseScale: s, shake: 0,
-                   state: 'alive', t: 0, respawnAt: 0, top: kind === 'tree' ? 2.6 * s : 1.0 * s });
+  resources.push({ kind, obj, x, z, r, ob, hp: maxHp, maxHp, baseScale: s, shake: 0, state: 'alive', t: 0, respawnAt: 0 });
 }
 const TREE_COUNT = 55, ROCK_COUNT = 26;
 for (let i = 0; i < TREE_COUNT; i++) { const p = findSpot(2.2); if (p) addResource('tree', p.x, p.z); }
 for (let i = 0; i < ROCK_COUNT; i++) { const p = findSpot(2.0); if (p) addResource('rock', p.x, p.z); }
-// Algumas árvores decorativas nas colinas da borda (fora da área jogável)
+// Árvores decorativas nas colinas da borda (fora da área jogável)
 for (let i = 0; i < 70; i++) {
   const a = rnd() * TAU, d = rr(52, 70);
   const x = Math.cos(a) * d, z = Math.sin(a) * d;
   const t = buildTree(rnd() < .6);
   t.scale.setScalar(rr(1, 1.5));
   t.position.set(x, heightAt(x, z) - .1, z);
-  t.traverse(o => { if (o.isMesh) { o.castShadow = false; } });
+  t.traverse(o => { if (o.isMesh) o.castShadow = false; });
   scene.add(t);
 }
 
@@ -483,7 +533,7 @@ for (let i = 0; i < 70; i++) {
   }
   scene.add(bushes);
 
-  const BLADES = 700;
+  const BLADES = 900;
   const blades = new THREE.InstancedMesh(G.blade, new THREE.MeshLambertMaterial({ color: 0x6aa844 }), BLADES);
   blades.receiveShadow = true;
   for (let i = 0; i < BLADES; i++) {
@@ -497,7 +547,7 @@ for (let i = 0; i < 70; i++) {
   scene.add(blades);
 
   const FLOWERS = 160;
-  const flowers = new THREE.InstancedMesh(boxGeo(0.12, 0.12, 0.12), new THREE.MeshLambertMaterial({ color: 0xffffff }), FLOWERS);
+  const flowers = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.07, 0), new THREE.MeshLambertMaterial({ color: 0xffffff }), FLOWERS);
   const fc = [0xf4e35a, 0xffffff, 0xe86a6a, 0xb98aea, 0xff9ad5].map(c => new THREE.Color(c));
   for (let i = 0; i < FLOWERS; i++) {
     const x = rr(-PLAY, PLAY), z = rr(-PLAY, PLAY);
@@ -511,7 +561,7 @@ for (let i = 0; i < 70; i++) {
   scene.add(flowers);
 }
 
-// Acampamento inicial com fogueira animada (detalhe visual)
+// Acampamento inicial com fogueira animada
 const campfire = { flames: [] };
 {
   const cx = 2.6, cz = 2.6, cy = heightAt(cx, cz);
@@ -523,14 +573,13 @@ const campfire = { flames: [] };
   }
   for (let i = 0; i < 3; i++) {
     const l = mesh(G.log, M.bark, 0, 0.12, 0);
-    l.rotation.set(Math.PI / 2, 0, 0); l.rotation.y = i * 1.05; l.rotation.order = 'YXZ';
+    l.rotation.order = 'YXZ'; l.rotation.set(Math.PI / 2, i * 1.05, 0);
     l.scale.set(1, 1.6, 1); g.add(l);
   }
   for (let i = 0; i < 3; i++) {
     const f = mesh(G.flame, i ? M.fire2 : M.fire1, (i - 1) * 0.12, 0.45, (i % 2) * 0.1, false);
     f.scale.setScalar(i ? 0.6 : 1); g.add(f); campfire.flames.push(f);
   }
-  // Placa de madeira
   const sign = group(-1.6, 0, 0.4, g);
   sign.add(box(0.1, 1.1, 0.1, M.plank, 0, 0.55, 0), box(0.9, 0.45, 0.08, M.plank, 0, 1.0, 0.05));
   sign.rotation.y = 0.5;
@@ -543,103 +592,105 @@ const clouds = [];
 for (let i = 0; i < 9; i++) {
   const c = new THREE.Group();
   const n = 3 + (rnd() * 3 | 0);
-  for (let k = 0; k < n; k++) {
-    const m = mesh(boxGeo(rr(3, 6), rr(1, 1.8), rr(2.5, 4)), M.cloud, k * 2.4 - n, rr(-.3, .3), rr(-1, 1), false);
-    c.add(m);
-  }
+  for (let k = 0; k < n; k++) c.add(mesh(boxGeo(rr(3, 6), rr(1, 1.8), rr(2.5, 4)), M.cloud, k * 2.4 - n, rr(-.3, .3), rr(-1, 1), false));
   c.position.set(rr(-90, 90), rr(28, 38), rr(-90, 90));
   scene.add(c); clouds.push(c);
 }
 
 /* =====================================================================
    PERSONAGEM: guerreiro montado em hierarquia de grupos ("ossos")
-   root → hips → (torso → chest/neck→head/shoulders→elbows→hands/cape) + (hip joints → knees)
-   Formas arredondadas: esferas, cápsulas e tronco torneado (LatheGeometry).
-   O modelo olha para +Z; o braço direito fica em -X.
+   root → hips → (torso → chest / neck → head / shoulders → elbows → hands → grip / cape)
+               + (hip joints → knees)
+   Proporções humanas (~1,8 m). Membros são perfis torneados (LatheGeometry),
+   com afinamento como músculos. O modelo olha para +Z; o braço direito fica em -X.
    ===================================================================== */
-const UNIT_SPHERE = new THREE.SphereGeometry(1, 12, 8);
-const UNIT_DOME = new THREE.SphereGeometry(1, 12, 6, 0, TAU, 0, Math.PI / 2);
-function capGeo(r, len) {
-  const k = 'cap' + r + '_' + len;
-  if (!geoCache.has(k)) geoCache.set(k, new THREE.CapsuleGeometry(r, len, 3, 8));
-  return geoCache.get(k);
+// Perfil de membro: começa em y=0 e desce até -len, com "barriga" muscular
+function limbGeo(key, len, rTop, rMid, rBot) {
+  return latheGeo(key, [
+    [0.001, rTop * 0.6], [rTop * 0.7, rTop * 0.45], [rTop, 0], [rMid, -len * 0.3],
+    [(rMid + rBot) / 2, -len * 0.65], [rBot, -len * 0.92], [rBot * 0.75, -len - rBot * 0.35], [0.001, -len - rBot * 0.6]], 14);
 }
-function latheGeo(key, pts, seg = 12) {
-  if (!geoCache.has(key)) geoCache.set(key, new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg));
-  return geoCache.get(key);
-}
-const cap = (r, len, mat, x, y, z) => mesh(capGeo(r, len), mat, x, y, z);
-function ball(rx, ry, rz, mat, x, y, z, geo = UNIT_SPHERE) { const m = mesh(geo, mat, x, y, z); m.scale.set(rx, ry, rz); return m; }
-
-// Perfis (raio, altura) do tronco e do peitoral — mais largo nos ombros, fino na cintura
-const TORSO_PROFILE = [[0, 0], [0.2, 0], [0.225, 0.1], [0.245, 0.26], [0.275, 0.42], [0.27, 0.52], [0.2, 0.6], [0.09, 0.66], [0, 0.67]];
-const ARMOR_PROFILE = [[0.225, 0.06], [0.245, 0.16], [0.27, 0.3], [0.3, 0.44], [0.295, 0.53], [0.22, 0.6], [0.15, 0.63]];
-const CAPE_GEO = new THREE.CylinderGeometry(0.2, 0.33, 0.8, 9, 1, true, Math.PI - 1.0, 2.0);
+const TORSO_PROFILE = [[0, 0], [0.145, 0], [0.15, 0.08], [0.163, 0.2], [0.188, 0.33], [0.2, 0.41], [0.188, 0.47], [0.13, 0.52], [0.06, 0.545], [0, 0.55]];
+const SKIRT_PROFILE = [[0.158, 0.07], [0.165, -0.02], [0.185, -0.13], [0.205, -0.25]];
+const ARMOR_PROFILE = [[0.165, 0.05], [0.172, 0.12], [0.185, 0.22], [0.208, 0.33], [0.218, 0.41], [0.205, 0.47], [0.15, 0.52], [0.11, 0.535]];
+const CAPE_GEO = new THREE.CylinderGeometry(0.15, 0.27, 0.86, 12, 1, true, Math.PI - 1.05, 2.1);
 
 function buildWarrior() {
   // Materiais clonados: permitem piscar em vermelho só neste personagem
   const m = {};
-  for (const k of ['skin', 'tunic', 'pants', 'boots', 'hair', 'cape', 'leather']) m[k] = M[k].clone();
-  m.cape.side = THREE.DoubleSide;
-  m.gold = M.gold.clone();
+  for (const k of ['skin', 'tunic', 'pants', 'boots', 'hair', 'cape', 'leather', 'gold', 'lips']) m[k] = M[k].clone();
+  m.skirt = m.tunic.clone(); m.skirt.side = THREE.DoubleSide;
   const J = {};
   J.root = new THREE.Group();
-  J.hips = group(0, 0.83, 0, J.root);
-  J.hips.add(ball(0.24, 0.16, 0.17, m.pants, 0, 0.02, 0));               // pélvis
+  J.hips = group(0, 0.95, 0, J.root);
+  J.hips.add(ball(0.15, 0.1, 0.11, m.pants, 0, 0, 0));                              // pélvis
+  const skirt = mesh(latheGeo('skirt', SKIRT_PROFILE), m.skirt, 0, 0, 0);
+  skirt.scale.z = 0.75; J.hips.add(skirt);                                            // saiote da túnica
 
-  J.torso = group(0, 0.06, 0, J.hips);
-  J.chest = group(0, 0, 0, J.torso);                                        // grupo: respira e recebe o peitoral
+  J.torso = group(0, 0.04, 0, J.hips);
+  J.chest = group(0, 0, 0, J.torso);                                                  // respira e recebe o peitoral
   const trunk = mesh(latheGeo('torso', TORSO_PROFILE), m.tunic, 0, 0, 0);
-  trunk.scale.z = 0.7;
-  J.chest.add(trunk);
-  const belt = mesh(latheGeo('belt', [[0.232, 0], [0.235, 0.08]]), m.leather, 0, 0.06, 0);
-  belt.scale.z = 0.72;
-  J.chest.add(belt);
-  J.chest.add(box(0.09, 0.08, 0.04, m.gold, 0, 0.1, 0.17));                // fivela
+  trunk.scale.z = 0.64; J.chest.add(trunk);
+  const belt = mesh(latheGeo('belt', [[0.153, 0], [0.156, 0.07]]), m.leather, 0, 0.01, 0);
+  belt.scale.z = 0.66; J.chest.add(belt);
+  J.chest.add(box(0.05, 0.05, 0.02, m.gold, 0, 0.045, 0.1));                         // fivela
+  J.chest.add(ball(0.045, 0.055, 0.03, m.leather, 0.12, -0.02, 0.07));               // bolsinha
+  J.chest.add(ball(0.13, 0.03, 0.09, m.tunic, 0, 0.5, 0));                            // gola
 
-  J.neck = group(0, 0.62, 0, J.torso);
-  J.neck.add(cap(0.075, 0.06, m.skin, 0, 0.06, 0));
-  J.head = ball(0.2, 0.21, 0.2, m.skin, 0, 0.25, 0);
-  J.neck.add(J.head);
-  // Rosto (filhos da esfera da cabeça: coordenadas relativas ao raio 1)
-  J.head.add(ball(0.13, 0.13, 0.08, M.dark, 0.36, 0.08, 0.9), ball(0.13, 0.13, 0.08, M.dark, -0.36, 0.08, 0.9));   // olhos
-  J.head.add(ball(0.17, 0.05, 0.08, m.hair, 0.36, 0.3, 0.9), ball(0.17, 0.05, 0.08, m.hair, -0.36, 0.3, 0.9));    // sobrancelhas
-  J.head.add(ball(0.13, 0.15, 0.15, m.skin, 0, -0.08, 1.0));                                                         // nariz
-  J.head.add(ball(0.12, 0.18, 0.12, m.skin, 0.98, 0, 0), ball(0.12, 0.18, 0.12, m.skin, -0.98, 0, 0));            // orelhas
-  J.head.add(ball(0.72, 0.42, 0.45, m.hair, 0, -0.55, 0.52));                                                        // barba
-  J.hair = ball(1.08, 0.95, 1.1, m.hair, 0, 0.12, -0.04, UNIT_DOME);
-  J.hair.rotation.x = -0.25;
-  J.hairBack = ball(0.95, 0.75, 0.55, m.hair, 0, -0.05, -0.55);
-  J.head.add(J.hair, J.hairBack);
+  J.neck = group(0, 0.52, 0, J.torso);
+  J.neck.add(mesh(limbGeo('neck', 0.09, 0.05, 0.048, 0.052), m.skin, 0, 0.1, 0));
+  J.head = group(0, 0.16, 0.01, J.neck);
+  J.head.add(ball(0.1, 0.115, 0.108, m.skin, 0, 0.01, 0));                          // crânio
+  J.head.add(ball(0.078, 0.07, 0.08, m.skin, 0, -0.05, 0.022));                     // mandíbula
+  const nose = mesh(new THREE.ConeGeometry(0.017, 0.05, 6), m.skin, 0, -0.012, 0.108);
+  nose.rotation.x = Math.PI / 2 + 0.25; J.head.add(nose);
+  for (const sd of [1, -1]) {
+    J.head.add(ball(0.019, 0.013, 0.01, M.eyeWhite, 0.038 * sd, 0.016, 0.094));        // olho
+    J.head.add(ball(0.009, 0.01, 0.006, M.iris, 0.038 * sd, 0.016, 0.102));            // íris
+    const brow = box(0.038, 0.009, 0.012, m.hair, 0.039 * sd, 0.039, 0.098);
+    brow.rotation.z = -0.15 * sd; J.head.add(brow);                                    // sobrancelha
+    J.head.add(ball(0.014, 0.028, 0.02, m.skin, 0.1 * sd, 0.0, -0.005));              // orelha
+  }
+  J.head.add(box(0.032, 0.007, 0.01, m.lips, 0, -0.058, 0.096));                     // boca
+  J.head.add(ball(0.072, 0.05, 0.055, m.hair, 0, -0.078, 0.045));                    // barba
+  J.head.add(ball(0.04, 0.01, 0.015, m.hair, 0, -0.045, 0.1));                       // bigode
+  J.hair = ball(0.108, 0.115, 0.118, m.hair, 0, 0.018, -0.006, DOME);
+  J.hair.rotation.x = -0.18;
+  J.head.add(J.hair);
+  J.head.add(ball(0.1, 0.085, 0.065, m.hair, 0, -0.025, -0.065));                    // cabelo da nuca
 
   const arm = (side) => {
-    const sh = group(0.33 * side, 0.52, 0, J.torso);
-    sh.add(ball(0.095, 0.09, 0.095, m.tunic, 0, -0.02, 0));                  // ombro
-    sh.add(cap(0.078, 0.2, m.tunic, 0, -0.16, 0));                          // braço
-    const el = group(0, -0.32, 0, sh);
-    el.add(cap(0.066, 0.18, m.skin, 0, -0.13, 0));                          // antebraço
-    el.add(mesh(latheGeo('cuff', [[0.078, 0], [0.082, 0.08]], 10), m.leather, 0, -0.22, 0));
-    const hand = group(0, -0.3, 0, el);
-    hand.add(ball(0.075, 0.085, 0.08, m.leather, 0, 0.0, 0));             // luva
-    return [sh, el, hand];
+    const sh = group(0.19 * side, 0.45, 0, J.torso);
+    sh.rotation.order = 'YXZ';                                                         // Y varre o golpe horizontal
+    sh.add(ball(0.068, 0.062, 0.068, m.tunic, 0, -0.01, 0));                         // deltoide
+    sh.add(mesh(limbGeo('uarm', 0.27, 0.058, 0.052, 0.042), m.tunic, 0, -0.01, 0));
+    const el = group(0, -0.28, 0, sh);
+    el.add(mesh(limbGeo('farm', 0.24, 0.044, 0.043, 0.032), m.skin, 0, 0, 0));
+    el.add(mesh(latheGeo('bracer', [[0.038, 0], [0.046, 0.04], [0.044, 0.11]]), m.leather, 0, -0.23, 0));
+    const hand = group(0, -0.26, 0, el);
+    hand.add(ball(0.036, 0.046, 0.042, m.leather, 0, -0.03, 0.004));                // punho fechado (luva)
+    const thumb = cap(0.012, 0.03, m.leather, -0.03 * side, -0.02, 0.028);
+    thumb.rotation.x = 0.6; hand.add(thumb);
+    const grip = group(0, -0.035, 0.0, hand);
+    return [sh, el, hand, grip];
   };
   [J.shL, J.elL, J.handL] = arm(1);
-  [J.shR, J.elR, J.handR] = arm(-1);
+  [J.shR, J.elR, J.handR, J.grip] = arm(-1);
 
   const leg = (side) => {
-    const hp = group(0.12 * side, -0.02, 0, J.hips);
-    hp.add(cap(0.1, 0.2, m.pants, 0, -0.2, 0));                             // coxa
-    const kn = group(0, -0.4, 0, hp);
-    kn.add(cap(0.085, 0.2, m.boots, 0, -0.17, 0));                          // canela/bota
-    kn.add(mesh(latheGeo('bootTop', [[0.094, 0], [0.1, 0.07]], 10), m.leather, 0, -0.08, 0));
-    kn.add(ball(0.095, 0.07, 0.16, m.boots, 0, -0.36, 0.04));             // pé
+    const hp = group(0.085 * side, -0.03, 0, J.hips);
+    hp.add(mesh(limbGeo('thigh', 0.44, 0.08, 0.072, 0.052), m.pants, 0, 0, 0));
+    const kn = group(0, -0.44, 0, hp);
+    kn.add(mesh(limbGeo('shin', 0.4, 0.056, 0.058, 0.042), m.boots, 0, 0, 0));
+    kn.add(mesh(latheGeo('bootTop', [[0.064, 0], [0.068, 0.05]]), m.leather, 0, -0.12, 0));
+    kn.add(ball(0.048, 0.036, 0.11, m.boots, 0, -0.42, 0.04));                      // pé
     return [hp, kn];
   };
   [J.hipL, J.knL] = leg(1);
   [J.hipR, J.knR] = leg(-1);
 
-  J.cape = group(0, 0.58, -0.15, J.torso);
-  J.cape.add(mesh(CAPE_GEO, m.cape, 0, -0.4, 0.17));
+  J.cape = group(0, 0.47, -0.1, J.torso);
+  J.cape.add(mesh(CAPE_GEO, m.cape, 0, -0.43, 0.12));
 
   J.root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   return J;
@@ -648,130 +699,204 @@ function buildWarrior() {
 const player = {
   pos: new THREE.Vector3(0, 0, 0), vel: new THREE.Vector3(), yaw: 0,
   hp: 20, maxHp: 20, invuln: 0, lastHurt: -99, dead: false, deadT: 0,
-  attackT: -1, attackHit: false, walkPhase: 0, moveBlend: 0, flash: 0, regenT: 0,
+  atk: null, atkName: '', atkT: 0, atkHit: false, queued: false, comboIdx: -1, comboWindow: 0, lunge: 0,
+  walkPhase: 0, moveBlend: 0, flash: 0, regenT: 0,
 };
 const J = buildWarrior();
 scene.add(J.root);
 
 /* =====================================================================
-   ANIMAÇÃO PROCEDURAL: locomoção (caminhada/respiração) + ataque por poses
+   ANIMAÇÃO PROCEDURAL: locomoção (caminhada/respiração) + ataques por poses-chave
    ===================================================================== */
-const POSE_KEYS = ['hipsY', 'torsoRx', 'torsoRy', 'neckRx', 'shLx', 'shLz', 'elL', 'shRx', 'shRz', 'elR', 'hipL', 'knL', 'hipR', 'knR'];
-const ATTACK_DUR = 0.52;
-// Poses-chave do golpe (interpoladas com easing a partir da pose atual de locomoção)
-const ATK_WINDUP = { shRx: -2.7, shRz: -0.35, elR: -0.9, torsoRy: -0.55, torsoRx: -0.05, shLx: -0.5, hipsY: 0 };
-const ATK_STRIKE = { shRx: -0.45, shRz: 0.1, elR: -0.15, torsoRy: 0.5, torsoRx: 0.25, shLx: 0.45, hipsY: -0.06 };
-const ATK_TIMES = [0, 0.32, 0.58, 1];
-
-function locomotionPose(t, blend, phase, run) {
+function locomotionPose(t, blend, phase, run, armed) {
   const s = Math.sin(phase), c = Math.cos(phase);
   const b = Math.sin(t * 2.2);                 // respiração
   const idle = 1 - blend;
-  const amp = run ? 1.0 : 0.8;
+  const amp = run ? 0.95 : 0.7;
+  const torsoRx = (run ? 0.2 : 0.06) * blend + 0.015 * b * idle;
   return {
-    hipsY: (1 - Math.abs(s)) * 0.06 * blend + 0.01 * b * idle,
-    torsoRx: (run ? 0.18 : 0.08) * blend + 0.02 * b * idle,
-    torsoRy: s * 0.12 * blend,
-    neckRx: 0.03 * b * idle - 0.05 * blend,
+    hipsY: (1 - Math.abs(s)) * 0.045 * blend - 0.02 * blend + 0.006 * b * idle,
+    torsoRx, torsoRy: s * 0.14 * blend,
+    neckRx: -torsoRx * 0.7 + 0.02 * b * idle,
     hipL: s * amp * blend, hipR: -s * amp * blend,
-    knL: Math.max(0, -c) * 1.1 * blend, knR: Math.max(0, c) * 1.1 * blend,
-    shLx: -s * amp * 0.8 * blend, shRx: s * amp * 0.8 * blend,
-    shLz: (0.08 + 0.03 * b) * idle + 0.05, shRz: -(0.08 + 0.03 * b) * idle - 0.05,
-    elL: -0.25 - 0.3 * blend, elR: -0.25 - 0.3 * blend,
-    breathe: b * idle,
+    knL: Math.max(0, -c) * 1.2 * blend + 0.05, knR: Math.max(0, c) * 1.2 * blend + 0.05,
+    shLx: -s * amp * 0.7 * blend, shLy: 0, shLz: 0.1 + 0.025 * b * idle, elL: -0.18 - 0.35 * blend,
+    shRx: armed ? -0.2 + s * amp * 0.4 * blend : s * amp * 0.7 * blend, shRy: 0,
+    shRz: -0.1 - 0.025 * b * idle, elR: armed ? -0.6 : -0.18 - 0.35 * blend,
+    wrR: armed ? 0.55 : 0, breathe: b * idle,
   };
 }
-function attackPose(base, u) {
-  const keys = [base, ATK_WINDUP, ATK_STRIKE, base];
+// Cada ataque: poses-chave [tempo normalizado, pose]; a pose atual de locomoção entra no início e no fim
+const ATTACKS = {
+  slash: { name: 'Corte', dur: 0.46, hit: 0.5, range: 2.3, dot: -0.15, mul: 1, kb: 6, lunge: 2.5, trail: true,
+    keys: [[0.34, { shRx: -1.3, shRy: -1.15, shRz: -0.15, elR: -0.8, wrR: 0.9, torsoRy: -0.65, torsoRx: 0.05, shLx: -0.4, elL: -1.2 }],
+           [0.62, { shRx: -1.4, shRy: 1.0, shRz: -0.1, elR: -0.15, wrR: 1.15, torsoRy: 0.7, torsoRx: 0.12, shLx: 0.25, elL: -0.8, hipsY: -0.04 }]] },
+  backslash: { name: 'Revés', dur: 0.44, hit: 0.5, range: 2.3, dot: -0.15, mul: 1.1, kb: 6, lunge: 2.5, trail: true,
+    keys: [[0.3, { shRx: -1.35, shRy: 0.95, shRz: -0.1, elR: -1.15, wrR: 0.9, torsoRy: 0.55, shLx: 0.1, elL: -0.9 }],
+           [0.6, { shRx: -1.35, shRy: -1.2, shRz: -0.25, elR: -0.2, wrR: 1.15, torsoRy: -0.6, torsoRx: 0.1, shLx: -0.3, hipsY: -0.04 }]] },
+  overhead: { name: 'Golpe pesado', dur: 0.64, hit: 0.56, range: 2.3, dot: 0.3, mul: 1.7, kb: 12, lunge: 3.5, trail: true, heavy: true,
+    keys: [[0.4, { shRx: -2.9, shRy: 0, shRz: -0.25, elR: -1.0, wrR: 0.7, torsoRy: -0.35, torsoRx: -0.15, shLx: -2.6, shLz: 0.3, elL: -1.0, hipsY: 0.02 }],
+           [0.62, { shRx: -0.5, shRz: 0.05, elR: -0.1, wrR: 1.25, torsoRy: 0.15, torsoRx: 0.35, shLx: -0.6, elL: -0.6, hipsY: -0.1, knL: 0.45, knR: 0.45 }]] },
+  thrust: { name: 'Estocada', dur: 0.5, hit: 0.5, range: 2.9, dot: 0.55, mul: 1.4, kb: 9, lunge: 8, trail: true,
+    keys: [[0.35, { shRx: -0.2, shRy: 0, shRz: -0.15, elR: -1.7, wrR: 1.57, torsoRy: -0.55, shLx: -0.9, elL: -1.4 }],
+           [0.58, { shRx: -1.45, shRy: 0.1, elR: -0.05, wrR: 1.57, torsoRy: 0.4, torsoRx: 0.2, hipsY: -0.07, hipL: -0.55, hipR: 0.4, knR: 0.35, knL: 0.2 }]] },
+  jab: { name: 'Soco', dur: 0.32, hit: 0.5, range: 1.7, dot: 0.4, mul: 1, kb: 4, lunge: 1.5,
+    keys: [[0.35, { shRx: -0.7, elR: -2.1, torsoRy: -0.3, shLx: -0.9, elL: -1.9 }],
+           [0.55, { shRx: -1.55, shRy: 0.15, elR: -0.1, torsoRy: 0.35, shLx: -0.9, elL: -1.9 }]] },
+  cross: { name: 'Direto', dur: 0.34, hit: 0.5, range: 1.7, dot: 0.4, mul: 1, kb: 4, lunge: 1.5,
+    keys: [[0.35, { shLx: -0.7, elL: -2.1, torsoRy: 0.3, shRx: -0.9, elR: -1.9 }],
+           [0.55, { shLx: -1.55, shLy: -0.15, elL: -0.1, torsoRy: -0.4, shRx: -0.9, elR: -1.9 }]] },
+  uppercut: { name: 'Gancho', dur: 0.42, hit: 0.55, range: 1.8, dot: 0.4, mul: 1.6, kb: 8, lunge: 2, heavy: true,
+    keys: [[0.4, { shRx: -0.2, elR: -1.6, torsoRy: -0.4, hipsY: -0.08, knL: 0.4, knR: 0.4, shLx: -0.9, elL: -1.9 }],
+           [0.6, { shRx: -2.2, elR: -1.2, torsoRy: 0.3, torsoRx: -0.15, hipsY: 0.03, shLx: -0.6, elL: -1.6 }]] },
+};
+for (const a of Object.values(ATTACKS)) a.fields = [...new Set(a.keys.flatMap(k => Object.keys(k[1])))];
+const COMBO_ARMED = ['slash', 'backslash', 'overhead'];
+const COMBO_FIST = ['jab', 'cross', 'uppercut'];
+
+function attackPose(base, a, u) {
+  const times = [0, ...a.keys.map(k => k[0]), 1];
+  const poses = [base, ...a.keys.map(k => k[1]), base];
   let i = 0;
-  while (i < 2 && u > ATK_TIMES[i + 1]) i++;
-  const k = easeInOut(clamp((u - ATK_TIMES[i]) / (ATK_TIMES[i + 1] - ATK_TIMES[i]), 0, 1));
+  while (i < times.length - 2 && u > times[i + 1]) i++;
+  const k = easeInOut(clamp((u - times[i]) / (times[i + 1] - times[i]), 0, 1));
   const out = { ...base };
-  for (const key in ATK_WINDUP) {
-    const a = keys[i][key] ?? base[key], b = keys[i + 1][key] ?? base[key];
-    out[key] = lerp(a, b, k);
-  }
+  for (const f of a.fields) out[f] = lerp(poses[i][f] ?? base[f], poses[i + 1][f] ?? base[f], k);
   return out;
 }
 function applyPose(P) {
-  J.hips.position.y = 0.83 + P.hipsY;
+  J.hips.position.y = 0.95 + P.hipsY;
   J.torso.rotation.set(P.torsoRx, P.torsoRy, 0);
-  J.chest.scale.set(1 + P.breathe * 0.015, 1 + P.breathe * 0.03, 1 + P.breathe * 0.03);
+  J.chest.scale.set(1 + P.breathe * 0.012, 1 + P.breathe * 0.02, 1 + P.breathe * 0.03);
   J.neck.rotation.x = P.neckRx;
-  J.shL.rotation.set(P.shLx, 0, P.shLz);
-  J.shR.rotation.set(P.shRx, 0, P.shRz);
+  J.shL.rotation.set(P.shLx, P.shLy, P.shLz);
+  J.shR.rotation.set(P.shRx, P.shRy, P.shRz);
   J.elL.rotation.x = P.elL; J.elR.rotation.x = P.elR;
+  J.handR.rotation.x = P.wrR;
   J.hipL.rotation.x = P.hipL; J.hipR.rotation.x = P.hipR;
   J.knL.rotation.x = P.knL; J.knR.rotation.x = P.knR;
 }
 function setFlash(root, v) {
-  root.traverse(o => {
-    if (o.isMesh && o.material.emissive && !o.userData.shared) o.material.emissive.setRGB(v * 0.9, v * 0.08, v * 0.05);
-  });
+  root.traverse(o => { if (o.isMesh && o.material.emissive) o.material.emissive.setRGB(v * 0.9, v * 0.08, v * 0.05); });
+}
+
+// Rastro da arma: fita entre a base e a ponta da lâmina nos últimos quadros
+const TRAIL_N = 14;
+const trail = { pts: [], mesh: null };
+{
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TRAIL_N * 6), 3));
+  g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(TRAIL_N * 6), 3));
+  const idx = [];
+  for (let i = 0; i < TRAIL_N - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  g.setIndex(idx);
+  trail.mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  trail.mesh.frustumCulled = false; trail.mesh.visible = false;
+  scene.add(trail.mesh);
+}
+const _tb = new THREE.Vector3(), _tt = new THREE.Vector3();
+function updateTrail(active) {
+  const w = equipMesh.weapon;
+  if (active && w && w.userData.tip) {
+    w.userData.base.getWorldPosition(_tb); w.userData.tip.getWorldPosition(_tt);
+    trail.pts.unshift([_tb.x, _tb.y, _tb.z, _tt.x, _tt.y, _tt.z]);
+    if (trail.pts.length > TRAIL_N) trail.pts.pop();
+  } else if (trail.pts.length) trail.pts.pop();
+  const n = trail.pts.length;
+  trail.mesh.visible = n > 1;
+  if (n < 2) return;
+  const pos = trail.mesh.geometry.attributes.position, col = trail.mesh.geometry.attributes.color;
+  for (let i = 0; i < TRAIL_N; i++) {
+    const p = trail.pts[Math.min(i, n - 1)];
+    pos.setXYZ(i * 2, p[0], p[1], p[2]); pos.setXYZ(i * 2 + 1, p[3], p[4], p[5]);
+    const f = i < n ? (1 - i / n) * 0.75 : 0;
+    col.setXYZ(i * 2, f * 0.3, f * 0.3, f * 0.3); col.setXYZ(i * 2 + 1, f, f * 0.95, f * 0.8);
+  }
+  pos.needsUpdate = true; col.needsUpdate = true;
+  trail.mesh.geometry.setDrawRange(0, (n - 1) * 6);
 }
 
 /* =====================================================================
    INVENTÁRIO: recursos, itens, receitas e equipamento visual
    ===================================================================== */
 const RES = {
-  wood: { name: 'Madeira', color: '#8b5a2b' },
-  stone: { name: 'Pedra', color: '#8a8f96' },
-  leather: { name: 'Couro', color: '#b0702f' },
-  bone: { name: 'Osso', color: '#e8e2cf' },
-  gel: { name: 'Gosma', color: '#6fdc6f' },
+  wood: { name: 'Madeira', ico: '🪵' },
+  stone: { name: 'Pedra', ico: '🪨' },
+  leather: { name: 'Couro', ico: '🟫' },
+  bone: { name: 'Osso', ico: '🦴' },
+  gel: { name: 'Gosma', ico: '🟢' },
 };
 const inv = { res: { wood: 0, stone: 0, leather: 0, bone: 0, gel: 0 }, items: {}, potions: 0 };
 const equip = { weapon: null, chest: null, head: null };
 const equipMesh = { weapon: null, chest: null, head: null };
 
+// Armas: o cabo fica no punho; a lâmina sai para a frente (+Z) a partir da mão
+function withTrailMarkers(g, baseY, tipY) {
+  const b = new THREE.Object3D(); b.position.y = baseY;
+  const t = new THREE.Object3D(); t.position.y = tipY;
+  g.add(b, t); g.userData.base = b; g.userData.tip = t;
+}
 function buildSword(bladeMat, len, width) {
   const g = new THREE.Group();
-  g.add(cap(0.03, 0.14, M.leather.clone(), 0, 0.02, 0));                       // cabo
-  g.add(ball(0.045, 0.045, 0.045, M.gold.clone(), 0, -0.08, 0));               // pomo
-  g.add(box(0.26, 0.05, 0.08, M.gold.clone(), 0, 0.13, 0));                   // guarda
-  g.add(box(width, len, 0.035, bladeMat.clone(), 0, 0.16 + len / 2, 0));     // lâmina
-  g.add(box(width * 0.6, 0.08, 0.035, bladeMat.clone(), 0, 0.2 + len, 0));   // ponta
-  g.rotation.x = Math.PI / 2 - 0.45;   // aponta para frente/cima a partir da mão
+  g.add(cap(0.017, 0.11, M.leather.clone(), 0, 0.0, 0));                            // cabo
+  g.add(ball(0.026, 0.026, 0.026, M.gold.clone(), 0, -0.085, 0));                    // pomo
+  const guard = cap(0.016, 0.16, M.gold.clone(), 0, 0.075, 0);
+  guard.rotation.z = Math.PI / 2; g.add(guard);                                        // guarda
+  const bm = bladeMat.clone();
+  g.add(box(width, len, 0.018, bm, 0, 0.09 + len / 2, 0));                           // lâmina
+  g.add(box(width * 0.25, len * 0.9, 0.024, bm, 0, 0.09 + len / 2, 0));              // nervura
+  const tip = mesh(new THREE.ConeGeometry(width * 0.72, width * 1.6, 4), bm, 0, 0.09 + len + width * 0.8, 0);
+  tip.scale.z = 0.18; tip.rotation.y = Math.PI / 4; g.add(tip);
+  withTrailMarkers(g, 0.12, 0.09 + len + width * 1.4);
+  g.rotation.x = Math.PI / 2;
+  return g;
+}
+function buildClub() {
+  const g = new THREE.Group(), wood = M.bark.clone();
+  g.add(mesh(latheGeo('clubHandle', [[0.001, -0.1], [0.02, -0.095], [0.019, 0.2], [0.001, 0.21]], 10), M.leather.clone(), 0, 0, 0));
+  g.add(mesh(latheGeo('clubHead', [[0.02, 0.15], [0.034, 0.26], [0.05, 0.42], [0.052, 0.5], [0.03, 0.56], [0.001, 0.57]], 10), wood, 0, 0, 0));
+  g.add(ball(0.018, 0.018, 0.018, wood, 0.045, 0.38, 0.01), ball(0.016, 0.016, 0.016, wood, -0.04, 0.47, -0.02));
+  withTrailMarkers(g, 0.2, 0.56);
+  g.rotation.x = Math.PI / 2;
   return g;
 }
 const ITEMS = {
-  woodSword: { name: 'Espada de Madeira', slot: 'weapon', dmg: 2, gather: 2, cost: { wood: 6 },
-    desc: 'Dano 2 · Coleta 2', build: () => buildSword(M.plank, 0.62, 0.09) },
-  stoneSword: { name: 'Espada de Pedra', slot: 'weapon', dmg: 4, gather: 3, cost: { wood: 3, stone: 6 },
-    desc: 'Dano 4 · Coleta 3', build: () => buildSword(M.stone, 0.78, 0.12) },
-  leatherChest: { name: 'Peitoral de Couro', slot: 'chest', armor: 1, cost: { leather: 4 },
+  club: { name: 'Porrete', ico: '🏏', slot: 'weapon', dmg: 2, gather: 1, starter: true,
+    desc: 'Arma inicial · Dano 2 · Coleta 1', build: buildClub },
+  woodSword: { name: 'Espada de Madeira', ico: '🗡️', slot: 'weapon', dmg: 3, gather: 2, cost: { wood: 6 },
+    desc: 'Dano 3 · Coleta 2', build: () => buildSword(M.plank, 0.62, 0.05) },
+  stoneSword: { name: 'Espada de Pedra', ico: '⚔️', slot: 'weapon', dmg: 5, gather: 3, cost: { wood: 3, stone: 6 },
+    desc: 'Dano 5 · Coleta 3', build: () => buildSword(M.stone, 0.74, 0.06) },
+  leatherChest: { name: 'Peitoral de Couro', ico: '🦺', slot: 'chest', armor: 1, cost: { leather: 4 },
     desc: 'Armadura +1', build: () => {
       const g = new THREE.Group(), lm = M.leather.clone();
       lm.side = THREE.DoubleSide;
       const vest = mesh(latheGeo('armor', ARMOR_PROFILE), lm, 0, 0, 0);
-      vest.scale.z = 0.74;
-      g.add(vest);
-      for (const sd of [1, -1]) {                                                 // ombreiras
-        const pad = ball(0.14, 0.1, 0.15, lm, 0.31 * sd, 0.53, 0, UNIT_DOME);
-        pad.rotation.z = -0.5 * sd;
-        g.add(pad);
+      vest.scale.z = 0.68; g.add(vest);
+      for (const sd of [1, -1]) {                                                       // ombreiras
+        const pad = ball(0.085, 0.06, 0.09, lm, 0.19 * sd, 0.44, 0, DOME);
+        pad.rotation.z = -0.55 * sd; g.add(pad);
       }
-      g.add(ball(0.04, 0.04, 0.02, M.gold.clone(), 0.12, 0.38, 0.225), ball(0.04, 0.04, 0.02, M.gold.clone(), 0.12, 0.26, 0.21));
+      for (let i = 0; i < 3; i++) g.add(ball(0.012, 0.012, 0.008, M.gold.clone(), 0.07, 0.36 - i * 0.08, 0.14));
       return g;
     } },
-  helmet: { name: 'Capacete', slot: 'head', armor: 1, cost: { stone: 5, bone: 2 },
+  helmet: { name: 'Capacete', ico: '⛑️', slot: 'head', armor: 1, cost: { stone: 5, bone: 2 },
     desc: 'Armadura +1', build: () => {
-      // filho da esfera da cabeça (escala ~0.2): medidas relativas ao raio 1
       const g = new THREE.Group(), mm = M.metal.clone();
-      g.add(ball(1.14, 1.0, 1.16, mm, 0, 0.32, -0.02, UNIT_DOME));                 // cúpula
-      const rim = mesh(latheGeo('helmRim', [[1.16, 0], [1.2, 0.08], [1.16, 0.2]], 14), mm, 0, 0.22, -0.02);
-      g.add(rim);
-      g.add(ball(0.11, 0.42, 0.11, mm, 0, 0.12, 1.1));                        // proteção do nariz
-      for (const sd of [1, -1]) g.add(ball(0.28, 0.5, 0.5, mm, 1.0 * sd, -0.05, -0.3));  // protetores laterais
-      g.add(mesh(new THREE.ConeGeometry(0.22, 0.6, 6), M.gold.clone(), 0, 1.55, 0));
+      g.add(ball(0.118, 0.12, 0.126, mm, 0, 0.03, -0.004, DOME));                     // cúpula
+      g.add(mesh(latheGeo('helmRim', [[0.119, 0], [0.125, 0.012], [0.12, 0.024]]), mm, 0, 0.022, -0.004));
+      g.add(box(0.014, 0.07, 0.012, mm, 0, 0.0, 0.124));                               // proteção do nariz
+      for (const sd of [1, -1]) g.add(ball(0.025, 0.055, 0.05, mm, 0.103 * sd, -0.02, -0.02));   // protetores laterais
+      g.add(mesh(new THREE.ConeGeometry(0.018, 0.06, 6), M.gold.clone(), 0, 0.175, 0));
       return g;
     } },
-  potion: { name: 'Poção de Gosma', consumable: true, heal: 10, cost: { gel: 3, wood: 1 }, desc: 'Cura 10 de vida (Q)' },
+  potion: { name: 'Poção de Gosma', ico: '🧪', consumable: true, heal: 10, cost: { gel: 3, wood: 1 }, desc: 'Cura 10 de vida (Q)' },
 };
-const SLOT_BONE = { weapon: () => J.handR, chest: () => J.chest, head: () => J.head };
+const SLOT_BONE = { weapon: () => J.grip, chest: () => J.chest, head: () => J.head };
 const SLOT_NAME = { weapon: 'Arma', chest: 'Peito', head: 'Cabeça' };
+const SLOT_ICO = { weapon: '⚔️', chest: '🦺', head: '⛑️' };
 
-function canCraft(id) { const c = ITEMS[id].cost; return Object.keys(c).every(k => inv.res[k] >= c[k]); }
+function canCraft(id) { const c = ITEMS[id].cost; return !!c && Object.keys(c).every(k => inv.res[k] >= c[k]); }
 function craft(id) {
   const it = ITEMS[id];
   if (!canCraft(id) || (!it.consumable && inv.items[id])) return;
@@ -786,7 +911,7 @@ function equipItem(id) {
   unequip(slot, true);
   equip[slot] = id;
   const m = it.build();
-  m.traverse(o => { if (o.isMesh) { o.castShadow = true; } });
+  m.traverse(o => { if (o.isMesh) o.castShadow = true; });
   m.scale.setScalar(0.01);
   m.userData.pop = 0;
   SLOT_BONE[slot]().add(m);
@@ -806,17 +931,17 @@ const stat = {
   armor: () => (equip.chest ? ITEMS[equip.chest].armor : 0) + (equip.head ? ITEMS[equip.head].armor : 0),
 };
 function usePotion() {
-  if (inv.potions <= 0) { toast('Sem poções. Forje com 3 Gosma + 1 Madeira.'); return; }
   if (player.dead) return;
+  if (inv.potions <= 0) { toast('Sem poções. Forje com 3 Gosma + 1 Madeira.'); return; }
   if (player.hp >= player.maxHp) { toast('Vida já está cheia.'); return; }
   inv.potions--;
   player.hp = Math.min(player.maxHp, player.hp + ITEMS.potion.heal);
-  floatText('+' + ITEMS.potion.heal, player.pos.clone().setY(player.pos.y + 2.3), '#7dff7d', 22);
+  floatText('+' + ITEMS.potion.heal, player.pos.clone().setY(player.pos.y + 2.1), '#7dff7d', 22);
   refreshUI();
 }
 function addRes(kind, n, worldPos) {
   inv.res[kind] += n;
-  if (worldPos) floatText(`+${n} ${RES[kind].name}`, worldPos, '#bfff8a', 16);
+  if (worldPos) floatText(`+${n} ${RES[kind].name}`, worldPos, '#d8ffb0', 15);
   refreshUI(kind);
 }
 
@@ -845,7 +970,7 @@ function buildWolf() {
   J.head.add(box(0.09, 0.15, 0.06, fur, 0.11, 0.22, 0), box(0.09, 0.15, 0.06, fur, -0.11, 0.22, 0));
   J.head.add(box(0.06, 0.05, 0.02, M.yellowEye, 0.1, 0.05, 0.235), box(0.06, 0.05, 0.02, M.yellowEye, -0.1, 0.05, 0.235));
   J.tail = group(0, 0.1, -0.52, J.body);
-  const tl = box(0.11, 0.11, 0.45, fur, 0, 0, -0.2); J.tail.add(tl); J.tail.rotation.x = 0.5;
+  J.tail.add(box(0.11, 0.11, 0.45, fur, 0, 0, -0.2)); J.tail.rotation.x = 0.5;
   J.legs = [];
   for (const [x, z] of [[0.15, 0.32], [-0.15, 0.32], [0.15, -0.38], [-0.15, -0.38]]) {
     const l = group(x, -0.15, z, J.body);
@@ -876,7 +1001,7 @@ function buildSkeleton() {
   };
   [J.shL, J.elL] = arm(1);
   [J.shR, J.elR] = arm(-1);
-  const rusty = buildSword(M.stone, 0.5, 0.08); rusty.position.y = -0.32; J.elR.add(rusty);
+  const rusty = buildSword(M.stone, 0.5, 0.05); rusty.position.y = -0.32; J.elR.add(rusty);
   const leg = (side) => {
     const hp = group(0.1 * side, -0.04, 0, J.hips);
     hp.add(box(0.08, 0.42, 0.08, bone, 0, -0.2, 0));
@@ -892,8 +1017,7 @@ function buildSlime() {
   const J = {}, sm = M.slime.clone();
   J.root = new THREE.Group();
   J.body = group(0, 0, 0, J.root);
-  const outer = box(0.9, 0.75, 0.9, sm, 0, 0.375, 0);
-  J.body.add(outer);
+  J.body.add(box(0.9, 0.75, 0.9, sm, 0, 0.375, 0));
   J.body.add(box(0.34, 0.3, 0.34, M.slimeCore.clone(), 0, 0.3, -0.05));
   J.body.add(box(0.1, 0.14, 0.02, M.dark, 0.17, 0.48, 0.455), box(0.1, 0.14, 0.02, M.dark, -0.17, 0.48, 0.455));
   J.body.add(box(0.22, 0.05, 0.02, M.dark, 0, 0.3, 0.455));
@@ -918,14 +1042,13 @@ function spawnMob(type) {
   const bg = new THREE.Mesh(G.bar, M.barBg), fg = new THREE.Mesh(G.barFill, M.barFg);
   fg.position.set(-0.38, 0, 0.001); bg.renderOrder = 10; fg.renderOrder = 11;
   bar.add(bg, fg); bar.visible = false; scene.add(bar);
-  const m = {
+  J.root.scale.setScalar(0.01);
+  mobs.push({
     type, T, J, bar, barFill: fg, hp: T.hp, pos: new THREE.Vector3(x, heightAt(x, z), z), home: new THREE.Vector2(x, z),
     yaw: Math.random() * TAU, vel: new THREE.Vector2(), kb: new THREE.Vector2(), state: 'wander',
     wanderTo: null, wait: Math.random() * 2, atkT: -1, atkCd: 0, atkHit: false, flash: 0, stun: 0,
-    phase: Math.random() * TAU, dead: false, deadT: 0, barShow: 0, spawnT: 0,
-  };
-  J.root.scale.setScalar(0.01);
-  mobs.push(m);
+    phase: Math.random() * TAU, dead: false, deadT: 0, barShow: 0, spawnT: 0, air: 0,
+  });
 }
 for (const t in MAX_MOBS) for (let i = 0; i < MAX_MOBS[t]; i++) spawnMob(t);
 const respawnQueue = [];
@@ -974,8 +1097,10 @@ function animateMob(m, dt, speed01, t) {
 }
 
 /* =====================================================================
-   COMBATE: ataque do jogador, dano, efeitos (números flutuantes, partículas)
+   COMBATE: combos do jogador, dano, efeitos (números flutuantes, partículas)
    ===================================================================== */
+let now = 0;              // tempo de jogo (para quando o inventário pausa)
+let hitStop = 0;          // micro-pausa no impacto
 const fxLayer = $('fx');
 const floats = [];
 function floatText(text, pos, color = '#fff', size = 18) {
@@ -989,12 +1114,12 @@ function updateFloats(dt) {
   for (let i = floats.length - 1; i >= 0; i--) {
     const f = floats[i];
     f.t += dt; f.pos.y += dt * (1.6 - f.t * 1.2); f.pos.x += f.vx * dt;
-    _v.copy(f.pos).project(camera);
     if (f.t >= f.life) { f.el.remove(); floats.splice(i, 1); continue; }
+    _v.copy(f.pos).project(camera);
     const x = (_v.x * .5 + .5) * innerWidth, y = (-_v.y * .5 + .5) * innerHeight;
-    const sc = f.t < 0.12 ? 0.6 + f.t / 0.12 * 0.6 : 1.2 - Math.min(0.2, (f.t - 0.12));
+    const s = f.t < 0.12 ? 0.6 + f.t / 0.12 * 0.6 : 1.2 - Math.min(0.2, (f.t - 0.12));
     f.el.style.display = _v.z > 1 ? 'none' : 'block';
-    f.el.style.transform = `translate(${x}px,${y}px) translate(-50%,-50%) scale(${sc})`;
+    f.el.style.transform = `translate(${x}px,${y}px) translate(-50%,-50%) scale(${s})`;
     f.el.style.opacity = String(clamp((f.life - f.t) / 0.35, 0, 1));
   }
 }
@@ -1011,7 +1136,7 @@ function burst(pos, matKey, n = 6, power = 3) {
   for (let i = 0; i < n; i++) {
     const p = particles[pIdx++ % particles.length];
     p.m.material = M[matKey]; p.m.visible = true; p.m.position.copy(pos);
-    p.m.scale.setScalar(0.6 + Math.random() * 0.8);
+    p.m.scale.setScalar(0.5 + Math.random() * 0.7);
     p.v.set((Math.random() - .5) * power, Math.random() * power + 1.5, (Math.random() - .5) * power);
     p.life = 0.6 + Math.random() * 0.4;
   }
@@ -1042,7 +1167,7 @@ function dropItem(kind, n, pos) {
     if (kind === 'wood') m.rotation.z = Math.PI / 2;
     scene.add(m);
     const a = Math.random() * TAU;
-    pickups.push({ kind, m, vel: new THREE.Vector3(Math.cos(a) * 2, 4, Math.sin(a) * 2), t: 0, grounded: false });
+    pickups.push({ kind, m, vel: new THREE.Vector3(Math.cos(a) * 2, 4, Math.sin(a) * 2), t: 0, grounded: false, baseY: 0 });
   }
 }
 function updatePickups(dt, t) {
@@ -1051,7 +1176,6 @@ function updatePickups(dt, t) {
     const pos = p.m.position;
     const d = Math.hypot(player.pos.x - pos.x, player.pos.z - pos.z);
     if (!player.dead && p.t > 0.5 && d < 2.2) {
-      // ímã em direção ao jogador
       _v.set(player.pos.x - pos.x, player.pos.y + 1 - pos.y, player.pos.z - pos.z).normalize();
       pos.addScaledVector(_v, dt * 9);
       if (d < 0.6) {
@@ -1092,64 +1216,79 @@ function findTarget(range, minDot) {
   }
   return best;
 }
+// Combo: apertar de novo durante/depois do golpe encadeia o próximo
 function startAttack() {
-  if (player.dead || player.attackT >= 0 || invOpen) return;
-  player.attackT = 0; player.attackHit = false;
+  if (player.dead || invOpen) return;
+  if (player.atk) { if (player.atkT / player.atk.dur > 0.3) player.queued = true; return; }
+  beginAttack();
+}
+function beginAttack() {
+  const armed = !!equip.weapon;
+  const running = Math.hypot(player.vel.x, player.vel.z) > 5.5;
+  let name;
+  if (armed && running) { name = 'thrust'; player.comboIdx = -1; }
+  else {
+    player.comboIdx = player.comboWindow > 0 ? (player.comboIdx + 1) % 3 : 0;
+    name = (armed ? COMBO_ARMED : COMBO_FIST)[player.comboIdx];
+  }
+  player.atk = ATTACKS[name]; player.atkName = name;
+  player.atkT = 0; player.atkHit = false; player.queued = false; player.lunge = 0;
   // Mira assistida: vira para o alvo próximo (ajuda muito no celular)
-  const t = findTarget(3.2, -1);
+  const t = findTarget(3.4, -1);
   if (t) player.yaw = Math.atan2(t.dx, t.dz);
 }
-function resolveHit() {
+function resolveHit(a) {
   const [fx, fz] = facing();
   let hitMob = false;
   for (const m of mobs) {
     if (m.dead) continue;
     const dx = m.pos.x - player.pos.x, dz = m.pos.z - player.pos.z, d = Math.hypot(dx, dz);
-    if (d < 2.4 && ((dx * fx + dz * fz) / (d || 1) > 0.3 || d < 1)) { damageMob(m, dx / (d || 1), dz / (d || 1)); hitMob = true; }
+    if (d < a.range && ((dx * fx + dz * fz) / (d || 1) > a.dot || d < 0.9)) { damageMob(m, dx / (d || 1), dz / (d || 1), a); hitMob = true; }
   }
-  if (hitMob) return;
-  const t = findTarget(1.7, 0.2);
+  if (hitMob) { hitStop = a.heavy ? 0.1 : 0.05; return; }
+  const t = findTarget(Math.min(a.range, 1.9), 0.1);
   if (t && t.kind === 'res') hitResource(t.ref);
 }
-function damageMob(m, nx, nz) {
-  const crit = Math.random() < 0.15;
-  const dmg = stat.dmg() * (crit ? 2 : 1);
-  m.hp -= dmg; m.flash = 1; m.barShow = 4; m.stun = 0.3; m.state = 'chase'; m.atkT = -1;
-  m.kb.set(nx * 7, nz * 7);
+function damageMob(m, nx, nz, a) {
+  const crit = Math.random() < 0.12;
+  const dmg = Math.round(stat.dmg() * a.mul * (crit ? 2 : 1));
+  m.hp -= dmg; m.flash = 1; m.barShow = 4; m.stun = a.heavy ? 0.6 : 0.3; m.state = 'chase'; m.atkT = -1;
+  m.kb.set(nx * a.kb, nz * a.kb);
   const top = m.pos.clone(); top.y += m.T.h;
-  floatText(crit ? dmg + '!' : String(dmg), top, crit ? '#ffd23a' : '#ffffff', crit ? 26 : 20);
-  burst(top.clone().setY(top.y - 0.4), m.T.chip, 5, 3);
-  camShake = Math.max(camShake, 0.12);
+  floatText(crit ? dmg + '!' : String(dmg), top, crit ? '#ffd23a' : (a.heavy ? '#ffb070' : '#ffffff'), crit || a.heavy ? 26 : 20);
+  burst(top.clone().setY(top.y - 0.4), m.T.chip, a.heavy ? 9 : 5, 3);
+  camShake = Math.max(camShake, a.heavy ? 0.3 : 0.12);
   if (m.hp <= 0) killMob(m);
 }
 function killMob(m) {
   m.dead = true; m.deadT = 0; m.bar.visible = false;
   for (const [k, n] of m.T.drops()) dropItem(k, n, m.pos);
   burst(m.pos.clone().setY(m.pos.y + 0.6), m.T.chip, 10, 4);
-  respawnQueue.push({ type: m.type, at: clock.elapsedTime + 14 });
+  respawnQueue.push({ type: m.type, at: now + 14 });
 }
 function hitResource(r) {
   r.hp -= stat.gather(); r.shake = 1;
   const top = new THREE.Vector3(r.x, heightAt(r.x, r.z) + (r.kind === 'tree' ? 1.2 : 0.6), r.z);
   burst(top, r.kind === 'tree' ? (Math.random() < .5 ? 'bark' : 'leaf') : 'stone', 5, 3);
   camShake = Math.max(camShake, 0.06);
+  hitStop = 0.03;
   if (r.hp <= 0) {
     r.state = 'dying'; r.t = 0; r.ob.active = false;
     const kind = r.kind === 'tree' ? 'wood' : 'stone';
     addRes(kind, 3, top.clone().setY(top.y + 1.2));
     burst(top, r.kind === 'tree' ? 'leaf' : 'stone', 10, 4);
   } else {
-    floatText(`${r.hp}/${r.maxHp}`, top.clone().setY(top.y + 1.4), '#ffe9b0', 14);
+    floatText(`${r.hp}/${r.maxHp}`, top.clone().setY(top.y + 1.4), '#ffe9b0', 13);
   }
 }
 function hurtPlayer(dmg) {
   if (player.invuln > 0 || player.dead) return;
   const d = Math.max(1, dmg - stat.armor());
-  player.hp -= d; player.invuln = 0.6; player.flash = 1; player.lastHurt = clock.elapsedTime;
-  floatText('-' + d, player.pos.clone().setY(player.pos.y + 2.2), '#ff5a5a', 22);
+  player.hp -= d; player.invuln = 0.6; player.flash = 1; player.lastHurt = now;
+  floatText('-' + d, player.pos.clone().setY(player.pos.y + 2.1), '#ff5a5a', 22);
   vignette = 1; camShake = Math.max(camShake, 0.25);
   if (player.hp <= 0) {
-    player.hp = 0; player.dead = true; player.deadT = 0;
+    player.hp = 0; player.dead = true; player.deadT = 0; player.atk = null;
     $('death').style.display = 'flex';
   }
   refreshUI();
@@ -1185,15 +1324,14 @@ function updateResources(dt, t) {
    ENTRADA: teclado, mouse (pointer lock), toque (joystick virtual)
    ===================================================================== */
 const keys = {};
-let camYaw = Math.PI * 0.85, camPitch = 0.42, camDist = 7, camDistT = innerWidth < innerHeight ? 9.5 : 7, camShake = 0, vignette = 0;
+let camYaw = Math.PI * 0.85, camPitch = 0.38, camDist = 6, camDistT = innerWidth < innerHeight ? 8 : 6, camShake = 0, vignette = 0;
 let invOpen = false, started = false, noLock = false, dragging = false, lastTouch = 0;
 const joy = { id: null, x: 0, y: 0, ox: 0, oy: 0 };
 const camTouch = { id: null, x: 0, y: 0, sx: 0, sy: 0, t: 0 };
-const canvas = renderer.domElement;
 
 function rotateCam(dx, dy, sens = 0.0028) {
   camYaw -= dx * sens;
-  camPitch = clamp(camPitch + dy * sens, 0.08, 1.25);
+  camPitch = clamp(camPitch + dy * sens, 0.06, 1.25);
 }
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
@@ -1202,7 +1340,8 @@ addEventListener('keydown', e => {
   if (k === 'e') startAttack();
   else if (k === 'i' || (k === 'escape' && invOpen)) toggleInv();
   else if (k === 'q') usePotion();
-  else if (k === 'h') $('controls').style.display = $('controls').style.display === 'none' ? '' : 'none';
+  else if (k === 'h') toggleHelp();
+  else if (k === 'p') setPixelMode(!pixelMode);
   if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
@@ -1219,30 +1358,27 @@ function showLockFallback() { toast('Arraste com o botão direito do mouse para 
 document.addEventListener('pointerlockerror', () => { noLock = true; showLockFallback(); });
 
 canvas.addEventListener('mousedown', e => {
-  if (performance.now() - lastTouch < 800 || !started) return;
-  if (invOpen) { toggleInv(); return; }
+  if (performance.now() - lastTouch < 800 || !started || invOpen) return;
   if (e.button === 0) { requestLock(); startAttack(); }
-  else { dragging = true; }
+  else dragging = true;
 });
 addEventListener('mouseup', () => { dragging = false; });
 document.addEventListener('mousemove', e => {
-  if (document.pointerLockElement === canvas || dragging) rotateCam(e.movementX, e.movementY);
+  if (!invOpen && (document.pointerLockElement === canvas || dragging)) rotateCam(e.movementX, e.movementY);
 });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
-canvas.addEventListener('wheel', e => { camDistT = clamp(camDistT + Math.sign(e.deltaY) * 0.8, 3.5, 13); e.preventDefault(); }, { passive: false });
+canvas.addEventListener('wheel', e => { camDistT = clamp(camDistT + Math.sign(e.deltaY) * 0.7, 3, 12); e.preventDefault(); }, { passive: false });
 
 // Toque: metade esquerda = joystick, metade direita = câmera (toque rápido = ataque)
 const joyBase = $('joyBase'), joyKnob = $('joyKnob');
 canvas.addEventListener('pointerdown', e => {
   if (e.pointerType !== 'touch') return;
   e.preventDefault(); lastTouch = performance.now();
-  if (!started) return;
-  if (invOpen) { toggleInv(); return; }
+  if (!started || invOpen) return;
   if (e.clientX < innerWidth * 0.45 && joy.id === null) {
     joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = joy.y = 0;
     joyBase.style.display = 'block'; joyBase.style.left = e.clientX + 'px'; joyBase.style.top = e.clientY + 'px';
     joyKnob.style.transform = 'translate(0,0)';
-    $('joyHelp').style.display = 'none';
   } else if (camTouch.id === null) {
     Object.assign(camTouch, { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now() });
   }
@@ -1276,82 +1412,138 @@ canvas.addEventListener('pointercancel', endTouch);
 function tapButton(id, fn) {
   const el = $(id);
   el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); lastTouch = performance.now(); fn(); });
-  el.addEventListener('click', e => e.preventDefault());
 }
 tapButton('btnAtk', startAttack);
 tapButton('btnPot', usePotion);
 $('btnInv').addEventListener('click', () => toggleInv());
+$('btnHelp').addEventListener('click', () => toggleHelp());
+$('btnPixel').addEventListener('click', () => setPixelMode(!pixelMode));
 $('invClose').addEventListener('click', () => toggleInv(false));
-$('closeHelp').addEventListener('click', () => { $('controls').style.display = 'none'; });
+$('invWrap').addEventListener('pointerdown', e => { if (e.target === $('invWrap')) toggleInv(false); });
 
 $('btnStart').addEventListener('click', () => {
   started = true; $('start').style.display = 'none';
   requestLock();
-  if (IS_TOUCH) { $('controls').classList.add('show'); setTimeout(() => { $('controls').style.display = 'none'; }, 9000); }
+  showHelp(9);
   toast(`Colete madeira e pedra, depois abra o inventário (${IS_TOUCH ? '🎒' : 'I'}) para forjar.`);
 });
 
+function setPixelMode(on) {
+  pixelMode = on;
+  canvas.classList.toggle('pixel', on);
+  ALL_TEX.forEach(applyFilter);
+  resize();
+  toast(on ? 'Modo pixel: ligado' : 'Modo pixel: desligado');
+}
+
 /* =====================================================================
-   INTERFACE: HUD, toast, dica de interação, janela do inventário
+   INTERFACE: HUD compacto, toast, dica de interação, janela do inventário
    ===================================================================== */
-$('controlsText').innerHTML = IS_TOUCH
-  ? '<b>Joystick</b> (lado esquerdo): mover<br><b>Arraste</b> à direita: girar câmera · <b>toque</b>: atacar<br><b>⚔</b>: atacar/coletar · <b>🧪</b>: poção · <b>🎒</b>: inventário'
-  : '<b>WASD / Setas</b>: mover · <b>Shift</b>: correr<br><b>Mouse</b>: girar câmera (clique trava o cursor, Esc solta) · <b>Roda</b>: zoom<br><b>Clique / E</b>: atacar e coletar · <b>I</b>: inventário · <b>Q</b>: poção · <b>H</b>: esconder ajuda';
-if (IS_TOUCH) $('btnInv').querySelector('.lbl').textContent = '';
+$('controls').innerHTML = IS_TOUCH
+  ? '<b>Esquerda</b>: mover · <b>Direita</b>: câmera · <b>toque</b>: atacar<br><b>⚔</b> combo de ataques · <b>🧪</b> poção · <b>🎒</b> inventário'
+  : '<b>WASD</b> mover · <b>Shift</b> correr · <b>Mouse</b> câmera · <b>Roda</b> zoom<br><b>Clique/E</b> atacar (aperte em sequência para combo; correndo = estocada)<br><b>I</b> inventário · <b>Q</b> poção · <b>P</b> modo pixel · <b>H</b> ajuda';
+let helpTimer = 0;
+function showHelp(sec) { $('controls').classList.remove('hide'); helpTimer = sec; }
+function toggleHelp() { if ($('controls').classList.contains('hide')) showHelp(9999); else { $('controls').classList.add('hide'); helpTimer = 0; } }
 
 let toastTimer = 0;
-function toast(msg) { const el = $('toast'); el.textContent = msg; el.style.display = 'block'; toastTimer = 2.8; }
+function toast(msg) { const el = $('toast'); el.textContent = msg; el.style.display = 'block'; toastTimer = 2.6; }
 
-const resEl = $('res');
-resEl.innerHTML = Object.keys(RES).map(k => `<div class="chip" id="chip_${k}"><i style="background:${RES[k].color}"></i><span>${RES[k].name}</span> <b id="cnt_${k}">0</b></div>`).join('')
-  + `<div class="chip"><i style="background:#c060ff"></i><span>Poção</span> <b id="cnt_pot">0</b></div>`;
+$('res').innerHTML = Object.keys(RES).map(k => `<div class="chip" id="chip_${k}">${RES[k].ico}<b id="cnt_${k}">0</b></div>`).join('')
+  + `<div class="chip" id="chip_pot">🧪<b id="cnt_pot">0</b></div>`;
 
+// Inventário: a estrutura é criada uma vez e só o conteúdo é atualizado
+// (recriar o HTML a cada mudança fazia cliques se perderem)
+const invEls = { slots: {}, res: {}, cards: {} };
+function buildInvUI() {
+  const slotsEl = $('invSlots');
+  for (const s of Object.keys(SLOT_NAME)) {
+    const d = document.createElement('div');
+    d.className = 'slot';
+    d.innerHTML = `<div class="ico"></div><div class="lb">${SLOT_NAME[s]}</div><div class="nm"></div>`;
+    d.title = 'Clique para remover';
+    d.addEventListener('click', () => { if (equip[s]) unequip(s); });
+    slotsEl.appendChild(d);
+    invEls.slots[s] = d;
+  }
+  const resEl = $('invRes');
+  for (const k of Object.keys(RES)) {
+    const d = document.createElement('div');
+    d.innerHTML = `${RES[k].ico} ${RES[k].name}<b></b>`;
+    resEl.appendChild(d); invEls.res[k] = d.querySelector('b');
+  }
+  const recEl = $('invRecipes');
+  for (const [id, it] of Object.entries(ITEMS)) {
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.innerHTML = `<div class="ico">${it.ico}</div><div class="info"><b>${it.name}</b><small>${it.desc}</small><div class="cost"></div></div><div class="btns"></div>`;
+    const btns = c.querySelector('.btns');
+    const main = document.createElement('button');
+    main.addEventListener('click', () => itemAction(id));
+    btns.appendChild(main);
+    let use = null;
+    if (it.consumable) {
+      use = document.createElement('button');
+      use.addEventListener('click', () => usePotion());
+      btns.appendChild(use);
+    }
+    recEl.appendChild(c);
+    invEls.cards[id] = { c, cost: c.querySelector('.cost'), main, use };
+  }
+}
+function itemAction(id) {
+  const it = ITEMS[id];
+  if (it.consumable || !inv.items[id]) craft(id);
+  else if (equip[it.slot] === id) unequip(it.slot);
+  else equipItem(id);
+}
+function updateInv() {
+  for (const s in invEls.slots) {
+    const d = invEls.slots[s], id = equip[s];
+    d.classList.toggle('empty', !id);
+    d.querySelector('.ico').textContent = id ? ITEMS[id].ico : SLOT_ICO[s];
+    d.querySelector('.nm').textContent = id ? ITEMS[id].name : 'vazio';
+  }
+  $('invStats').innerHTML = `<span>Dano <b>${stat.dmg()}</b></span><span>Coleta <b>${stat.gather()}</b></span><span>Armadura <b>${stat.armor()}</b></span><span>Vida <b>${Math.ceil(player.hp)}/${player.maxHp}</b></span>`;
+  for (const k in invEls.res) invEls.res[k].textContent = inv.res[k];
+  for (const [id, it] of Object.entries(ITEMS)) {
+    const e = invEls.cards[id];
+    const owned = !it.consumable && inv.items[id];
+    const equipped = !it.consumable && equip[it.slot] === id;
+    e.c.classList.toggle('equipped', equipped);
+    e.cost.innerHTML = it.cost && !owned
+      ? Object.entries(it.cost).map(([k, n]) => `<span class="${inv.res[k] >= n ? 'ok' : 'no'}">${RES[k].ico} ${inv.res[k]}/${n}</span>`).join('')
+      : `<span class="ok">${owned ? '✓ possui' : ''}</span>`;
+    if (it.consumable) {
+      e.main.textContent = 'Forjar'; e.main.disabled = !canCraft(id); e.main.className = canCraft(id) ? 'primary' : '';
+      e.use.textContent = `Usar (${inv.potions})`; e.use.disabled = inv.potions <= 0;
+    } else if (!owned) {
+      e.main.textContent = 'Forjar'; e.main.disabled = !canCraft(id); e.main.className = canCraft(id) ? 'primary' : '';
+    } else {
+      e.main.textContent = equipped ? 'Remover' : 'Equipar'; e.main.disabled = false; e.main.className = equipped ? '' : 'primary';
+    }
+  }
+}
 function refreshUI(bumpKind) {
   $('hpText').textContent = `${Math.ceil(player.hp)}/${player.maxHp}`;
   $('hpFill').style.width = (player.hp / player.maxHp * 100) + '%';
-  for (const k in RES) $('cnt_' + k).textContent = inv.res[k];
-  $('cnt_pot').textContent = inv.potions;
-  $('stats').textContent = `Dano ${stat.dmg()} · Coleta ${stat.gather()} · Armadura ${stat.armor()}`;
+  $('hpBar').classList.toggle('low', player.hp / player.maxHp < 0.3);
+  for (const k in RES) { $('cnt_' + k).textContent = inv.res[k]; $('chip_' + k).classList.toggle('zero', !inv.res[k]); }
+  $('cnt_pot').textContent = inv.potions; $('chip_pot').classList.toggle('zero', !inv.potions);
   if (bumpKind && $('chip_' + bumpKind)) {
     const c = $('chip_' + bumpKind); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump');
   }
-  if (invOpen) renderInv();
+  if (invOpen) updateInv();
 }
-function costHtml(cost) {
-  return Object.entries(cost).map(([k, n]) => `<span style="color:${inv.res[k] >= n ? '#2d6a1f' : '#a02a2a'}">${n} ${RES[k].name}</span>`).join(' + ');
-}
-function renderInv() {
-  let h = '<h3>Recursos</h3><div class="ires-wrap">'
-    + Object.keys(RES).map(k => `<div class="ires"><i style="background:${RES[k].color}"></i>${RES[k].name}: <b>${inv.res[k]}</b></div>`).join('')
-    + `<div class="ires"><i style="background:#c060ff"></i>Poções: <b>${inv.potions}</b></div></div>`;
-  h += '<h3>Equipamento</h3><div class="slots">'
-    + Object.keys(SLOT_NAME).map(s => `<div class="slot"><b>${SLOT_NAME[s]}</b>${equip[s] ? ITEMS[equip[s]].name : '—'}</div>`).join('') + '</div>';
-  h += '<h3>Receitas</h3>';
-  for (const [id, it] of Object.entries(ITEMS)) {
-    const owned = !it.consumable && inv.items[id];
-    let btns = '';
-    if (it.consumable) {
-      btns = `<button data-craft="${id}" ${canCraft(id) ? '' : 'disabled'}>Criar</button><button data-use="potion" ${inv.potions ? '' : 'disabled'}>Usar</button>`;
-    } else if (owned) {
-      btns = equip[it.slot] === id ? `<button data-unequip="${it.slot}">Remover</button>` : `<button data-equip="${id}">Equipar</button>`;
-    } else {
-      btns = `<button data-craft="${id}" ${canCraft(id) ? '' : 'disabled'}>Criar</button>`;
-    }
-    h += `<div class="row"><div>${it.name}${owned ? ' ✔' : ''}<small>${it.desc} — ${costHtml(it.cost)}</small></div><div class="btns">${btns}</div></div>`;
-  }
-  $('invBody').innerHTML = h;
-}
-$('invBody').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.craft) craft(b.dataset.craft);
-  else if (b.dataset.equip) equipItem(b.dataset.equip);
-  else if (b.dataset.unequip) unequip(b.dataset.unequip);
-  else if (b.dataset.use) usePotion();
-});
 function toggleInv(force) {
   invOpen = typeof force === 'boolean' ? force : !invOpen;
-  $('inv').classList.toggle('open', invOpen);
-  if (invOpen) { renderInv(); if (document.pointerLockElement) document.exitPointerLock(); }
+  $('invWrap').classList.toggle('open', invOpen);
+  if (invOpen) {
+    updateInv();
+    if (document.pointerLockElement) document.exitPointerLock();
+    joy.id = null; joy.x = joy.y = 0; joyBase.style.display = 'none'; camTouch.id = null;
+    for (const k in keys) keys[k] = false;
+  }
 }
 const hintEl = $('hint');
 let hintText = '';
@@ -1360,8 +1552,8 @@ function updateHint() {
   if (!player.dead && !invOpen) {
     const t = findTarget(2.2, 0.2);
     if (t) {
-      const key = IS_TOUCH ? '⚔' : '[E]';
-      txt = t.kind === 'mob' ? `${key} Atacar ${t.ref.T.name}` : `${key} ${t.ref.kind === 'tree' ? 'Cortar árvore' : 'Quebrar pedra'}`;
+      const key = IS_TOUCH ? '⚔' : 'E';
+      txt = t.kind === 'mob' ? `${key} · Atacar ${t.ref.T.name}` : `${key} · ${t.ref.kind === 'tree' ? 'Cortar árvore' : 'Quebrar pedra'}`;
     }
   }
   if (txt !== hintText) { hintText = txt; hintEl.textContent = txt; hintEl.style.display = txt ? 'block' : 'none'; }
@@ -1387,7 +1579,7 @@ function collide(pos, radius) {
 function updatePlayer(dt, t) {
   // --- movimento relativo à câmera ---
   let ix = 0, iz = 0;
-  if (!player.dead && !invOpen) {
+  if (!player.dead) {
     if (keys.KeyW || keys.ArrowUp) iz += 1;
     if (keys.KeyS || keys.ArrowDown) iz -= 1;
     if (keys.KeyD || keys.ArrowRight) ix += 1;
@@ -1400,27 +1592,43 @@ function updatePlayer(dt, t) {
   const rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
   const mx = fx * iz + rx * ix, mz = fz * iz + rz * ix;
   const run = (keys.ShiftLeft || keys.ShiftRight || Math.hypot(joy.x, joy.y) > 0.95) && il > 0.1;
-  let speed = run ? 7 : 4.4;
-  if (player.attackT >= 0) speed *= 0.4;
+  let speed = run ? 7 : 4.2;
+  if (player.atk) speed *= 0.3;
   player.vel.x = damp(player.vel.x, mx * speed, 12, dt);
   player.vel.z = damp(player.vel.z, mz * speed, 12, dt);
-  player.pos.x += player.vel.x * dt; player.pos.z += player.vel.z * dt;
-  collide(player.pos, 0.35);
+  // avanço do golpe
+  const [ffx, ffz] = facing();
+  player.lunge = damp(player.lunge, 0, 9, dt);
+  player.pos.x += (player.vel.x + ffx * player.lunge) * dt;
+  player.pos.z += (player.vel.z + ffz * player.lunge) * dt;
+  collide(player.pos, 0.3);
   player.pos.y = heightAt(player.pos.x, player.pos.z);
   const hs = Math.hypot(player.vel.x, player.vel.z);
-  if (il > 0.1 && player.attackT < 0) player.yaw = dampAngle(player.yaw, Math.atan2(mx, mz), 12, dt);
+  if (il > 0.1 && !player.atk) player.yaw = dampAngle(player.yaw, Math.atan2(mx, mz), 12, dt);
 
   // --- animação ---
-  player.moveBlend = damp(player.moveBlend, clamp(hs / 4.4, 0, 1), 10, dt);
-  player.walkPhase += dt * hs * 2.1;
-  let P = locomotionPose(t, player.moveBlend, player.walkPhase, run);
-  if (player.attackT >= 0) {
-    player.attackT += dt;
-    const u = player.attackT / ATTACK_DUR;
-    if (!player.attackHit && u >= 0.5) { player.attackHit = true; resolveHit(); }
-    if (u >= 1) player.attackT = -1; else P = attackPose(P, u);
+  const armed = !!equip.weapon;
+  player.moveBlend = damp(player.moveBlend, clamp(hs / 4.2, 0, 1), 10, dt);
+  player.walkPhase += dt * hs * 2.0;
+  let P = locomotionPose(t, player.moveBlend, player.walkPhase, run, armed);
+  let trailOn = false;
+  player.comboWindow -= dt;
+  if (player.atk) {
+    const a = player.atk;
+    const prevU = player.atkT / a.dur;
+    player.atkT += dt;
+    const u = player.atkT / a.dur;
+    const k0 = a.keys[0][0], k1 = a.keys[a.keys.length - 1][0];
+    if (prevU < k0 && u >= k0) player.lunge = a.lunge;                     // impulso ao soltar o golpe
+    if (!player.atkHit && u >= a.hit) { player.atkHit = true; resolveHit(a); }
+    trailOn = a.trail && u > k0 - 0.06 && u < k1 + 0.06;
+    if (u >= 1) {
+      player.atk = null; player.comboWindow = 0.55;
+      if (player.queued) beginAttack();
+    } else P = attackPose(P, a, u);
   }
   applyPose(P);
+  updateTrail(trailOn);
   J.cape.rotation.x = 0.08 + player.moveBlend * 0.55 + Math.sin(t * 7) * 0.05 * (0.3 + player.moveBlend);
 
   // morte / renascimento
@@ -1483,7 +1691,6 @@ function updateMobs(dt, t) {
     else if (m.state === 'chase' && (dist > T.aggro * 1.8 || Math.hypot(m.pos.x - m.home.x, m.pos.z - m.home.y) > 34)) m.state = 'wander';
 
     if (m.atkT >= 0) {
-      // golpe do mob: dano no meio da animação
       m.atkT += dt;
       if (!m.atkHit && m.atkT > 0.3) { m.atkHit = true; if (dist < T.range + 0.7) hurtPlayer(T.dmg); }
       if (m.atkT > 0.6) { m.atkT = -1; m.atkCd = 1.1 + Math.random() * 0.5; }
@@ -1506,13 +1713,12 @@ function updateMobs(dt, t) {
       }
     }
     let sp = T.speed;
-    if (m.type === 'slime') sp *= (m.air || 0) > 0.05 ? 1.7 : 0.15;
+    if (m.type === 'slime') sp *= m.air > 0.05 ? 1.7 : 0.15;
     m.vel.x = damp(m.vel.x, mvx * sp, 10, dt);
     m.vel.y = damp(m.vel.y, mvz * sp, 10, dt);
     m.kb.multiplyScalar(Math.exp(-8 * dt));
     m.pos.x += (m.vel.x + m.kb.x) * dt;
     m.pos.z += (m.vel.y + m.kb.y) * dt;
-    // separação entre mobs e do jogador
     for (const o of mobs) {
       if (o === m || o.dead) continue;
       const ox = m.pos.x - o.pos.x, oz = m.pos.z - o.pos.z, od = Math.hypot(ox, oz);
@@ -1528,7 +1734,6 @@ function updateMobs(dt, t) {
     m.J.root.rotation.y = m.yaw;
 
     if (m.flash > 0) { m.flash = Math.max(0, m.flash - dt * 4); setFlash(m.J.root, m.flash); }
-    // barra de vida (billboard)
     m.barShow -= dt;
     m.bar.visible = m.barShow > 0;
     if (m.bar.visible) {
@@ -1544,7 +1749,7 @@ function updateMobs(dt, t) {
 
 function updateCamera(dt) {
   camDist = damp(camDist, camDistT, 8, dt);
-  camTarget.set(player.pos.x, player.pos.y + 1.5, player.pos.z);
+  camTarget.set(player.pos.x, player.pos.y + 1.45, player.pos.z);
   const cp = Math.cos(camPitch);
   let cx = camTarget.x + Math.sin(camYaw) * cp * camDist;
   let cz = camTarget.z + Math.cos(camYaw) * cp * camDist;
@@ -1556,7 +1761,6 @@ function updateCamera(dt) {
   }
   camera.position.set(cx, cy, cz);
   camera.lookAt(camTarget);
-  // Sombras acompanham o jogador
   sun.position.copy(player.pos).add(SUN_OFFSET);
   sun.target.position.copy(player.pos);
 }
@@ -1564,34 +1768,41 @@ function updateCamera(dt) {
 function loop() {
   requestAnimationFrame(loop);
   const dt = Math.min(clock.getDelta(), 0.05);
-  const t = clock.elapsedTime;
+  // inventário aberto pausa o mundo; hitStop dá peso ao impacto
+  let gdt = invOpen ? 0 : dt;
+  if (hitStop > 0) { hitStop -= dt; gdt *= 0.08; }
+  now += gdt;
 
-  updatePlayer(dt, t);
-  updateMobs(dt, t);
-  updateResources(dt, t);
-  updatePickups(dt, t);
-  updateParticles(dt);
+  updatePlayer(gdt, now);
+  updateMobs(gdt, now);
+  updateResources(gdt, now);
+  updatePickups(gdt, now);
+  updateParticles(gdt);
   updateCamera(dt);
-  updateFloats(dt);
+  updateFloats(gdt);
 
-  for (const [i, f] of campfire.flames.entries()) {
-    const s = (i ? 0.6 : 1) * (1 + Math.sin(t * 13 + i * 2) * 0.15);
-    f.scale.set(s, s * (1 + Math.sin(t * 17 + i) * 0.2), s);
-    f.rotation.y = t * (i ? -3 : 2);
-  }
-  for (const c of clouds) { c.position.x += dt * 0.8; if (c.position.x > 100) c.position.x = -100; }
+  campfire.flames.forEach((f, i) => {
+    const s = (i ? 0.6 : 1) * (1 + Math.sin(now * 13 + i * 2) * 0.15);
+    f.scale.set(s, s * (1 + Math.sin(now * 17 + i) * 0.2), s);
+    f.rotation.y = now * (i ? -3 : 2);
+  });
+  for (const c of clouds) { c.position.x += gdt * 0.8; if (c.position.x > 100) c.position.x = -100; }
 
   if (vignette > 0) { vignette = Math.max(0, vignette - dt * 2); $('vignette').style.opacity = vignette; }
   if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) $('toast').style.display = 'none'; }
+  if (helpTimer > 0) { helpTimer -= dt; if (helpTimer <= 0) $('controls').classList.add('hide'); }
   hintTimer -= dt;
   if (hintTimer <= 0) { hintTimer = 0.12; updateHint(); }
 
   renderer.render(scene, camera);
 }
 
+buildInvUI();
+inv.items.club = true;
+equipItem('club');
 refreshUI();
 window.__gameStarted = true;
-window.__game = { player, mobs, resources, inv, equip, craft, equipItem, startAttack, hurtPlayer,
+window.__game = { player, mobs, resources, inv, equip, craft, equipItem, startAttack, hurtPlayer, toggleInv,
   setCam: (y, p, d) => { camYaw = y; camPitch = p; camDist = camDistT = d; } };
 loop();
 </script>
