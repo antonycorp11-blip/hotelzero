@@ -554,55 +554,92 @@ for (let i = 0; i < 9; i++) {
 /* =====================================================================
    PERSONAGEM: guerreiro montado em hierarquia de grupos ("ossos")
    root → hips → (torso → chest/neck→head/shoulders→elbows→hands/cape) + (hip joints → knees)
+   Formas arredondadas: esferas, cápsulas e tronco torneado (LatheGeometry).
    O modelo olha para +Z; o braço direito fica em -X.
    ===================================================================== */
+const UNIT_SPHERE = new THREE.SphereGeometry(1, 12, 8);
+const UNIT_DOME = new THREE.SphereGeometry(1, 12, 6, 0, TAU, 0, Math.PI / 2);
+function capGeo(r, len) {
+  const k = 'cap' + r + '_' + len;
+  if (!geoCache.has(k)) geoCache.set(k, new THREE.CapsuleGeometry(r, len, 3, 8));
+  return geoCache.get(k);
+}
+function latheGeo(key, pts, seg = 12) {
+  if (!geoCache.has(key)) geoCache.set(key, new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg));
+  return geoCache.get(key);
+}
+const cap = (r, len, mat, x, y, z) => mesh(capGeo(r, len), mat, x, y, z);
+function ball(rx, ry, rz, mat, x, y, z, geo = UNIT_SPHERE) { const m = mesh(geo, mat, x, y, z); m.scale.set(rx, ry, rz); return m; }
+
+// Perfis (raio, altura) do tronco e do peitoral — mais largo nos ombros, fino na cintura
+const TORSO_PROFILE = [[0, 0], [0.2, 0], [0.225, 0.1], [0.245, 0.26], [0.275, 0.42], [0.27, 0.52], [0.2, 0.6], [0.09, 0.66], [0, 0.67]];
+const ARMOR_PROFILE = [[0.225, 0.06], [0.245, 0.16], [0.27, 0.3], [0.3, 0.44], [0.295, 0.53], [0.22, 0.6], [0.15, 0.63]];
+const CAPE_GEO = new THREE.CylinderGeometry(0.2, 0.33, 0.8, 9, 1, true, Math.PI - 1.0, 2.0);
+
 function buildWarrior() {
   // Materiais clonados: permitem piscar em vermelho só neste personagem
   const m = {};
   for (const k of ['skin', 'tunic', 'pants', 'boots', 'hair', 'cape', 'leather']) m[k] = M[k].clone();
+  m.cape.side = THREE.DoubleSide;
+  m.gold = M.gold.clone();
   const J = {};
   J.root = new THREE.Group();
   J.hips = group(0, 0.83, 0, J.root);
-  J.hips.add(box(0.5, 0.24, 0.3, m.pants, 0, 0, 0));
-  J.torso = group(0, 0.1, 0, J.hips);
-  J.chest = box(0.56, 0.6, 0.32, m.tunic, 0, 0.32, 0);
-  J.torso.add(J.chest);
-  J.torso.add(box(0.58, 0.08, 0.34, m.leather, 0, 0.05, 0));       // cinto
-  J.torso.add(box(0.1, 0.1, 0.05, M.gold.clone(), 0, 0.05, 0.18));          // fivela
-  J.neck = group(0, 0.64, 0, J.torso);
-  J.head = box(0.4, 0.4, 0.4, m.skin, 0, 0.22, 0);
+  J.hips.add(ball(0.24, 0.16, 0.17, m.pants, 0, 0.02, 0));               // pélvis
+
+  J.torso = group(0, 0.06, 0, J.hips);
+  J.chest = group(0, 0, 0, J.torso);                                        // grupo: respira e recebe o peitoral
+  const trunk = mesh(latheGeo('torso', TORSO_PROFILE), m.tunic, 0, 0, 0);
+  trunk.scale.z = 0.7;
+  J.chest.add(trunk);
+  const belt = mesh(latheGeo('belt', [[0.232, 0], [0.235, 0.08]]), m.leather, 0, 0.06, 0);
+  belt.scale.z = 0.72;
+  J.chest.add(belt);
+  J.chest.add(box(0.09, 0.08, 0.04, m.gold, 0, 0.1, 0.17));                // fivela
+
+  J.neck = group(0, 0.62, 0, J.torso);
+  J.neck.add(cap(0.075, 0.06, m.skin, 0, 0.06, 0));
+  J.head = ball(0.2, 0.21, 0.2, m.skin, 0, 0.25, 0);
   J.neck.add(J.head);
-  J.hair = box(0.43, 0.12, 0.43, m.hair, 0, 0.2, 0);
-  J.hairBack = box(0.43, 0.3, 0.1, m.hair, 0, 0.02, -0.17);
+  // Rosto (filhos da esfera da cabeça: coordenadas relativas ao raio 1)
+  J.head.add(ball(0.13, 0.13, 0.08, M.dark, 0.36, 0.08, 0.9), ball(0.13, 0.13, 0.08, M.dark, -0.36, 0.08, 0.9));   // olhos
+  J.head.add(ball(0.17, 0.05, 0.08, m.hair, 0.36, 0.3, 0.9), ball(0.17, 0.05, 0.08, m.hair, -0.36, 0.3, 0.9));    // sobrancelhas
+  J.head.add(ball(0.13, 0.15, 0.15, m.skin, 0, -0.08, 1.0));                                                         // nariz
+  J.head.add(ball(0.12, 0.18, 0.12, m.skin, 0.98, 0, 0), ball(0.12, 0.18, 0.12, m.skin, -0.98, 0, 0));            // orelhas
+  J.head.add(ball(0.72, 0.42, 0.45, m.hair, 0, -0.55, 0.52));                                                        // barba
+  J.hair = ball(1.08, 0.95, 1.1, m.hair, 0, 0.12, -0.04, UNIT_DOME);
+  J.hair.rotation.x = -0.25;
+  J.hairBack = ball(0.95, 0.75, 0.55, m.hair, 0, -0.05, -0.55);
   J.head.add(J.hair, J.hairBack);
-  J.head.add(box(0.3, 0.12, 0.06, m.hair, 0, -0.15, 0.2));          // barba
-  J.head.add(box(0.06, 0.06, 0.02, M.dark, 0.09, 0.03, 0.205), box(0.06, 0.06, 0.02, M.dark, -0.09, 0.03, 0.205));
 
   const arm = (side) => {
-    const sh = group(0.36 * side, 0.56, 0, J.torso);
-    sh.add(box(0.17, 0.34, 0.17, m.tunic, 0, -0.14, 0));
+    const sh = group(0.33 * side, 0.52, 0, J.torso);
+    sh.add(ball(0.095, 0.09, 0.095, m.tunic, 0, -0.02, 0));                  // ombro
+    sh.add(cap(0.078, 0.2, m.tunic, 0, -0.16, 0));                          // braço
     const el = group(0, -0.32, 0, sh);
-    el.add(box(0.15, 0.3, 0.15, m.skin, 0, -0.13, 0));
+    el.add(cap(0.066, 0.18, m.skin, 0, -0.13, 0));                          // antebraço
+    el.add(mesh(latheGeo('cuff', [[0.078, 0], [0.082, 0.08]], 10), m.leather, 0, -0.22, 0));
     const hand = group(0, -0.3, 0, el);
-    hand.add(box(0.16, 0.12, 0.16, m.leather, 0, 0.03, 0));
+    hand.add(ball(0.075, 0.085, 0.08, m.leather, 0, 0.0, 0));             // luva
     return [sh, el, hand];
   };
   [J.shL, J.elL, J.handL] = arm(1);
   [J.shR, J.elR, J.handR] = arm(-1);
 
   const leg = (side) => {
-    const hp = group(0.13 * side, -0.02, 0, J.hips);
-    hp.add(box(0.2, 0.4, 0.22, m.pants, 0, -0.2, 0));
+    const hp = group(0.12 * side, -0.02, 0, J.hips);
+    hp.add(cap(0.1, 0.2, m.pants, 0, -0.2, 0));                             // coxa
     const kn = group(0, -0.4, 0, hp);
-    kn.add(box(0.19, 0.36, 0.21, m.boots, 0, -0.18, 0));
-    kn.add(box(0.2, 0.1, 0.3, m.boots, 0, -0.36, 0.05));
+    kn.add(cap(0.085, 0.2, m.boots, 0, -0.17, 0));                          // canela/bota
+    kn.add(mesh(latheGeo('bootTop', [[0.094, 0], [0.1, 0.07]], 10), m.leather, 0, -0.08, 0));
+    kn.add(ball(0.095, 0.07, 0.16, m.boots, 0, -0.36, 0.04));             // pé
     return [hp, kn];
   };
   [J.hipL, J.knL] = leg(1);
   [J.hipR, J.knR] = leg(-1);
 
-  J.cape = group(0, 0.6, -0.17, J.torso);
-  J.cape.add(box(0.5, 0.78, 0.04, m.cape, 0, -0.38, 0));
+  J.cape = group(0, 0.58, -0.15, J.torso);
+  J.cape.add(mesh(CAPE_GEO, m.cape, 0, -0.4, 0.17));
 
   J.root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   return J;
@@ -689,7 +726,8 @@ const equipMesh = { weapon: null, chest: null, head: null };
 
 function buildSword(bladeMat, len, width) {
   const g = new THREE.Group();
-  g.add(box(0.05, 0.18, 0.05, M.leather.clone(), 0, 0.02, 0));                // cabo
+  g.add(cap(0.03, 0.14, M.leather.clone(), 0, 0.02, 0));                       // cabo
+  g.add(ball(0.045, 0.045, 0.045, M.gold.clone(), 0, -0.08, 0));               // pomo
   g.add(box(0.26, 0.05, 0.08, M.gold.clone(), 0, 0.13, 0));                   // guarda
   g.add(box(width, len, 0.035, bladeMat.clone(), 0, 0.16 + len / 2, 0));     // lâmina
   g.add(box(width * 0.6, 0.08, 0.035, bladeMat.clone(), 0, 0.2 + len, 0));   // ponta
@@ -704,19 +742,28 @@ const ITEMS = {
   leatherChest: { name: 'Peitoral de Couro', slot: 'chest', armor: 1, cost: { leather: 4 },
     desc: 'Armadura +1', build: () => {
       const g = new THREE.Group(), lm = M.leather.clone();
-      g.add(box(0.62, 0.5, 0.38, lm, 0, 0.04, 0));
-      g.add(box(0.22, 0.1, 0.26, lm, 0.36, 0.26, 0), box(0.22, 0.1, 0.26, lm, -0.36, 0.26, 0)); // ombreiras
-      g.add(box(0.1, 0.1, 0.02, M.gold.clone(), 0.14, 0.1, 0.2));
+      lm.side = THREE.DoubleSide;
+      const vest = mesh(latheGeo('armor', ARMOR_PROFILE), lm, 0, 0, 0);
+      vest.scale.z = 0.74;
+      g.add(vest);
+      for (const sd of [1, -1]) {                                                 // ombreiras
+        const pad = ball(0.14, 0.1, 0.15, lm, 0.31 * sd, 0.53, 0, UNIT_DOME);
+        pad.rotation.z = -0.5 * sd;
+        g.add(pad);
+      }
+      g.add(ball(0.04, 0.04, 0.02, M.gold.clone(), 0.12, 0.38, 0.225), ball(0.04, 0.04, 0.02, M.gold.clone(), 0.12, 0.26, 0.21));
       return g;
     } },
   helmet: { name: 'Capacete', slot: 'head', armor: 1, cost: { stone: 5, bone: 2 },
     desc: 'Armadura +1', build: () => {
+      // filho da esfera da cabeça (escala ~0.2): medidas relativas ao raio 1
       const g = new THREE.Group(), mm = M.metal.clone();
-      g.add(box(0.47, 0.24, 0.47, mm, 0, 0.12, 0));
-      g.add(box(0.47, 0.14, 0.08, mm, 0, -0.02, -0.2));
-      g.add(box(0.06, 0.2, 0.04, mm, 0, -0.02, 0.24));     // proteção do nariz
-      const sp = mesh(new THREE.ConeGeometry(0.06, 0.2, 4), M.gold.clone(), 0, 0.33, 0);
-      g.add(sp);
+      g.add(ball(1.14, 1.0, 1.16, mm, 0, 0.32, -0.02, UNIT_DOME));                 // cúpula
+      const rim = mesh(latheGeo('helmRim', [[1.16, 0], [1.2, 0.08], [1.16, 0.2]], 14), mm, 0, 0.22, -0.02);
+      g.add(rim);
+      g.add(ball(0.11, 0.42, 0.11, mm, 0, 0.12, 1.1));                        // proteção do nariz
+      for (const sd of [1, -1]) g.add(ball(0.28, 0.5, 0.5, mm, 1.0 * sd, -0.05, -0.3));  // protetores laterais
+      g.add(mesh(new THREE.ConeGeometry(0.22, 0.6, 6), M.gold.clone(), 0, 1.55, 0));
       return g;
     } },
   potion: { name: 'Poção de Gosma', consumable: true, heal: 10, cost: { gel: 3, wood: 1 }, desc: 'Cura 10 de vida (Q)' },
