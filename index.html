@@ -124,8 +124,11 @@
   .tbtn{position:absolute;pointer-events:auto;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;
     touch-action:none;background:rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.5)}
   #btnAtk{right:calc(26px + var(--safe-r));bottom:calc(26px + var(--safe-b));width:88px;height:88px;font-size:36px}
-  #btnAtk.held{background:rgba(242,193,78,.45)}
-  #btnDodge{right:calc(128px + var(--safe-r));bottom:calc(20px + var(--safe-b));width:60px;height:60px;font-size:24px}
+  /* no toque, os botões são só visuais: um único gerenciador de toque decide o que foi apertado */
+  body.touch .tbtn, body.touch #topRight{pointer-events:none}
+  .tbtn, .iconbtn{transition:transform .08s, background .08s}
+  .tbtn.pressed, .iconbtn.pressed{transform:scale(.88);background:rgba(242,193,78,.55);border-color:#ffe08a}
+  #btnDodge{right:calc(140px + var(--safe-r));bottom:calc(22px + var(--safe-b));width:62px;height:62px;font-size:24px}
   #btnDodge.cd{opacity:.4}
   #btnPot{right:calc(40px + var(--safe-r));bottom:calc(128px + var(--safe-b));width:54px;height:54px;font-size:22px}
   body.touch #controls{left:50%;transform:translateX(-50%);bottom:calc(10px + var(--safe-b));text-align:center;max-width:min(460px,calc(100vw - 340px))}
@@ -1627,7 +1630,7 @@ addEventListener('keydown', e => {
   if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
-addEventListener('blur', () => { for (const k in keys) keys[k] = false; atkHeld = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; atkHeld = false; releaseButtons(); });
 
 function requestLock() {
   if (noLock || IS_TOUCH || document.pointerLockElement) return;
@@ -1646,6 +1649,29 @@ document.addEventListener('mousemove', e => { if (!invOpen && (document.pointerL
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 canvas.addEventListener('wheel', e => { camDistT = clamp(camDistT + Math.sign(e.deltaY) * 0.7, 3, 12); e.preventDefault(); }, { passive: false });
 
+// Botões de toque: área de toque maior que o desenho e funcionam junto com o joystick
+const TOUCH_BTNS = [
+  { id: 'btnAtk', down: () => { atkHeld = true; startAttack(); }, up: () => { atkHeld = false; } },
+  { id: 'btnDodge', down: () => dodge() },
+  { id: 'btnPot', down: () => usePotion() },
+  { id: 'btnInv', down: () => toggleInv() },
+  { id: 'btnHelp', down: () => toggleHelp() },
+];
+const btnPointers = new Map();          // pointerId → botão apertado
+function hitButton(x, y) {
+  let best = null, bd = Infinity;
+  for (const b of TOUCH_BTNS) {
+    const r = $(b.id).getBoundingClientRect();
+    if (!r.width) continue;
+    const edge = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2)) - r.width / 2;   // < 0 = dentro
+    if (edge < 18 && edge < bd) { bd = edge; best = b; }
+  }
+  return best;
+}
+function releaseButtons() {
+  for (const b of btnPointers.values()) { $(b.id).classList.remove('pressed'); if (b.up) b.up(); }
+  btnPointers.clear();
+}
 const joyBase = $('joyBase'), joyKnob = $('joyKnob');
 function joyIdle() { joyBase.style.display = ''; joyBase.style.left = joyBase.style.top = ''; joyKnob.style.transform = 'translate(0,0)'; joyBase.classList.add('idle'); }
 joyIdle();
@@ -1653,6 +1679,15 @@ canvas.addEventListener('pointerdown', e => {
   if (e.pointerType !== 'touch') return;
   e.preventDefault(); lastTouch = performance.now();
   if (!started || invOpen) return;
+  const hb = hitButton(e.clientX, e.clientY);
+  if (hb) {
+    btnPointers.set(e.pointerId, hb);
+    $(hb.id).classList.add('pressed');
+    if (navigator.vibrate) { try { navigator.vibrate(8); } catch (_) {} }
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+    hb.down();
+    return;
+  }
   if (e.clientX < innerWidth * 0.45 && joy.id === null) {
     joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = joy.y = 0;
     joyBase.classList.remove('idle');
@@ -1676,9 +1711,18 @@ canvas.addEventListener('pointermove', e => {
     camTouch.x = e.clientX; camTouch.y = e.clientY;
   }
 });
+// um toque na tela do jogo gera um "clique" do navegador ao soltar; ele não pode cair em
+// outro elemento (ex.: o ✕ do inventário que acabou de abrir no mesmo lugar do 🎒)
+let suppressClickUntil = 0;
+document.addEventListener('click', e => {
+  if (performance.now() < suppressClickUntil) { e.stopPropagation(); e.preventDefault(); }
+}, true);
 function endTouch(e) {
   if (e.pointerType !== 'touch') return;
   lastTouch = performance.now();
+  suppressClickUntil = lastTouch + 400;
+  const hb = btnPointers.get(e.pointerId);
+  if (hb) { btnPointers.delete(e.pointerId); $(hb.id).classList.remove('pressed'); if (hb.up) hb.up(); return; }
   if (e.pointerId === joy.id) { joy.id = null; joy.x = joy.y = 0; joyIdle(); }
   if (e.pointerId === camTouch.id) {
     if (performance.now() - camTouch.t < 220 && Math.hypot(e.clientX - camTouch.sx, e.clientY - camTouch.sy) < 12) startAttack();
@@ -1703,7 +1747,7 @@ $('btnInv').addEventListener('click', () => toggleInv());
 $('btnHelp').addEventListener('click', () => toggleHelp());
 $('btnPixel').addEventListener('click', () => setPixelMode(!pixelMode));
 $('invClose').addEventListener('click', () => toggleInv(false));
-$('invWrap').addEventListener('pointerdown', e => { if (e.target === $('invWrap')) toggleInv(false); });
+$('invWrap').addEventListener('pointerdown', e => { if (e.target === $('invWrap') && performance.now() - invOpenedAt > 450) toggleInv(false); });
 
 $('btnStart').addEventListener('click', () => {
   started = true; $('start').style.display = 'none';
@@ -1849,13 +1893,15 @@ function refreshUI(bumpKind) {
   if (bumpKind && $('chip_' + bumpKind)) { const c = $('chip_' + bumpKind); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
   if (invOpen) updateInv();
 }
+let invOpenedAt = 0;
 function toggleInv(force) {
   invOpen = typeof force === 'boolean' ? force : !invOpen;
   $('invWrap').classList.toggle('open', invOpen);
   if (invOpen) {
+    invOpenedAt = performance.now();
     updateInv();
     if (document.pointerLockElement) document.exitPointerLock();
-    joy.id = null; joy.x = joy.y = 0; joyIdle(); camTouch.id = null; atkHeld = false;
+    joy.id = null; joy.x = joy.y = 0; joyIdle(); camTouch.id = null; atkHeld = false; releaseButtons();
     for (const k in keys) keys[k] = false;
   }
 }
