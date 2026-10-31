@@ -13,7 +13,8 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;overflow:hidden;background:#9fd4f0;color:var(--txt);
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;user-select:none;-webkit-user-select:none;touch-action:none;
+    -webkit-touch-callout:none;overscroll-behavior:none}
   #game{position:fixed;inset:0;width:100vw;height:100vh;display:block;touch-action:none;cursor:crosshair}
   #game.pixel{image-rendering:pixelated;image-rendering:crisp-edges}
   button{font:inherit;cursor:pointer;color:var(--txt);background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:7px 12px}
@@ -110,9 +111,34 @@
     background:rgba(255,255,255,.7)}
   .tbtn{position:absolute;pointer-events:auto;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;
     touch-action:none;background:rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.5)}
-  #btnAtk{right:calc(20px + var(--safe-r));bottom:calc(30px + var(--safe-b));width:80px;height:80px;font-size:32px}
-  #btnPot{right:calc(112px + var(--safe-r));bottom:calc(26px + var(--safe-b));width:52px;height:52px;font-size:22px}
-  body.touch #controls{bottom:calc(130px + var(--safe-b))}
+  #joyBase.idle{display:block;opacity:.35;left:calc(95px + var(--safe-l));top:calc(100% - 95px - var(--safe-b))}
+  #btnAtk{right:calc(26px + var(--safe-r));bottom:calc(26px + var(--safe-b));width:88px;height:88px;font-size:36px}
+  #btnAtk.held{background:rgba(242,193,78,.45)}
+  #btnDodge{right:calc(128px + var(--safe-r));bottom:calc(20px + var(--safe-b));width:60px;height:60px;font-size:24px}
+  #btnPot{right:calc(40px + var(--safe-r));bottom:calc(128px + var(--safe-b));width:54px;height:54px;font-size:22px}
+  #btnDodge.cd{opacity:.4}
+  body.touch #controls{left:50%;transform:translateX(-50%);bottom:calc(10px + var(--safe-b));text-align:center;max-width:min(460px,calc(100vw - 340px))}
+  body.touch #btnPixel{display:none}
+  body.touch #hint{bottom:calc(30px + var(--safe-b))}
+  /* aviso de orientação */
+  #rotate{position:fixed;inset:0;z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    background:#16130f;color:var(--txt);font-size:17px;text-align:center;padding:24px}
+  #rotate .ph{font-size:56px;animation:rot 1.6s ease-in-out infinite}
+  @keyframes rot{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+  @media (orientation:portrait){ body.touch #rotate{display:flex} }
+  /* inventário em tela de pouca altura (celular deitado) */
+  @media (max-height:520px){
+    #invWrap{padding:0}
+    #inv{max-width:none;height:100%;border-radius:0;border:0}
+    #inv header{padding:8px calc(14px + var(--safe-r)) 8px calc(14px + var(--safe-l))}
+    .inv-grid{grid-template-columns:minmax(220px,34%) 1fr;padding:10px calc(14px + var(--safe-r)) 14px calc(14px + var(--safe-l));gap:14px}
+    .slot{min-height:64px;padding:6px 4px}
+    .card{padding:7px 10px;gap:10px}
+    .card .ico{font-size:24px;width:32px}
+    .card .btns{flex-direction:row}
+    .card .btns button{min-width:80px;padding:9px 10px}
+    #invStats{margin-bottom:10px}
+  }
   @media (max-width:600px){ #hpBar{width:130px} #res{max-width:200px} .chip{font-size:11px} }
 
   /* ---------- tela inicial / erro ---------- */
@@ -167,6 +193,7 @@
 <div id="touchUI">
   <div id="joyBase"><div id="joyKnob"></div></div>
   <button id="btnPot" class="tbtn" title="Poção">🧪</button>
+  <button id="btnDodge" class="tbtn" title="Esquiva">💨</button>
   <button id="btnAtk" class="tbtn" title="Atacar / coletar">⚔</button>
 </div>
 
@@ -178,6 +205,7 @@
     <button id="btnStart" class="primary">JOGAR</button>
   </div>
 </div>
+<div id="rotate"><div class="ph">📱</div>Gire o celular para jogar na horizontal</div>
 <div id="err"></div>
 
 <!-- Aviso caso o Three.js não carregue do CDN -->
@@ -241,10 +269,13 @@ const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 220);
 
 // Modo pixel opcional (tecla P): renderiza em baixa resolução + texturas "nearest"
 let pixelMode = false;
+// Qualidade automática: no celular começa em 1.25x e reduz se o FPS cair
+const DPR_STEPS = IS_TOUCH ? [1.5, 1.25, 1, 0.85, 0.7] : [2, 1.5, 1.25, 1];
+let dprIdx = IS_TOUCH ? 1 : 0;
 function resize() {
   const w = innerWidth, h = innerHeight;
   if (pixelMode) { renderer.setPixelRatio(1); renderer.setSize(Math.ceil(w / 3), Math.ceil(h / 3), false); }
-  else { renderer.setPixelRatio(Math.min(devicePixelRatio || 1, IS_TOUCH ? 1.5 : 2)); renderer.setSize(w, h, false); }
+  else { renderer.setPixelRatio(Math.min(devicePixelRatio || 1, DPR_STEPS[dprIdx])); renderer.setSize(w, h, false); }
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
 }
@@ -700,7 +731,7 @@ const player = {
   pos: new THREE.Vector3(0, 0, 0), vel: new THREE.Vector3(), yaw: 0,
   hp: 20, maxHp: 20, invuln: 0, lastHurt: -99, dead: false, deadT: 0,
   atk: null, atkName: '', atkT: 0, atkHit: false, queued: false, comboIdx: -1, comboWindow: 0, lunge: 0,
-  walkPhase: 0, moveBlend: 0, flash: 0, regenT: 0,
+  walkPhase: 0, moveBlend: 0, flash: 0, regenT: 0, blinkT: 0, dodgeT: 0, dodgeCd: 0,
 };
 const J = buildWarrior();
 scene.add(J.root);
@@ -1237,6 +1268,17 @@ function beginAttack() {
   const t = findTarget(3.4, -1);
   if (t) player.yaw = Math.atan2(t.dx, t.dz);
 }
+// Esquiva: avanço rápido com invulnerabilidade curta
+function dodge() {
+  if (player.dead || invOpen || player.dodgeCd > 0) return;
+  const il = Math.hypot(lastMove.x, lastMove.z);
+  if (il > 0.1) player.yaw = Math.atan2(lastMove.x, lastMove.z);
+  player.atk = null; player.queued = false;
+  player.dodgeT = 0.38; player.dodgeCd = 0.75; player.lunge = 13;
+  player.invuln = Math.max(player.invuln, 0.42);
+  burst(player.pos.clone().setY(player.pos.y + 0.1), 'leaf', 4, 2);
+}
+const lastMove = { x: 0, z: 0 };
 function resolveHit(a) {
   const [fx, fz] = facing();
   let hitMob = false;
@@ -1284,7 +1326,7 @@ function hitResource(r) {
 function hurtPlayer(dmg) {
   if (player.invuln > 0 || player.dead) return;
   const d = Math.max(1, dmg - stat.armor());
-  player.hp -= d; player.invuln = 0.6; player.flash = 1; player.lastHurt = now;
+  player.hp -= d; player.invuln = 0.6; player.blinkT = 0.6; player.flash = 1; player.lastHurt = now;
   floatText('-' + d, player.pos.clone().setY(player.pos.y + 2.1), '#ff5a5a', 22);
   vignette = 1; camShake = Math.max(camShake, 0.25);
   if (player.hp <= 0) {
@@ -1324,7 +1366,7 @@ function updateResources(dt, t) {
    ENTRADA: teclado, mouse (pointer lock), toque (joystick virtual)
    ===================================================================== */
 const keys = {};
-let camYaw = Math.PI * 0.85, camPitch = 0.38, camDist = 6, camDistT = innerWidth < innerHeight ? 8 : 6, camShake = 0, vignette = 0;
+let camYaw = Math.PI * 0.85, camPitch = 0.36, camDist = 6, camDistT = IS_TOUCH ? 6.2 : 6, camShake = 0, vignette = 0;
 let invOpen = false, started = false, noLock = false, dragging = false, lastTouch = 0;
 const joy = { id: null, x: 0, y: 0, ox: 0, oy: 0 };
 const camTouch = { id: null, x: 0, y: 0, sx: 0, sy: 0, t: 0 };
@@ -1342,6 +1384,7 @@ addEventListener('keydown', e => {
   else if (k === 'q') usePotion();
   else if (k === 'h') toggleHelp();
   else if (k === 'p') setPixelMode(!pixelMode);
+  else if (e.code === 'Space') dodge();
   if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
@@ -1371,12 +1414,15 @@ canvas.addEventListener('wheel', e => { camDistT = clamp(camDistT + Math.sign(e.
 
 // Toque: metade esquerda = joystick, metade direita = câmera (toque rápido = ataque)
 const joyBase = $('joyBase'), joyKnob = $('joyKnob');
+function joyIdle() { joyBase.style.display = ''; joyBase.style.left = joyBase.style.top = ''; joyKnob.style.transform = 'translate(0,0)'; joyBase.classList.add('idle'); }
+joyIdle();
 canvas.addEventListener('pointerdown', e => {
   if (e.pointerType !== 'touch') return;
   e.preventDefault(); lastTouch = performance.now();
   if (!started || invOpen) return;
   if (e.clientX < innerWidth * 0.45 && joy.id === null) {
     joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = joy.y = 0;
+    joyBase.classList.remove('idle');
     joyBase.style.display = 'block'; joyBase.style.left = e.clientX + 'px'; joyBase.style.top = e.clientY + 'px';
     joyKnob.style.transform = 'translate(0,0)';
   } else if (camTouch.id === null) {
@@ -1400,7 +1446,7 @@ canvas.addEventListener('pointermove', e => {
 function endTouch(e) {
   if (e.pointerType !== 'touch') return;
   lastTouch = performance.now();
-  if (e.pointerId === joy.id) { joy.id = null; joy.x = joy.y = 0; joyBase.style.display = 'none'; }
+  if (e.pointerId === joy.id) { joy.id = null; joy.x = joy.y = 0; joyIdle(); }
   if (e.pointerId === camTouch.id) {
     if (performance.now() - camTouch.t < 220 && Math.hypot(e.clientX - camTouch.sx, e.clientY - camTouch.sy) < 12) startAttack();
     camTouch.id = null;
@@ -1413,7 +1459,15 @@ function tapButton(id, fn) {
   const el = $(id);
   el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); lastTouch = performance.now(); fn(); });
 }
-tapButton('btnAtk', startAttack);
+// Segurar o botão de ataque continua o combo
+let atkHeld = false;
+{
+  const b = $('btnAtk');
+  b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); lastTouch = performance.now(); atkHeld = true; b.classList.add('held'); startAttack(); });
+  const up = () => { atkHeld = false; b.classList.remove('held'); };
+  b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
+}
+tapButton('btnDodge', dodge);
 tapButton('btnPot', usePotion);
 $('btnInv').addEventListener('click', () => toggleInv());
 $('btnHelp').addEventListener('click', () => toggleHelp());
@@ -1424,8 +1478,15 @@ $('invWrap').addEventListener('pointerdown', e => { if (e.target === $('invWrap'
 $('btnStart').addEventListener('click', () => {
   started = true; $('start').style.display = 'none';
   requestLock();
+  if (IS_TOUCH) {
+    const el = document.documentElement;
+    try {
+      const fs = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : (el.webkitRequestFullscreen && el.webkitRequestFullscreen());
+      Promise.resolve(fs).then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape')).catch(() => {});
+    } catch (_) {}
+  }
   showHelp(9);
-  toast(`Colete madeira e pedra, depois abra o inventário (${IS_TOUCH ? '🎒' : 'I'}) para forjar.`);
+  toast(IS_TOUCH ? 'Colete madeira e pedra e forje no 🎒' : 'Colete madeira e pedra, depois abra o inventário (I) para forjar.');
 });
 
 function setPixelMode(on) {
@@ -1440,7 +1501,7 @@ function setPixelMode(on) {
    INTERFACE: HUD compacto, toast, dica de interação, janela do inventário
    ===================================================================== */
 $('controls').innerHTML = IS_TOUCH
-  ? '<b>Esquerda</b>: mover · <b>Direita</b>: câmera · <b>toque</b>: atacar<br><b>⚔</b> combo de ataques · <b>🧪</b> poção · <b>🎒</b> inventário'
+  ? '<b>⚔</b> segure p/ combo · <b>💨</b> esquiva · <b>arraste</b> à direita: câmera'
   : '<b>WASD</b> mover · <b>Shift</b> correr · <b>Mouse</b> câmera · <b>Roda</b> zoom<br><b>Clique/E</b> atacar (aperte em sequência para combo; correndo = estocada)<br><b>I</b> inventário · <b>Q</b> poção · <b>P</b> modo pixel · <b>H</b> ajuda';
 let helpTimer = 0;
 function showHelp(sec) { $('controls').classList.remove('hide'); helpTimer = sec; }
@@ -1541,11 +1602,11 @@ function toggleInv(force) {
   if (invOpen) {
     updateInv();
     if (document.pointerLockElement) document.exitPointerLock();
-    joy.id = null; joy.x = joy.y = 0; joyBase.style.display = 'none'; camTouch.id = null;
+    joy.id = null; joy.x = joy.y = 0; joyIdle(); camTouch.id = null; atkHeld = false;
     for (const k in keys) keys[k] = false;
   }
 }
-const hintEl = $('hint');
+const hintEl = $('hint'), btnAtkEl = $('btnAtk');
 let hintText = '';
 function updateHint() {
   let txt = '';
@@ -1555,6 +1616,12 @@ function updateHint() {
       const key = IS_TOUCH ? '⚔' : 'E';
       txt = t.kind === 'mob' ? `${key} · Atacar ${t.ref.T.name}` : `${key} · ${t.ref.kind === 'tree' ? 'Cortar árvore' : 'Quebrar pedra'}`;
     }
+  }
+  if (IS_TOUCH) {
+    const t = !player.dead && findTarget(2.4, 0.1);
+    const ico = !t || t.kind === 'mob' ? '⚔' : t.ref.kind === 'tree' ? '🪓' : '⛏';
+    if (btnAtkEl.textContent !== ico) btnAtkEl.textContent = ico;
+    txt = '';
   }
   if (txt !== hintText) { hintText = txt; hintEl.textContent = txt; hintEl.style.display = txt ? 'block' : 'none'; }
 }
@@ -1591,6 +1658,7 @@ function updatePlayer(dt, t) {
   const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw);
   const rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
   const mx = fx * iz + rx * ix, mz = fz * iz + rz * ix;
+  lastMove.x = mx; lastMove.z = mz;
   const run = (keys.ShiftLeft || keys.ShiftRight || Math.hypot(joy.x, joy.y) > 0.95) && il > 0.1;
   let speed = run ? 7 : 4.2;
   if (player.atk) speed *= 0.3;
@@ -1604,7 +1672,8 @@ function updatePlayer(dt, t) {
   collide(player.pos, 0.3);
   player.pos.y = heightAt(player.pos.x, player.pos.z);
   const hs = Math.hypot(player.vel.x, player.vel.z);
-  if (il > 0.1 && !player.atk) player.yaw = dampAngle(player.yaw, Math.atan2(mx, mz), 12, dt);
+  if (il > 0.1 && !player.atk && player.dodgeT <= 0) player.yaw = dampAngle(player.yaw, Math.atan2(mx, mz), 12, dt);
+  player.dodgeCd -= dt;
 
   // --- animação ---
   const armed = !!equip.weapon;
@@ -1627,6 +1696,13 @@ function updatePlayer(dt, t) {
       if (player.queued) beginAttack();
     } else P = attackPose(P, a, u);
   }
+  if (player.dodgeT > 0) {
+    // pose agachada de esquiva (mistura com a pose atual)
+    player.dodgeT -= dt;
+    const k = Math.sin(clamp(1 - player.dodgeT / 0.38, 0, 1) * Math.PI);
+    const D = { hipsY: -0.28, torsoRx: 0.7, neckRx: -0.4, hipL: -1.1, knL: 1.6, hipR: -0.3, knR: 1.3, shLx: 0.6, elL: -0.8, shRx: 0.5, elR: -0.9 };
+    for (const f in D) P[f] = lerp(P[f], D[f], k);
+  }
   applyPose(P);
   updateTrail(trailOn);
   J.cape.rotation.x = 0.08 + player.moveBlend * 0.55 + Math.sin(t * 7) * 0.05 * (0.3 + player.moveBlend);
@@ -1638,7 +1714,7 @@ function updatePlayer(dt, t) {
     J.hips.position.y = damp(J.hips.position.y, 0.3, 8, dt);
     if (player.deadT > 2.5) {
       player.dead = false; player.hp = player.maxHp; player.pos.set(0, 0, 0); player.vel.set(0, 0, 0);
-      J.hips.rotation.x = 0; player.invuln = 2;
+      J.hips.rotation.x = 0; player.invuln = 2; player.blinkT = 2;
       $('death').style.display = 'none'; refreshUI();
     }
   } else J.hips.rotation.x = 0;
@@ -1653,7 +1729,7 @@ function updatePlayer(dt, t) {
     if (player.regenT > 2.5) { player.regenT = 0; player.hp = Math.min(player.maxHp, player.hp + 1); refreshUI(); }
   }
   if (player.flash > 0) { player.flash = Math.max(0, player.flash - dt * 4); setFlash(J.root, player.flash); }
-  else if (player.invuln > 0 && !player.dead) J.root.visible = Math.floor(t * 15) % 2 === 0 || player.invuln < 0.1;
+  else if (player.blinkT > 0 && !player.dead) { player.blinkT -= dt; J.root.visible = Math.floor(t * 15) % 2 === 0 || player.blinkT < 0.1; }
   else J.root.visible = true;
 
   // "pop" do equipamento recém-equipado
@@ -1749,6 +1825,9 @@ function updateMobs(dt, t) {
 
 function updateCamera(dt) {
   camDist = damp(camDist, camDistT, 8, dt);
+  // celular: a câmera volta suavemente para trás do personagem enquanto ele anda
+  if (IS_TOUCH && camTouch.id === null && !invOpen && !player.dead && Math.hypot(joy.x, joy.y) > 0.2)
+    camYaw = dampAngle(camYaw, player.yaw + Math.PI, 1.3 * player.moveBlend, dt);
   camTarget.set(player.pos.x, player.pos.y + 1.45, player.pos.z);
   const cp = Math.cos(camPitch);
   let cx = camTarget.x + Math.sin(camYaw) * cp * camDist;
@@ -1765,11 +1844,25 @@ function updateCamera(dt) {
   sun.target.position.copy(player.pos);
 }
 
+// Ajuste automático de resolução conforme o FPS médio
+let qT = 0, qFrames = 0, qChecks = 0;
+function autoQuality(dt) {
+  if (pixelMode || !started) return;
+  qT += dt; qFrames++;
+  if (qT < 2.5) return;
+  const fps = qFrames / qT; qT = 0; qFrames = 0; qChecks++;
+  if (fps < 40 && dprIdx < DPR_STEPS.length - 1) { dprIdx++; resize(); }
+  else if (fps > 58 && qChecks > 2 && dprIdx > 0 && DPR_STEPS[dprIdx - 1] <= (devicePixelRatio || 1)) { dprIdx--; resize(); qChecks = 0; }
+}
 function loop() {
   requestAnimationFrame(loop);
   const dt = Math.min(clock.getDelta(), 0.05);
   // inventário aberto pausa o mundo; hitStop dá peso ao impacto
-  let gdt = invOpen ? 0 : dt;
+  const portrait = IS_TOUCH && innerHeight > innerWidth;
+  let gdt = invOpen || portrait ? 0 : dt;
+  if (atkHeld && !portrait) startAttack();
+  autoQuality(dt);
+  $('btnDodge').classList.toggle('cd', player.dodgeCd > 0);
   if (hitStop > 0) { hitStop -= dt; gdt *= 0.08; }
   now += gdt;
 
