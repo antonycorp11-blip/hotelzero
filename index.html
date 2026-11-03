@@ -1480,26 +1480,27 @@ const TOUCH_BTNS = [
   { id: 'btnHeat', down: () => { heatHeld = true; }, up: () => { heatHeld = false; } },
   { id: 'btnSound', down: () => toggleSound() }, { id: 'btnHelp', down: () => toggleHelp() },
 ];
-const btnPointers = new Map();
+const btnPointers = new Map(), btnLook = new Map();   // segurar o botão de ação/fogo e arrastar = mirar
 function hitButton(x, y) { let best = null, bd = Infinity; for (const b of TOUCH_BTNS) { const r = $(b.id).getBoundingClientRect(); if (!r.width) continue; const edge = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2)) - r.width / 2; if (edge < 18 && edge < bd) { bd = edge; best = b; } } return best; }
-function releaseButtons() { for (const b of btnPointers.values()) { $(b.id).classList.remove('pressed'); if (b.up) b.up(); } btnPointers.clear(); }
+function releaseButtons() { btnLook.clear(); for (const b of btnPointers.values()) { $(b.id).classList.remove('pressed'); if (b.up) b.up(); } btnPointers.clear(); }
 canvas.addEventListener('pointerdown', e => {
   if (e.pointerType !== 'touch') return; e.preventDefault(); lastTouch = performance.now(); if (!started || shopOpen) return;
   const hb = hitButton(e.clientX, e.clientY); try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
-  if (hb) { btnPointers.set(e.pointerId, hb); $(hb.id).classList.add('pressed'); vibrate(8); hb.down(); return; }
+  if (hb) { btnPointers.set(e.pointerId, hb); if (hb.id === 'btnAct' || hb.id === 'btnHeat') btnLook.set(e.pointerId, { x: e.clientX, y: e.clientY }); $(hb.id).classList.add('pressed'); vibrate(8); hb.down(); return; }
   if (e.clientX < innerWidth * 0.45 && joy.id === null) { Object.assign(joy, { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: 0, y: 0 }); joyBase.classList.remove('idle'); joyBase.style.display = 'block'; joyBase.style.left = e.clientX + 'px'; joyBase.style.top = e.clientY + 'px'; joyKnob.style.transform = 'translate(0,0)'; }
   else if (look.id === null) Object.assign(look, { id: e.pointerId, x: e.clientX, y: e.clientY });
 });
 canvas.addEventListener('pointermove', e => {
   if (e.pointerType !== 'touch') return;
   if (e.pointerId === joy.id) { let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy; const l = Math.hypot(dx, dy), R = 52; if (l > R) { dx = dx / l * R; dy = dy / l * R; } joy.x = dx / R; joy.y = -dy / R; joyKnob.style.transform = `translate(${dx}px,${dy}px)`; }
+  else if (btnLook.has(e.pointerId)) { const o = btnLook.get(e.pointerId); lookBy(e.clientX - o.x, e.clientY - o.y, 0.0058); o.x = e.clientX; o.y = e.clientY; }
   else if (e.pointerId === look.id) { lookBy(e.clientX - look.x, e.clientY - look.y, 0.0058); look.x = e.clientX; look.y = e.clientY; }
 });
 let suppressClickUntil = 0;
 document.addEventListener('click', e => { if (performance.now() < suppressClickUntil) { e.stopPropagation(); e.preventDefault(); } }, true);
 function endTouch(e) {
   if (e.pointerType !== 'touch') return; lastTouch = performance.now(); suppressClickUntil = lastTouch + 400;
-  const hb = btnPointers.get(e.pointerId); if (hb) { btnPointers.delete(e.pointerId); $(hb.id).classList.remove('pressed'); if (hb.up) hb.up(); return; }
+  btnLook.delete(e.pointerId); const hb = btnPointers.get(e.pointerId); if (hb) { btnPointers.delete(e.pointerId); $(hb.id).classList.remove('pressed'); if (hb.up) hb.up(); return; }
   if (e.pointerId === joy.id) { joy.id = null; joy.x = joy.y = 0; joyIdle(); } if (e.pointerId === look.id) look.id = null;
 }
 canvas.addEventListener('pointerup', endTouch); canvas.addEventListener('pointercancel', endTouch);
