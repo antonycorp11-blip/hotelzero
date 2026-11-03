@@ -83,44 +83,66 @@
   .tab .ic{width:20px;height:20px}
   .coinsTag{display:flex;align-items:center;gap:5px;font-weight:900;font-size:17px;color:var(--gold);text-shadow:0 2px 0 #7a4a00;padding:0 6px;white-space:nowrap}
   .closeBtn{width:40px;height:40px;border-radius:50%;background:linear-gradient(#ff8a8a,#e04848);border:3px solid var(--ink);color:#fff;font-weight:900;font-size:18px;flex-shrink:0}
-  .page{flex:1;overflow:auto;padding:12px 14px 16px;-webkit-overflow-scrolling:touch;touch-action:pan-y;display:none}
-  .page.on{display:block}
-  .secTitle{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#9fd6ff;margin:4px 2px 8px;display:flex;align-items:center;gap:6px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px;margin-bottom:14px}
-  .card{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 10px 12px;border-radius:16px;text-align:center;
-    background:linear-gradient(#2a5585,#1b3b60);border:3px solid var(--ink);box-shadow:inset 0 2px 0 rgba(255,255,255,.15)}
-  .card.on{background:linear-gradient(#3a8fc4,#22618f);box-shadow:inset 0 0 0 2px #bff0ff}
-  .card .badge{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(#ffffff 0%,#cfe9ff 70%);border:3px solid var(--ink)}
-  .card .badge .ic{width:40px;height:40px;vertical-align:0}
-  .card b{font-size:13.5px;font-weight:900;text-shadow:0 1px 0 var(--ink)}
-  .card small{font-size:11px;color:#bcd6ee;line-height:1.3;min-height:28px}
-  .stats{width:100%;display:flex;flex-direction:column;gap:3px}
-  .stat{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:800;color:#bcd6ee}
-  .stat span{width:44px;text-align:left}
-  .stat i{flex:1;height:7px;border-radius:4px;background:rgba(0,0,0,.35);overflow:hidden;position:relative}
+  .page{flex:1;min-height:0;display:none}
+  .page.on{display:flex}
+  .slots{flex:1;overflow:auto;padding:10px 12px 14px;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+  .secTitle{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#9fd6ff;margin:2px 2px 7px;display:flex;align-items:center;gap:6px}
+  .secTitle .ic{width:18px;height:18px}
+  .srow{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:12px}
+  .slot{position:relative;width:76px;height:86px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0;
+    background:linear-gradient(#2a5585,#163050);border:3px solid var(--ink);box-shadow:inset 0 0 0 2px var(--rc,#4a6d93),0 4px 0 rgba(0,0,0,.4);color:#fff;font-family:inherit;transition:transform .12s}
+  .slot>.ic{width:44px;height:44px;filter:drop-shadow(0 2px 0 rgba(0,0,0,.35))}
+  .slot i{font-style:normal;font-size:11px;font-weight:900;display:flex;align-items:center;gap:2px;color:var(--gold);text-shadow:0 1px 0 var(--ink)}
+  .slot i .ic{width:12px;height:12px}
+  .slot.own i{color:#9ff0b0}.slot.no>.ic{opacity:.55}.slot.no i{color:#ff9d9d}.slot.lock>.ic{opacity:.3;filter:grayscale(1)}
+  .slot.sel{transform:translateY(-4px) scale(1.04);box-shadow:inset 0 0 0 2px #fff,0 0 0 3px #7fd8ff,0 0 18px #7fd8ff}
+  .slot.on::after{content:"";position:absolute;top:5px;right:5px;width:11px;height:11px;border-radius:50%;background:#7be495;border:2px solid var(--ink)}
+  .slot .cnt{position:absolute;top:3px;left:6px;font-size:13px;font-weight:900;text-shadow:0 1px 0 var(--ink)}
+  .slot.can{animation:sglow 1.4s ease-in-out infinite}
+  @keyframes sglow{50%{box-shadow:inset 0 0 0 2px var(--rc,#4a6d93),0 0 16px 2px rgba(255,209,102,.85)}}
+  .detail{width:250px;flex-shrink:0;border-left:3px solid var(--ink);background:linear-gradient(#1c3a5c,#0f2238);padding:12px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:7px;overflow:auto;text-align:center;touch-action:pan-y}
+  .detail .big{width:84px;height:84px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;border:4px solid var(--ink);background:radial-gradient(circle at 35% 30%,#fff,#bfe6ff 60%,#5ea7dc);box-shadow:0 0 0 3px var(--rc,#4a6d93),0 6px 0 rgba(0,0,0,.35)}
+  .detail .big .ic{width:56px;height:56px}
+  .detail h3{margin:2px 0 0;font-size:17px;font-weight:900;text-shadow:0 2px 0 var(--ink)}
+  .detail .rar{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--rc,#9fd6ff)}
+  .detail p{margin:0;font-size:12px;color:#bcd6ee;line-height:1.35}
+  .detail .gbtn{width:100%;font-size:15px;padding:10px;margin-top:auto}
+  .fx{font-size:12px;font-weight:900;color:#9ff0b0;background:rgba(0,0,0,.3);padding:6px 9px;border-radius:10px;width:100%;line-height:1.5}
+  .fx em{font-style:normal;color:#ffd166}
+  .stats{width:100%;display:flex;flex-direction:column;gap:4px}
+  .stat{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;color:#bcd6ee}
+  .stat span{width:48px;text-align:left}
+  .stat i{flex:1;height:8px;border-radius:4px;background:rgba(0,0,0,.4);overflow:hidden;position:relative;border:1px solid var(--ink)}
   .stat i::after{content:"";position:absolute;inset:0;width:var(--v);background:linear-gradient(90deg,#7be495,#7fd8ff)}
-  .tag{position:absolute;top:6px;right:6px;font-size:10px;font-weight:900;padding:2px 6px;border-radius:8px;background:#ffd166;color:#3b2500;border:2px solid var(--ink)}
-  .need{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
-  .need span{display:flex;align-items:center;gap:3px;font-size:11px;font-weight:900;padding:2px 6px;border-radius:9px;background:rgba(0,0,0,.3)}
+  .tag{font-size:10px;font-weight:900;padding:2px 7px;border-radius:8px;background:#ffd166;color:#3b2500;border:2px solid var(--ink)}
+  .need{display:flex;flex-direction:column;gap:4px;width:100%}
+  .need span{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:900;padding:4px 8px;border-radius:10px;background:rgba(0,0,0,.3)}
+  .need span .ic{width:22px;height:22px}.need span b{margin-left:auto}
   .need span.ok{color:#9ff0b0}.need span.no{color:#ff9d9d}
-  /* árvore de habilidades */
-  .tree{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;min-width:560px}
-  .branch{display:flex;flex-direction:column;align-items:center;gap:0;padding:8px 4px 10px;border-radius:16px;background:rgba(0,0,0,.18)}
-  .branch h4{margin:0 0 6px;font-size:13px;font-weight:900;color:#9fd6ff;letter-spacing:.06em;text-transform:uppercase}
-  .link{width:6px;height:18px;background:#0f2238;border-left:2px solid var(--ink);border-right:2px solid var(--ink)}
-  .link.on{background:#7fd8ff}
-  .node{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%}
-  .node .orb{width:66px;height:66px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:4px solid var(--ink);
-    background:radial-gradient(circle at 35% 30%,#ffffff,#9ed8ff 60%,#4a97cf);box-shadow:0 4px 0 rgba(0,0,0,.35)}
-  .node .orb .ic{width:40px;height:40px;vertical-align:0}
-  .node.locked .orb{filter:grayscale(1) brightness(.55)}
-  .node.max .orb{background:radial-gradient(circle at 35% 30%,#fff7c8,#ffd34d 60%,#d9930f)}
-  .node b{font-size:12px;font-weight:900;text-shadow:0 1px 0 var(--ink)}
-  .pips{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:110px}
-  .pips i{width:7px;height:7px;border-radius:2px;background:rgba(0,0,0,.4);border:1px solid var(--ink)}
-  .pips i.on{background:#7be495}
-  .node small{font-size:10px;color:#bcd6ee;max-width:130px;line-height:1.25}
-  .node .gbtn{min-width:84px;padding:6px 8px;font-size:12px}
+  .mis{display:flex;align-items:center;gap:6px;width:100%;font-size:11.5px;font-weight:800;padding:4px 8px;border-radius:9px;background:rgba(0,0,0,.28);color:#bcd6ee}
+  .mis .ic{width:18px;height:18px}.mis.done{color:#9ff0b0}.mis.cur{color:#fff;box-shadow:inset 0 0 0 2px #7fd8ff}.mis b{margin-left:auto;color:#ffd166}
+  /* árvore de habilidades: mapa arrastável */
+  .tmap{flex:1;position:relative;overflow:hidden;touch-action:none;background:radial-gradient(ellipse at 50% 50%,#1f4170 0%,#0b1729 80%)}
+  .tmap::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(160,210,255,.16) 1px,transparent 1.6px);background-size:24px 24px;pointer-events:none}
+  .tworld{position:absolute;left:50%;top:50%;width:0;height:0;transform-origin:0 0}
+  .tlinks{position:absolute;left:-1000px;top:-1000px;width:2000px;height:2000px;overflow:visible;pointer-events:none}
+  .tn{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;padding:5px;background:conic-gradient(#7be495 calc(var(--p)*1%),#0b1b2e 0);box-shadow:0 0 0 3px var(--ink),0 5px 0 rgba(0,0,0,.45)}
+  .tn .in{width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,#fff,#a9dcff 60%,#4a97cf);border:2px solid var(--ink)}
+  .tn .in .ic{width:32px;height:32px}
+  .tn .lv{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);font-size:10px;font-weight:900;padding:1px 7px;border-radius:8px;background:#0f2238;border:2px solid var(--ink);white-space:nowrap}
+  .tn .nm{position:absolute;left:50%;top:-19px;transform:translateX(-50%);font-size:10.5px;font-weight:900;white-space:nowrap;text-shadow:0 1px 0 #000,0 0 5px #000}
+  .tn.core{width:84px;height:84px;margin:-42px 0 0 -42px}.tn.core .in .ic{width:44px;height:44px}
+  .tn.lock .in{filter:grayscale(1) brightness(.55)}
+  .tn.myst{background:#0b1b2e}.tn.myst .in{background:#162740}.tn.myst .in .ic{opacity:.45}
+  .tn.max{background:#ffd34d;box-shadow:0 0 0 3px var(--ink),0 0 18px rgba(255,211,77,.85)}
+  .tn.max .in{background:radial-gradient(circle at 35% 30%,#fff7c8,#ffd34d 60%,#d9930f)}
+  .tn.can{animation:tglow 1.3s ease-in-out infinite}
+  @keyframes tglow{50%{box-shadow:0 0 0 3px var(--ink),0 0 22px 5px rgba(127,216,255,.95)}}
+  .tn.sel::after{content:"";position:absolute;inset:-10px;border-radius:50%;border:3px dashed #fff;animation:spin 6s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .thint{position:absolute;left:10px;bottom:8px;font-size:11px;font-weight:800;color:#8fb3d6;pointer-events:none}
+  .zoomBtns{position:absolute;right:8px;bottom:8px;display:flex;gap:6px}
+  .zoomBtns button{width:36px;height:36px;border-radius:10px;font-size:20px;font-weight:900;color:#fff;background:#24476f;border:3px solid var(--ink)}
   .settings{margin-top:10px}
   #win .modal{max-width:440px;height:auto;text-align:center}
   #win .body{padding:18px 20px;line-height:1.55;font-size:14px;color:#cfe3f7}
@@ -247,6 +269,7 @@ const sv = b => `<svg viewBox="0 0 64 64" class="ic">${b}</svg>`;
 const ln = (d, c, w = 5) => `<path d="${d}" fill="none" stroke="#1b2a3c" stroke-width="${w + 4}" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
 const shovelIc = c => sv(ln('M46 6L30 36', '#b07a45', 5) + `<path d="M18 32l17 8-6 15c-6 2-13-2-15-9z" fill="${c}" ${O}/>` + ln('M41 4l10 5', '#222831', 5));
 const ICON = {
+  ball: sv(`<circle cx="32" cy="34" r="24" fill="#f4fbff" ${O}/><path d="M17 28c6-7 15-9 23-5M21 45c8 4 17 3 23-3" stroke="#a9d8f2" stroke-width="4" fill="none" stroke-linecap="round"/>`),
   coin: sv(`<circle cx="32" cy="32" r="25" fill="#ffcc33" ${O}/><circle cx="32" cy="32" r="16" fill="none" stroke="#d99a10" stroke-width="3"/><path d="M32 22v20M26 28h12" stroke="#d99a10" stroke-width="5" stroke-linecap="round"/>`),
   snow: sv(ln('M32 8v48M11 20l42 24M11 44l42-24M26 12l6 6 6-6M26 52l6-6 6 6', '#c9f1ff', 5)),
   star: sv(`<path d="M32 6l7.6 16.4 17.9 2.1-13.2 12.2 3.5 17.7L32 45.6 16.2 54.4l3.5-17.7L6.5 24.5l17.9-2.1z" fill="#ffd34d" ${O}/>`),
@@ -927,8 +950,8 @@ const items = ITEM_SPAWNS.map(([part, x, z], n) => {
   return { part, x, z, k: idxOf(x, z), g, found: false, id: n };
 });
 const VEH = [
-  { id: 'sled', name: 'Motoneve com Lâmina', icon: 'sled', x: -14, z: -32, yaw: 0.6, part: 'plug', kind: 'fuel', cap: 700, r: 1.7, rate: 3.6, speed: 8.5, burn: 1.3 },
-  { id: 'tractor', name: 'Trator Elétrico', icon: 'tractor', x: 58, z: 20, yaw: -2.2, part: 'battery', kind: 'elec', cap: 2600, r: 2.7, rate: 6.5, speed: 6.5, burn: 0.9 },
+  { id: 'sled', name: 'Motoneve com Lâmina', icon: 'sled', x: -14, z: -32, yaw: 0.6, part: 'plug', kind: 'fuel', maxR: 1.4, r: 1.7, rate: 4, speed: 8.5, burn: 1.3 },
+  { id: 'tractor', name: 'Trator Elétrico', icon: 'tractor', x: 58, z: 20, yaw: -2.2, part: 'battery', kind: 'elec', maxR: 2.6, r: 2.7, rate: 7, speed: 6.5, burn: 0.9 },
 ];
 function buildVehicle(v) {
   const g = new THREE.Group(); scene.add(g);
@@ -973,31 +996,38 @@ const RECIPES = [
   { id: 'heat', parts: { coil: 1, pipe: 1, tank: 1 }, cost: 18000, gives: ['tool', 7] },
   { id: 'vortex', parts: { crystal: 3, core: 1 }, cost: 90000, gives: ['tool', 9] },
 ];
-const UPG = {
-  power: { name: 'Força', icon: 'power', base: 40, mult: 2.1, max: 15, col: 0, desc: '+25% de neve por segundo' },
-  radius: { name: 'Área', icon: 'radius', base: 80, mult: 2.3, max: 10, col: 0, req: ['power', 2], desc: '+12% de raio' },
-  iceBreak: { name: 'Quebra-gelo', icon: 'iceBreak', base: 900, mult: 2.4, max: 8, col: 0, req: ['radius', 2], desc: 'Neve dura e gelo cedem +15%' },
-  bag: { name: 'Mochila', icon: 'bag', base: 20, mult: 2.2, max: 15, col: 1, desc: '+60% de capacidade' },
-  melter: { name: 'Derretedor', icon: 'melter', base: 80, mult: 2.4, max: 15, col: 1, req: ['bag', 1], desc: '+30% de moedas' },
-  pipe: { name: 'Tubo pneumático', icon: 'rocket', base: 4000, mult: 1, max: 1, col: 1, req: ['melter', 3], desc: 'Mochila esvazia sozinha (80%)' },
-  boots: { name: 'Botas', icon: 'boots', base: 30, mult: 2, max: 8, col: 2, desc: '+10% de velocidade' },
-  fuelEff: { name: 'Motor eficiente', icon: 'fuelEff', base: 1500, mult: 2.2, max: 6, col: 2, req: ['boots', 2], desc: 'Veículos gastam -15%' },
-  plow: { name: 'Lâmina maior', icon: 'plow', base: 2500, mult: 2.3, max: 6, col: 2, req: ['fuelEff', 1], desc: '+15% de raio dos veículos' },
-  robots: { name: 'Robô limpa-neve', icon: 'robot', base: 400, mult: 1.75, max: 12, col: 3, desc: 'Limpa sozinho, paga 60%' },
-  motor: { name: 'Motor dos robôs', icon: 'motorUp', base: 600, mult: 2.5, max: 10, col: 3, req: ['robots', 1], desc: '+50% de força dos robôs' },
+const UPG = {   // árvore de habilidades em mapa: p = posição (x, y) em casas
+  core: { name: 'Espírito do Inverno', icon: 'snow', base: 5, mult: 1, max: 1, p: [0, 0], desc: 'O começo de tudo. Abre os quatro galhos.', fx: () => 'Libera a árvore' },
+  power: { name: 'Força', icon: 'power', base: 40, mult: 2.1, max: 15, p: [0, -1.15], req: ['core', 1], desc: 'Tira mais neve por segundo.', fx: l => `+${l * 25}% de neve/s` },
+  radius: { name: 'Área', icon: 'radius', base: 80, mult: 2.3, max: 10, p: [-1, -2.1], req: ['power', 2], desc: 'Ferramentas pegam um círculo maior.', fx: l => `+${l * 12}% de raio` },
+  reach: { name: 'Alcance', icon: 'turbo', base: 120, mult: 2.2, max: 8, p: [1, -2.1], req: ['power', 2], desc: 'Alcança neve mais longe.', fx: l => `+${l * 10}% de alcance` },
+  iceBreak: { name: 'Quebra-gelo', icon: 'iceBreak', base: 900, mult: 2.4, max: 8, p: [-1.7, -3.1], req: ['radius', 2], desc: 'Neve dura e gelo cedem mais rápido.', fx: l => `+${l * 15}% contra gelo` },
+  heatPow: { name: 'Chama Viva', icon: 'torch', base: 1500, mult: 2.3, max: 8, p: [-0.5, -3.3], req: ['radius', 3], desc: 'Ferramentas de calor derretem mais.', fx: l => `+${l * 20}% de calor` },
+  crit: { name: 'Técnica', icon: 'star', base: 600, mult: 2.2, max: 10, p: [1, -3.2], req: ['reach', 2], desc: 'Cada pazada rende mais neve.', fx: l => `+${l * 8}% de neve por pazada` },
+  bag: { name: 'Mochila', icon: 'bag', base: 20, mult: 2.2, max: 15, p: [1.25, 0], req: ['core', 1], desc: 'Carrega mais neve por viagem.', fx: l => `${fmt(30 * Math.pow(1.6, l))} de capacidade` },
+  melter: { name: 'Derretedor', icon: 'melter', base: 80, mult: 2.4, max: 15, p: [2.3, -0.6], req: ['bag', 1], desc: 'Cada floco derretido vale mais.', fx: l => `+${l * 30}% de moedas` },
+  pipe: { name: 'Tubo Pneumático', icon: 'rocket', base: 4000, mult: 1, max: 1, p: [3.4, -0.6], req: ['melter', 3], desc: 'A mochila esvazia sozinha, de qualquer lugar.', fx: l => l ? 'Ativo (80% do valor)' : 'Desligado' },
+  boots: { name: 'Botas', icon: 'boots', base: 30, mult: 2, max: 8, p: [-1.25, 0], req: ['core', 1], desc: 'Anda mais rápido, até na neve funda.', fx: l => `+${l * 10}% de velocidade` },
+  robots: { name: 'Robô Limpa-neve', icon: 'robot', base: 400, mult: 1.75, max: 12, p: [-2.3, 0.6], req: ['boots', 1], desc: 'Robozinhos limpam sozinhos e pagam 60%.', fx: l => `${l} robôs` },
+  motor: { name: 'Motor dos Robôs', icon: 'motorUp', base: 600, mult: 2.5, max: 10, p: [-3.4, 0.6], req: ['robots', 1], desc: 'Robôs mais fortes.', fx: l => `+${l * 50}% de força` },
+  fuelEff: { name: 'Motor Eficiente', icon: 'fuelEff', base: 800, mult: 2.2, max: 6, p: [0, 1.15], req: ['core', 1], desc: 'Veículos gastam menos energia.', fx: l => `-${l * 15}% de consumo` },
+  vehSpeed: { name: 'Turbo de Veículo', icon: 'sled', base: 1500, mult: 2.2, max: 6, p: [-1, 2.1], req: ['fuelEff', 1], desc: 'Veículos andam mais rápido.', fx: l => `+${l * 10}% de velocidade` },
+  plow: { name: 'Lâmina Maior', icon: 'plow', base: 1800, mult: 2.3, max: 6, p: [1, 2.1], req: ['fuelEff', 1], desc: 'A lâmina empurra uma faixa mais larga.', fx: l => `+${l * 15}% de largura` },
+  ballMax: { name: 'Bola Gigante', icon: 'ball', base: 2500, mult: 2.4, max: 5, p: [1.6, 3.1], req: ['plow', 1], desc: 'As bolas de neve podem crescer mais.', fx: l => `+${l * 20}% de tamanho máximo` },
+  ballValue: { name: 'Bola Valiosa', icon: 'coin', base: 3000, mult: 2.3, max: 10, p: [-0.4, 3.2], req: ['vehSpeed', 1], desc: 'Bolas derretidas pagam mais.', fx: l => `+${l * 20}% por bola` },
 };
-const COLS = ['Força', 'Carga', 'Movimento', 'Robôs'];
 const FUEL_COST = 300;
 const state = {
-  coins: 0, bag: 0, vbag: 0, tool: 0, heat: -1, owned: TOOLS.map((_, i) => i === 0), ownedHeat: HEATS.map(() => false),
+  coins: 0, bag: 0, ballM: 0, balls: [], tool: 0, heat: -1, owned: TOOLS.map((_, i) => i === 0), ownedHeat: HEATS.map(() => false),
   upg: Object.fromEntries(Object.keys(UPG).map(k => [k, 0])), inv: Object.fromEntries(Object.keys(PARTS).map(k => [k, 0])),
   zone: 0, prestige: 0, step: 0, won: false, muted: false, played: 0, sections: 0, driving: -1, iceTip: false,
 };
 const upgCost = id => Math.round(UPG[id].base * Math.pow(UPG[id].mult, state.upg[id]));
+const upgVis = id => !UPG[id].req || upgOpen(UPG[id].req[0]);
 const upgOpen = id => !UPG[id].req || state.upg[UPG[id].req[0]] >= UPG[id].req[1];
 const stat = {
-  rate: () => TOOLS[state.tool].rate * (1 + 0.25 * state.upg.power), radius: () => TOOLS[state.tool].r * (1 + 0.12 * state.upg.radius),
-  reach: () => TOOLS[state.tool].reach * (1 + 0.05 * state.upg.radius), cap: () => Math.round(30 * Math.pow(1.6, state.upg.bag)),
+  rate: () => TOOLS[state.tool].rate * (1 + 0.25 * state.upg.power) * (1 + 0.08 * state.upg.crit), radius: () => TOOLS[state.tool].r * (1 + 0.12 * state.upg.radius),
+  reach: () => TOOLS[state.tool].reach * (1 + 0.1 * state.upg.reach), cap: () => Math.round(30 * Math.pow(1.6, state.upg.bag)),
   speed: () => 1 + 0.1 * state.upg.boots, value: () => (1 + 0.3 * state.upg.melter) * Math.pow(1.5, state.prestige),
 };
 
@@ -1005,7 +1035,37 @@ const stat = {
    SOM
    ===================================================================== */
 let actx = null, noiseBuf = null;
-function initAudio() { if (actx) { if (actx.state === 'suspended') actx.resume(); return; } try { actx = new (window.AudioContext || window.webkitAudioContext)(); noiseBuf = actx.createBuffer(1, actx.sampleRate * 0.6, actx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } catch (_) { actx = null; } }
+function initAudio() { if (actx) { if (actx.state === 'suspended') actx.resume(); return; } try { actx = new (window.AudioContext || window.webkitAudioContext)(); noiseBuf = actx.createBuffer(1, actx.sampleRate * 0.6, actx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; startMusic(); } catch (_) { actx = null; } }
+// ---------- trilha sonora gerada: caixinha de música + pad + baixo, acordes aconchegantes de inverno ----------
+const music = { on: false, next: 0, step: 0, out: null };
+const CHORDS = [[48, 52, 55, 59], [45, 48, 52, 55], [41, 45, 48, 52], [43, 47, 50, 52], [48, 52, 55, 59], [45, 48, 52, 55], [41, 45, 48, 52], [43, 47, 50, 55]];
+const PENTA = [72, 74, 76, 79, 81, 84];
+const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+function startMusic() {
+  if (!actx || music.on) return; music.on = true;
+  const out = actx.createGain(); out.gain.value = state.muted ? 0 : 0.55; out.connect(actx.destination); music.out = out;
+  const dl = actx.createDelay(1), fb = actx.createGain(), wet = actx.createGain(); dl.delayTime.value = 0.51; fb.gain.value = 0.32; wet.gain.value = 0.35;
+  dl.connect(fb).connect(dl); dl.connect(wet).connect(out); music.echo = dl; music.next = actx.currentTime + 0.3;
+  setInterval(schedMusic, 150);
+}
+function mnote(t, f, len, vol, type, echo) {
+  const o = actx.createOscillator(), g = actx.createGain(); o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + (type === 'triangle' && len > 2 ? 0.9 : 0.01)); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  o.connect(g).connect(music.out); if (echo) g.connect(music.echo); o.start(t); o.stop(t + len + 0.05);
+}
+function schedMusic() {
+  if (!actx || document.hidden) return; const E = 60 / 84 / 2;           // colcheia a 84 bpm
+  if (music.next < actx.currentTime) music.next = actx.currentTime + 0.05;
+  while (music.next < actx.currentTime + 0.5) {
+    const t = music.next, st = music.step, ch = CHORDS[Math.floor(st / 16) % CHORDS.length], b = st % 16;
+    if (b === 0) { for (const m of ch.slice(1)) mnote(t, mf(m), E * 16, 0.035, 'triangle', false); mnote(t, mf(ch[0] - 12), E * 7, 0.11, 'sine', false); }
+    if (b === 8) mnote(t, mf(ch[0] - 12 + (st % 32 === 8 ? 7 : 0)), E * 7, 0.09, 'sine', false);
+    const arp = [0, 1, 2, 3, 2, 1, 2, 3][b % 8];
+    if (b % 2 === 0 || Math.random() < 0.3) { const f = mf(ch[arp] + 12); mnote(t, f, 0.9, 0.05, 'sine', true); mnote(t, f * 2, 0.35, 0.012, 'triangle', false); }
+    if (b % 4 === 2 && Math.random() < 0.38) mnote(t + E * 0.5, mf(PENTA[(Math.random() * PENTA.length) | 0]), 1.4, 0.035, 'sine', true);
+    music.step++; music.next += E * (b % 2 ? 0.94 : 1.06);   // leve swing
+  }
+}
 function crunch(vol = 0.12, freq = 1100, len = 0.12) { if (!actx || state.muted) return; const t = actx.currentTime, s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(); s.buffer = noiseBuf; f.type = 'bandpass'; f.frequency.value = freq * (0.75 + Math.random() * 0.5); f.Q.value = 0.9; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + len); s.connect(f).connect(g).connect(actx.destination); s.start(t, Math.random() * 0.4, len + 0.02); }
 function thump(vol = 0.16, f0 = 160) { if (!actx || state.muted) return; const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.12); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.16); o.connect(g).connect(actx.destination); o.start(t); o.stop(t + 0.18); }
 function tone(f0 = 880, f1 = 1320, vol = 0.07, len = 0.22, type = 'sine', delay = 0) { if (!actx || state.muted) return; const t = actx.currentTime + delay, o = actx.createOscillator(), g = actx.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + len * 0.4); g.gain.setValueAtTime(0.0001, actx.currentTime); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + len); o.connect(g).connect(actx.destination); o.start(t); o.stop(t + len + 0.02); }
@@ -1224,6 +1284,7 @@ function collide(o, R) {
     if (d2 < R * R) { if (d2 > 1e-8) { const d = Math.sqrt(d2), k = (R - d) / d; o.x += dx * k; o.z += dz * k; } else { const opts = [[w.x0 - R - o.x, 0], [w.x1 + R - o.x, 0], [0, w.z0 - R - o.z], [0, w.z1 + R - o.z]]; opts.sort((a, b) => Math.abs(a[0] + a[1]) - Math.abs(b[0] + b[1])); o.x += opts[0][0]; o.z += opts[0][1]; } }
   }
   for (const c of circles) { const dx = o.x - c.x, dz = o.z - c.z, min = c.r + R; if (Math.abs(dx) > min || Math.abs(dz) > min) continue; const d = Math.hypot(dx, dz); if (d < min && d > 1e-6) { o.x = c.x + dx / d * min; o.z = c.z + dz / d * min; } }
+  for (const bl of balls) { if (bl.att || bl.melt) continue; const dx = o.x - bl.x, dz = o.z - bl.z, min = bl.r + R, d = Math.hypot(dx, dz); if (d < min && d > 1e-6) { o.x = bl.x + dx / d * min; o.z = bl.z + dz / d * min; } }
   const b = ZONES[state.zone] - 0.4; o.x = clamp(o.x, -b, b); o.z = clamp(o.z, -b, b);
 }
 const inHouse = () => player.x > HOUSE.x0 && player.x < HOUSE.x1 && player.z > HOUSE.z0 && player.z < HOUSE.z1;
@@ -1294,7 +1355,7 @@ $('help').innerHTML = IS_TOUCH ? '<b>Esquerda</b>: andar · <b>arraste à direit
 let helpT = 0;
 function showHelp(sec) { $('help').classList.remove('hide'); helpT = sec; }
 function toggleHelp() { if ($('help').classList.contains('hide')) showHelp(9999); else { $('help').classList.add('hide'); helpT = 0; } }
-function toggleSound() { state.muted = !state.muted; $('btnSound').innerHTML = ic(state.muted ? 'mute' : 'sound'); if (!state.muted) initAudio(); }
+function toggleSound() { state.muted = !state.muted; if (music.out) music.out.gain.value = state.muted ? 0 : 0.55; $('btnSound').innerHTML = ic(state.muted ? 'mute' : 'sound'); if (!state.muted) initAudio(); }
 const pct = () => (1 - totalVol / initVol) * 100;
 const dispPct = () => Math.min(100, pct() / 0.985);
 let zoneFrac = 1;
@@ -1314,14 +1375,13 @@ function refreshHUD() {
   if (state.step === 4 && state.zone >= 1) state.step = 5;
   if (state.step === 5 && vstate[0].fixed) state.step = 6;
   const drv = state.driving >= 0, v = drv ? VEH[state.driving] : null;
-  const cap = drv ? v.cap : stat.cap(), bag = drv ? state.vbag : state.bag, direct = !drv && TOOLS[state.tool].direct;
-  $('bagBar').querySelector('.fill').style.width = (bag / cap * 100) + '%';
-  $('bagText').innerHTML = ic('snow') + (direct ? 'derrete na hora' : `${fmt(bag)} / ${fmt(cap)}`);
-  $('bagBar').classList.toggle('full', !direct && !(state.upg.pipe && !drv) && bag >= cap - 0.01);
+  const cap = stat.cap(), bag = state.bag, direct = TOOLS[state.tool].direct;
+  if (drv) { const r = curBall ? curBall.r : 0, mr = ballMaxR(v); $('bagBar').querySelector('.fill').style.width = (r / mr * 100) + '%'; $('bagText').innerHTML = ic('ball') + `Bola Ø ${(r * 2).toFixed(1)} / ${(mr * 2).toFixed(1)} m`; $('bagBar').classList.toggle('full', r >= mr * 0.97); }
+  else { $('bagBar').querySelector('.fill').style.width = (bag / cap * 100) + '%'; $('bagText').innerHTML = ic('snow') + (direct ? 'derrete na hora' : `${fmt(bag)} / ${fmt(cap)}`); $('bagBar').classList.toggle('full', !direct && !state.upg.pipe && bag >= cap - 0.01); }
   $('fuelBar').style.display = drv ? 'block' : 'none';
   if (drv) { $('fuelBar').querySelector('.fill').style.width = v.st.energy + '%'; $('fuelText').innerHTML = ic(v.kind === 'fuel' ? 'fuel' : 'battery') + `${Math.round(v.st.energy)}%`; }
   $('prog').innerHTML = `${ic('star')} ${state.sections} · Vila ${dispPct().toFixed(1)}% · Zona ${state.zone + 1}: ${Math.round(dispZone())}%`;
-  $('objective').innerHTML = state.step < OBJECTIVES.length ? ic('radius') + OBJECTIVES[state.step]() : '';
+  $('objective').innerHTML = drv && state.ballM < BALL_MISSIONS.length ? ic('ball') + `Missão: bola de ${BALL_MISSIONS[state.ballM][0]} m no Derretedor (+${fmt(BALL_MISSIONS[state.ballM][1])})` : state.step < OBJECTIVES.length ? ic('radius') + OBJECTIVES[state.step]() : '';
   $('btnHeat').style.display = state.heat >= 0 && !drv ? 'flex' : 'none';
   if (shopOpen) renderShop();
 }
@@ -1334,67 +1394,92 @@ let tab = 'loja';
 $('tabs').innerHTML = TABS.map(([id, n, i]) => `<button class="tab" data-tab="${id}">${ic(i)}${n}</button>`).join('');
 $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { tab = b.dataset.tab; renderShop(true); } });
 const bar = (n, v) => `<div class="stat"><span>${n}</span><i style="--v:${clamp(v, 0, 1) * 100}%"></i></div>`;
-const need = parts => Object.entries(parts).map(([p, n]) => `<span class="${state.inv[p] >= n ? 'ok' : 'no'}">${ic(p)}${state.inv[p] || 0}/${n}</span>`).join('');
+const need = parts => `<div class="need">${Object.entries(parts).map(([p, n]) => `<span class="${(state.inv[p] || 0) >= n ? 'ok' : 'no'}">${ic(p)}${PARTS[p]}<b>${state.inv[p] || 0}/${n}</b></span>`).join('')}</div>`;
+const RAR = [['Comum', '#8fb3d6'], ['Incomum', '#7be495'], ['Raro', '#59c3ee'], ['Épico', '#b48cff'], ['Lendário', '#ffb347']];
+const TOOL_TIER = [0, 0, 1, 1, 2, 2, 3, 3, 3, 4, 4], HEAT_TIER = [0, 2, 3];
+const selKey = { loja: 't1', bancada: 'vacuum', arvore: 'core', mochila: '' };
+const slot = (key, icon, label, cls, rc, cnt) => `<button class="slot ${cls} ${selKey[tab] === key ? 'sel' : ''}" data-sel="${key}" style="--rc:${rc}">${cnt !== undefined ? `<span class="cnt">${cnt}</span>` : ''}${ic(icon)}<i>${label}</i></button>`;
+const price = (c, ok) => `${ic('coin')}${fmt(c)}`;
+const detail = (icon, rc, rar, name, body, btn) => `<div class="detail"><div class="big" style="--rc:${rc}">${ic(icon)}</div>${rar ? `<div class="rar" style="--rc:${rc}">${rar}</div>` : ''}<h3>${name}</h3>${body}${btn || ''}</div>`;
 let lastShopHTML = {};
 function setPage(id, html) { if (lastShopHTML[id] !== html) { $('pg-' + id).innerHTML = html; lastShopHTML[id] = html; } }
+const tree = { x: 0, y: 30, s: 0.85 };
+function applyTree() { const w = $('tworld'); if (w) w.style.transform = `translate(${tree.x}px,${tree.y}px) scale(${tree.s})`; }
 function renderShop(force) {
   if (force) lastShopHTML = {};
   $('shopTitle').textContent = TABS.find(t => t[0] === tab)[1];
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'pg-' + tab));
   $('shopCoins').innerHTML = ic('coin') + fmt(state.coins);
-  const c = state.coins;
+  const c = state.coins, sk = selKey[tab];
   if (tab === 'loja') {
+    let h = `<div class="slots"><div class="secTitle">${ic('wood')}Ferramentas de neve</div><div class="srow">`;
+    TOOLS.forEach((t, i) => { const own = state.owned[i], rc = RAR[TOOL_TIER[i]][1];
+      h += slot('t' + i, t.id, own ? (state.tool === i ? 'Em uso' : 'Sua') : t.craft ? 'Bancada' : price(t.cost), `${own ? 'own' : t.craft ? 'lock' : c >= t.cost ? 'can' : 'no'} ${state.tool === i ? 'on' : ''}`, rc); });
+    h += `</div><div class="secTitle">${ic('lighter')}Calor (derrete gelo)</div><div class="srow">`;
+    HEATS.forEach((t, i) => { const own = state.ownedHeat[i], rc = RAR[HEAT_TIER[i]][1];
+      h += slot('h' + i, t.id, own ? (state.heat === i ? 'Em uso' : 'Sua') : t.craft ? 'Bancada' : price(t.cost), `${own ? 'own' : t.craft ? 'lock' : c >= t.cost ? 'can' : 'no'} ${state.heat === i ? 'on' : ''}`, rc); });
     const z = state.zone + 1;
-    let h = `<div class="secTitle">${ic('radius')}Expansão</div><div class="grid">`;
-    h += z < ZONES.length ? `<div class="card"><div class="badge">${ic('radius')}</div><b>Zona ${z + 1}</b><small>Cerca vai de ${ZONES[state.zone] * 2} m para ${ZONES[z] * 2} m. Neve mais alta e dura, gelo, casas, peças.</small><button class="gbtn ${c >= ZONE_COST[z] ? '' : 'gray'}" data-buy="zone">${ic('coin')}${fmt(ZONE_COST[z])}</button></div>`
-      : `<div class="card on"><div class="badge">${ic('star')}</div><b>Vila inteira liberada</b><small>Não há mais cercas.</small></div>`;
-    h += `<div class="card"><div class="badge">${ic('fuel')}</div><b>Galão de Combustível</b><small>Abastece a motoneve (+40%). Você tem ${state.inv.fuel}.</small><button class="gbtn ${c >= FUEL_COST ? '' : 'gray'}" data-buy="fuel">${ic('coin')}${fmt(FUEL_COST)}</button></div></div>`;
-    h += `<div class="secTitle">${ic('wood')}Ferramentas de neve</div><div class="grid">`;
-    TOOLS.forEach((t, i) => {
-      const own = state.owned[i], on = state.tool === i;
-      const btn = own ? `<button class="gbtn ${on ? 'green' : 'blue'}" data-tool="${i}">${on ? 'Em uso' : 'Equipar'}</button>` : t.craft ? `<button class="gbtn gray" data-goto="bancada">${ic('bench')}Bancada</button>` : `<button class="gbtn ${c >= t.cost ? '' : 'gray'}" data-tool="${i}">${ic('coin')}${fmt(t.cost)}</button>`;
-      h += `<div class="card ${on ? 'on' : ''}">${t.direct ? '<span class="tag">paga na hora</span>' : ''}<div class="badge">${ic(t.id)}</div><b>${t.name}</b><small>${t.desc}</small><div class="stats">${bar('Área', t.r / 5)}${bar('Força', t.rate / 10)}${bar('Alcance', t.reach / 16)}</div>${btn}</div>`;
-    });
-    h += `</div><div class="secTitle">${ic('lighter')}Ferramentas de calor (derretem gelo)</div><div class="grid">`;
-    HEATS.forEach((t, i) => {
-      const own = state.ownedHeat[i], on = state.heat === i;
-      const btn = own ? `<button class="gbtn ${on ? 'green' : 'blue'}" data-heat="${i}">${on ? 'Em uso' : 'Equipar'}</button>` : t.craft ? `<button class="gbtn gray" data-goto="bancada">${ic('bench')}Bancada</button>` : `<button class="gbtn ${c >= t.cost ? '' : 'gray'}" data-heat="${i}">${ic('coin')}${fmt(t.cost)}</button>`;
-      h += `<div class="card ${on ? 'on' : ''}"><div class="badge">${ic(t.id)}</div><b>${t.name}</b><small>${t.desc}</small><div class="stats">${bar('Área', t.r / 2)}${bar('Calor', t.melt / 4)}${bar('Alcance', t.reach / 7)}</div>${btn}</div>`;
-    });
-    setPage('loja', h + '</div>');
+    h += `</div><div class="secTitle">${ic('radius')}Expansão e suprimentos</div><div class="srow">`;
+    h += slot('zone', 'radius', z < ZONES.length ? price(ZONE_COST[z]) : 'Tudo', z < ZONES.length ? (c >= ZONE_COST[z] ? 'can' : 'no') : 'own', '#ffb347');
+    h += slot('fuel', 'fuel', price(FUEL_COST), c >= FUEL_COST ? '' : 'no', '#ff8a8a', state.inv.fuel) + '</div></div>';
+    let d;
+    if (sk[0] === 't' || sk[0] === 'h') {
+      const heat = sk[0] === 'h', i = +sk.slice(1), t = heat ? HEATS[i] : TOOLS[i], own = heat ? state.ownedHeat[i] : state.owned[i], on = heat ? state.heat === i : state.tool === i, [rn, rc] = RAR[(heat ? HEAT_TIER : TOOL_TIER)[i]];
+      const stats = heat ? bar('Área', t.r / 2) + bar('Calor', t.melt / 4) + bar('Alcance', t.reach / 7) : bar('Área', t.r / 5) + bar('Força', t.rate / 10) + bar('Alcance', t.reach / 16);
+      const btn = own ? `<button class="gbtn ${on ? 'green' : 'blue'}" data-${heat ? 'heat' : 'tool'}="${i}">${on ? 'Em uso' : 'Equipar'}</button>` : t.craft ? `<button class="gbtn gray" data-goto="bancada">${ic('bench')}Fabricar na Bancada</button>` : `<button class="gbtn ${c >= t.cost ? '' : 'gray'}" data-${heat ? 'heat' : 'tool'}="${i}">${ic('coin')}${fmt(t.cost)}</button>`;
+      d = detail(t.id, rc, rn, t.name, `<p>${t.desc}</p>${t.direct ? '<span class="tag">vira moeda na hora</span>' : ''}<div class="stats">${stats}</div>`, btn);
+    } else if (sk === 'zone') {
+      d = z < ZONES.length ? detail('radius', '#ffb347', 'Expansão', `Zona ${z + 1}`, `<p>A cerca vai de ${ZONES[state.zone] * 2} m para ${ZONES[z] * 2} m. Neve mais alta e mais dura, gelo, casas e peças escondidas.</p>`, `<button class="gbtn ${c >= ZONE_COST[z] ? '' : 'gray'}" data-buy="zone">${ic('coin')}${fmt(ZONE_COST[z])}</button>`)
+        : detail('star', '#ffb347', 'Expansão', 'Vila inteira liberada', '<p>Não há mais cercas.</p>');
+    } else d = detail('fuel', '#ff8a8a', 'Suprimento', 'Galão de Combustível', `<p>Abastece a motoneve (+40%). Você tem <b>${state.inv.fuel}</b>.</p>`, `<button class="gbtn ${c >= FUEL_COST ? '' : 'gray'}" data-buy="fuel">${ic('coin')}${fmt(FUEL_COST)}</button>`);
+    setPage('loja', h + d);
   } else if (tab === 'bancada') {
-    let h = `<div class="secTitle">${ic('bench')}Fabricar com peças encontradas na neve</div><div class="grid">`;
+    let h = `<div class="slots"><div class="secTitle">${ic('bench')}Receitas com peças achadas na neve</div><div class="srow">`, d = '';
     RECIPES.forEach(r => {
       const t = r.gives[0] === 'tool' ? TOOLS[r.gives[1]] : HEATS[r.gives[1]], own = r.gives[0] === 'tool' ? state.owned[r.gives[1]] : state.ownedHeat[r.gives[1]];
-      const ok = Object.entries(r.parts).every(([p, n]) => state.inv[p] >= n) && c >= r.cost;
-      h += `<div class="card ${own ? 'on' : ''}"><div class="badge">${ic(t.id)}</div><b>${t.name}</b><small>${t.desc}</small><div class="need">${need(r.parts)}</div>${own ? '<button class="gbtn green">Fabricado</button>' : `<button class="gbtn ${ok ? 'blue' : 'gray'}" data-craft="${r.id}">${ic('wrench')}${ic('coin')}${fmt(r.cost)}</button>`}</div>`;
+      const ok = Object.entries(r.parts).every(([p, n]) => state.inv[p] >= n) && c >= r.cost, rc = RAR[r.gives[0] === 'tool' ? TOOL_TIER[r.gives[1]] : HEAT_TIER[r.gives[1]]][1];
+      h += slot(r.id, t.id, own ? 'Feito' : ok ? 'Pronto!' : price(r.cost), own ? 'own' : ok ? 'can' : 'no', rc);
+      if (r.id === sk) d = detail(t.id, rc, 'Receita', t.name, `<p>${t.desc}</p>${need(r.parts)}`, own ? '<button class="gbtn green">Fabricado</button>' : `<button class="gbtn ${ok ? 'blue' : 'gray'}" data-craft="${r.id}">${ic('wrench')}Fabricar · ${ic('coin')}${fmt(r.cost)}</button>`);
     });
-    setPage('bancada', h + '</div>');
+    setPage('bancada', h + '</div></div>' + d);
   } else if (tab === 'arvore') {
-    let h = '<div style="overflow-x:auto"><div class="tree">';
-    COLS.forEach((name, col) => {
-      h += `<div class="branch"><h4>${name}</h4>`;
-      Object.entries(UPG).filter(([, u]) => u.col === col).forEach(([id, u], n) => {
-        const lv = state.upg[id], open = upgOpen(id), max = lv >= u.max, cost = upgCost(id);
-        if (n) h += `<div class="link ${open ? 'on' : ''}"></div>`;
-        h += `<div class="node ${open ? '' : 'locked'} ${max ? 'max' : ''}"><div class="orb">${open ? ic(u.icon) : ic('lock')}</div><b>${u.name}</b><div class="pips">${Array.from({ length: Math.min(u.max, 15) }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</div><small>${open ? u.desc : `Precisa de ${UPG[u.req[0]].name} nv ${u.req[1]}`}</small>${max ? '<button class="gbtn green">Máximo</button>' : `<button class="gbtn ${open && c >= cost ? '' : 'gray'}" data-upg="${id}">${ic('coin')}${fmt(cost)}</button>`}</div>`;
-      });
-      h += '</div>';
-    });
-    setPage('arvore', h + '</div></div>');
+    const U = 110; let lines = '', nodes = '';
+    for (const [id, u] of Object.entries(UPG)) {
+      if (u.req) { const q = UPG[u.req[0]].p, lit = upgOpen(id), x1 = 1000 + q[0] * U, y1 = 1000 + q[1] * U, x2 = 1000 + u.p[0] * U, y2 = 1000 + u.p[1] * U;
+        lines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#08111f" stroke-width="12" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${lit ? '#7fd8ff' : '#2a4262'}" stroke-width="6" stroke-linecap="round" ${lit ? '' : 'stroke-dasharray="2 10"'}/>`; }
+      const lv = state.upg[id], open = upgOpen(id), vis = upgVis(id), max = lv >= u.max, can = open && !max && c >= upgCost(id);
+      const cls = `${id === 'core' ? 'core' : ''} ${!vis ? 'myst' : !open ? 'lock' : ''} ${max ? 'max' : ''} ${can ? 'can' : ''} ${sk === id ? 'sel' : ''}`;
+      nodes += `<div class="tn ${cls}" data-node="${id}" style="left:${u.p[0] * U}px;top:${u.p[1] * U}px;--p:${lv / u.max * 100}">${vis ? `<div class="nm">${u.name}</div>` : ''}<div class="in">${ic(!vis ? 'lock' : u.icon)}</div>${vis ? `<div class="lv">${max ? 'MÁX' : `${lv}/${u.max}`}</div>` : ''}</div>`;
+    }
+    const u = UPG[sk], lv = state.upg[sk], open = upgOpen(sk), vis = upgVis(sk), max = lv >= u.max, cost = upgCost(sk);
+    const body = vis ? `<p>${u.desc}</p><div class="fx">Agora: ${lv ? u.fx(lv) : '—'}${max ? '' : `<br>Próximo: <em>${u.fx(lv + 1)}</em>`}</div>${open ? '' : `<p style="color:#ff9d9d">Precisa de ${UPG[u.req[0]].name} nível ${u.req[1]}</p>`}` : '<p>Habilidade misteriosa. Evolua o galho para revelar.</p>';
+    const btn = max ? '<button class="gbtn green">Nível máximo</button>' : `<button class="gbtn ${open && c >= cost ? '' : 'gray'}" data-upg="${sk}">${ic('coin')}${fmt(cost)}</button>`;
+    setPage('arvore', `<div class="tmap" id="tmap"><div class="tworld" id="tworld"><svg class="tlinks" viewBox="0 0 2000 2000">${lines}</svg>${nodes}</div><div class="thint">Arraste para explorar</div><div class="zoomBtns"><button data-zoom="-1">−</button><button data-zoom="1">+</button></div></div>`
+      + detail(vis ? u.icon : 'lock', max ? '#ffd34d' : '#7fd8ff', vis ? `Nível ${lv} de ${u.max}` : '???', vis ? u.name : '???', body, vis ? btn : ''));
+    applyTree();
   } else {
-    let h = `<div class="secTitle">${ic('bag')}Peças</div><div class="grid">`;
-    Object.entries(PARTS).forEach(([p, n]) => { h += `<div class="card ${state.inv[p] ? 'on' : ''}"><div class="badge">${ic(p)}</div><b>${n}</b><small>Quantidade: ${state.inv[p]}</small></div>`; });
-    h += `</div><div class="secTitle">${ic('sled')}Veículos</div><div class="grid">`;
-    VEH.forEach(v => { h += `<div class="card ${v.st.fixed ? 'on' : ''}"><div class="badge">${ic(v.icon)}</div><b>${v.name}</b><small>${v.st.fixed ? `Funcionando · ${v.kind === 'fuel' ? 'combustível' : 'bateria'} ${Math.round(v.st.energy)}%` : v.st.found ? `Achado! Falta: ${PARTS[v.part]}` : `Enterrado na zona ${zoneRing(v.x, v.z) + 1} (siga o feixe de luz)`}</small></div>`; });
-    h += `</div><div class="settings"><button class="gbtn gray" id="btnReset">Apagar progresso</button></div>`;
-    setPage('mochila', h);
+    let h = `<div class="slots"><div class="secTitle">${ic('bag')}Peças</div><div class="srow">`;
+    Object.entries(PARTS).forEach(([p]) => { h += slot('p' + p, p, PARTS[p].split(' ')[0], state.inv[p] ? 'own' : 'lock', '#59c3ee', state.inv[p]); });
+    h += `</div><div class="secTitle">${ic('sled')}Veículos</div><div class="srow">`;
+    VEH.forEach((v, i) => { h += slot('v' + i, v.icon, v.st.fixed ? 'Pronto' : v.st.found ? 'Quebrado' : '???', v.st.fixed ? 'own' : 'lock', '#ffb347'); });
+    h += `</div><div class="secTitle">${ic('ball')}Missões de bola de neve</div><div class="srow">`;
+    h += slot('', 'ball', `${state.ballM}/${BALL_MISSIONS.length}`, '', '#bff0ff') + slot('reset', 'help', 'Opções', '', '#8fb3d6') + '</div></div>';
+    let d;
+    if (sk[0] === 'p') { const p = sk.slice(1), uses = RECIPES.filter(r => r.parts[p]).map(r => (r.gives[0] === 'tool' ? TOOLS : HEATS)[r.gives[1]].name);
+      d = detail(p, '#59c3ee', 'Peça', PARTS[p], `<p>Você tem <b>${state.inv[p]}</b>.</p><p>${p === 'fuel' ? 'Abastece a motoneve.' : p === 'plug' ? 'Conserta a motoneve.' : p === 'battery' ? 'Conserta o trator elétrico.' : uses.length ? 'Usada em: ' + uses.join(', ') : ''}</p>`); }
+    else if (sk[0] === 'v') { const v = VEH[+sk.slice(1)];
+      d = detail(v.icon, '#ffb347', 'Veículo', v.name, `<p>${v.st.fixed ? `Funcionando · ${v.kind === 'fuel' ? 'combustível' : 'bateria'} ${Math.round(v.st.energy)}%` : v.st.found ? `Achado! Falta: ${PARTS[v.part]}` : `Enterrado na zona ${zoneRing(v.x, v.z) + 1}. Siga o feixe de luz.`}</p><p>Empurra a neve e forma bolas gigantes. Bola máxima: Ø ${(ballMaxR(v) * 2).toFixed(1)} m. Leve ao Derretedor: quanto maior, mais vale.</p>`); }
+    else if (sk === 'reset') d = detail('help', '#8fb3d6', '', 'Opções', `<p>Música e sons: botão no canto superior direito.</p>`, `<button class="gbtn gray" id="btnReset">Apagar progresso</button>`);
+    else d = detail('ball', '#bff0ff', 'Veículos', 'Missões de bola', BALL_MISSIONS.map(([dd, cc, pp], i) => `<div class="mis ${i < state.ballM ? 'done' : i === state.ballM ? 'cur' : ''}">${ic(i < state.ballM ? 'star' : 'ball')}Bola de ${dd} m${pp ? ' + ' + PARTS[pp].split(' ')[0] : ''}<b>${fmt(cc)}</b></div>`).join(''));
+    setPage('mochila', h + d);
   }
 }
 $('shop').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.id === 'btnReset') { if (confirm('Apagar todo o progresso e recomeçar?')) { try { localStorage.removeItem(SAVE_KEY); } catch (_) {} location.reload(); } return; }
+  if (b.dataset.zoom) { tree.s = clamp(tree.s * (b.dataset.zoom > 0 ? 1.2 : 0.83), 0.45, 1.6); applyTree(); return; }
+  if (b.dataset.sel !== undefined) { selKey[tab] = b.dataset.sel; tone(700, 900, 0.03, 0.08, 'triangle'); renderShop(true); return; }
   if (b.dataset.goto) { tab = b.dataset.goto; renderShop(true); return; }
   if (b.dataset.tool !== undefined) toolAction(+b.dataset.tool);
   else if (b.dataset.heat !== undefined) heatAction(+b.dataset.heat);
@@ -1404,6 +1489,15 @@ $('shop').addEventListener('click', e => {
   else if (b.dataset.buy === 'fuel' && state.coins >= FUEL_COST) { state.coins -= FUEL_COST; state.inv.fuel++; tone(600, 900, 0.07, 0.25, 'triangle'); }
   renderShop(); refreshHUD(); save();
 });
+// arrastar / pinçar o mapa da árvore; toque curto seleciona o nó
+const tp = new Map(); let tMoved = 0, tPinch = 0;
+$('pg-arvore').addEventListener('pointerdown', e => { if (!e.target.closest('#tmap') || e.target.closest('button')) return; tp.set(e.pointerId, { x: e.clientX, y: e.clientY }); tMoved = 0; if (tp.size === 2) { const [a, b] = [...tp.values()]; tPinch = Math.hypot(a.x - b.x, a.y - b.y); } try { e.target.setPointerCapture(e.pointerId); } catch (_) {} });
+$('pg-arvore').addEventListener('pointermove', e => { const o = tp.get(e.pointerId); if (!o) return; const dx = e.clientX - o.x, dy = e.clientY - o.y; o.x = e.clientX; o.y = e.clientY;
+  if (tp.size === 2) { const [a, b] = [...tp.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (tPinch) tree.s = clamp(tree.s * d / tPinch, 0.45, 1.6); tPinch = d; tMoved = 99; }
+  else { tree.x = clamp(tree.x + dx, -420, 420); tree.y = clamp(tree.y + dy, -420, 420); tMoved += Math.abs(dx) + Math.abs(dy); } applyTree(); });
+const tUp = e => { if (!tp.has(e.pointerId)) return; tp.delete(e.pointerId); tPinch = 0; if (tMoved < 10) { const el = document.elementFromPoint(e.clientX, e.clientY), n = el && el.closest('[data-node]'); if (n) { selKey.arvore = n.dataset.node; tone(700, 900, 0.03, 0.08, 'triangle'); renderShop(true); } } };
+$('pg-arvore').addEventListener('pointerup', tUp); $('pg-arvore').addEventListener('pointercancel', e => { tp.delete(e.pointerId); tPinch = 0; });
+$('pg-arvore').addEventListener('wheel', e => { e.preventDefault(); tree.s = clamp(tree.s * (e.deltaY < 0 ? 1.1 : 0.9), 0.45, 1.6); applyTree(); }, { passive: false });
 function toolAction(i) { const t = TOOLS[i]; if (state.owned[i]) equipTool(i); else if (!t.craft && state.coins >= t.cost) { state.coins -= t.cost; state.owned[i] = true; equipTool(i); chime(523, 5); toast(`Nova ferramenta: ${t.name}!`, 2.8, t.id); advance(2); } }
 function heatAction(i) { const t = HEATS[i]; if (state.ownedHeat[i]) equipHeat(i); else if (!t.craft && state.coins >= t.cost) { state.coins -= t.cost; state.ownedHeat[i] = true; equipHeat(i); chime(523, 5); toast(`${t.name}! Segure o botão de fogo para derreter gelo.`, 3.5, t.id); } }
 function buyUpg(id) { const u = UPG[id]; if (!upgOpen(id) || state.upg[id] >= u.max || state.coins < upgCost(id)) return; state.coins -= upgCost(id); state.upg[id]++; if (id === 'robots') syncRobots(); tone(600, 900, 0.07, 0.25, 'triangle'); }
@@ -1435,6 +1529,7 @@ $('winPrestige').addEventListener('click', () => { const p = state.prestige + 1;
 const SAVE_KEY = 'nevezero_v4';
 const enc = (arr, mul) => { const q = new Uint8Array(N * N); for (let k = 0; k < N * N; k++) q[k] = Math.min(255, Math.round(arr[k] * mul)); let s = ''; for (let k = 0; k < q.length; k += 4096) s += String.fromCharCode.apply(null, q.subarray(k, k + 4096)); return btoa(s); };
 function save() {
+  state.balls = balls.filter(b => !b.melt).map(b => [+b.x.toFixed(2), +b.z.toFixed(2), Math.round(b.vol)]);
   try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 4, state, snow: enc(depth, 60), ice: enc(iceA, 255), found: treasures.map(t => t.found ? 1 : 0).join(''), items: items.map(t => t.found ? 1 : 0).join(''), veh: vstate, player: [player.x, player.z, player.yaw], day: DAY.t })); } catch (_) {}
 }
 function load() {
@@ -1442,7 +1537,7 @@ function load() {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (!d || d.v !== 4) return false;
     if (d.prestigeOnly) { state.prestige = d.prestigeOnly; snowPhase = state.prestige * 1.7; fillSnow(); return false; }
     const keep = { upg: { ...state.upg, ...d.state.upg }, inv: { ...state.inv, ...d.state.inv } };
-    Object.assign(state, d.state, keep); state.driving = -1;
+    Object.assign(state, d.state, keep); state.driving = -1; if (Object.values(state.upg).some(v => v > 0)) state.upg.core = 1;
     snowPhase = state.prestige * 1.7; fillSnow();
     const s = atob(d.snow), si = atob(d.ice); totalVol = 0;
     for (let k = 0; k < N * N; k++) { depth[k] = s.charCodeAt(k) / 60; iceA[k] = si.charCodeAt(k) / 255; totalVol += depth[k] * CELL_A; }
@@ -1457,6 +1552,40 @@ function load() {
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
 addEventListener('pagehide', save);
 
+/* ---------- bolas de neve: os veículos não coletam, eles empurram e enrolam ---------- */
+const BALL_GEO = new THREE.IcosahedronGeometry(1, 3), balls = [], COMPACT = 0.06;
+M.snowBall = toon({ map: TEX.snow, color: 0xf4fbff });
+const ballR = vol => Math.cbrt(vol * COMPACT * 0.2387);
+const ballMaxR = V => V.maxR * (1 + 0.2 * state.upg.ballMax);
+const ballMult = r => (1 + 0.6 * r) * (1 + 0.2 * state.upg.ballValue);
+const BALL_MISSIONS = [[1, 300], [1.5, 1500, 'gear'], [2, 5000, 'fuel'], [2.5, 15000, 'crystal'], [3, 40000, 'coil'], [3.5, 90000, 'crystal'], [4, 200000, 'core'], [5, 600000]];
+let curBall = null, ballFullT = 0;
+const _ax = new THREE.Vector3(), _q = new THREE.Quaternion();
+function makeBall(x, z, vol) { const m = ol(mesh(BALL_GEO, M.snowBall), 0.025); scene.add(m); const b = { x, z, vol, m, r: 0, att: false, melt: false, peak: 0, v0: 0 }; balls.push(b); placeBall(b); return b; }
+function placeBall(b) { b.r = Math.max(0.15, ballR(b.vol)); b.m.scale.setScalar(b.r); b.m.position.set(b.x, groundAt(b.x, b.z) + b.r * 0.9, b.z); }
+function rollBall(b, nx, nz) { const mv = Math.hypot(nx - b.x, nz - b.z); if (mv > 1e-4) { _ax.set(nz - b.z, 0, b.x - nx).normalize(); _q.setFromAxisAngle(_ax, mv / b.r); b.m.quaternion.premultiply(_q); } b.x = nx; b.z = nz; }
+function ballMission(r) {
+  while (state.ballM < BALL_MISSIONS.length && r * 2 >= BALL_MISSIONS[state.ballM][0] - 0.01) {
+    const [d, c, part] = BALL_MISSIONS[state.ballM++]; state.coins += c; if (part) state.inv[part]++;
+    toast(`Missão cumprida: bola de ${d} m! +${fmt(c)}${part ? ' e ' + PARTS[part] : ''}`, 4, 'ball'); chime(784, 6); vibrate([30, 40, 60]);
+  }
+}
+function updateBalls(dt) {
+  for (let n = balls.length - 1; n >= 0; n--) {
+    const b = balls[n];
+    if (!b.melt && Math.hypot(b.x - MELT.x, b.z - MELT.z) < 2.1 + b.r * 0.7) {
+      b.melt = true; b.peak = b.r; b.v0 = b.vol; b.att = false; if (curBall === b) curBall = null;
+      floatText(`Bola Ø ${(b.r * 2).toFixed(1)} m · ×${ballMult(b.r).toFixed(1)}`, new THREE.Vector3(MELT.x, 4, MELT.z), '#bff0ff', 20, 'ball'); ballMission(b.r); thump(0.2, 120);
+    }
+    if (b.melt) {
+      const m = Math.min(b.vol, Math.max(b.v0 * 0.45, 20) * dt), c = m * UNITS * stat.value() * ballMult(b.peak);
+      b.vol -= m; state.coins += c; sellAcc += c; b.x = lerp(b.x, MELT.x, dt * 1.5); b.z = lerp(b.z, MELT.z, dt * 1.5); placeBall(b);
+      if (Math.random() < 0.7) spawn(coins3, MELT.x + fr(-0.5, 0.5), 3, MELT.z + fr(-0.5, 0.5), fr(-2.5, 2.5), fr(5, 8), fr(-2.5, 2.5), 1, 1.4);
+      if (Math.random() < 0.5) emitSteam(b.x + fr(-b.r, b.r), b.m.position.y + b.r, b.z + fr(-b.r, b.r), fr(-.3, .3), 1.6, fr(-.3, .3), 1.5);
+      if (b.vol <= 1) { scene.remove(b.m); balls.splice(n, 1); }
+    }
+  }
+}
 /* =====================================================================
    LOOP PRINCIPAL
    ===================================================================== */
@@ -1466,7 +1595,9 @@ let hudT = 0, zoneT = 0, saveT = 0, sellAcc = 0, sellT = 0, crunchT = 0, fullT =
 let gainAcc = 0, gainT = 0, shake = 0, buzzT = 0, boardT = 0, puffT = 0, fireT = 0, noFuelT = 0;
 function aimSnow(reach) {
   camera.getWorldDirection(_dir); const o = camera.position;
-  for (let t = 0.25; t < reach; t += 0.06) { const x = o.x + _dir.x * t, y = o.y + _dir.y * t, z = o.z + _dir.z * t, k = idxOf(x, z); if (k < 0) continue; const s = depth[k] > 0.015 ? gH[k] + depth[k] : gH[k]; if (y <= s) return _hit.set(x, s, z); }
+  for (let t = 0.25; t < reach; t += 0.06) { const x = o.x + _dir.x * t, y = o.y + _dir.y * t, z = o.z + _dir.z * t, k = idxOf(x, z); if (k < 0) continue; const s = depth[k] > 0.015 ? gH[k] + depth[k] : gH[k]; if (y <= s) return snapSnow(x, z, s); }
+  // encostas e desníveis: se o raio passa por cima (descida), mira na neve logo abaixo do fim do alcance
+  if (_dir.y < 0.25) { const h = Math.hypot(_dir.x, _dir.z) || 1, t = reach * 0.85, x = o.x + _dir.x / h * t, z = o.z + _dir.z / h * t, k = idxOf(x, z); if (k >= 0 && Math.abs(o.y - (gH[k] + depth[k])) < reach + 1.5) return snapSnow(x, z, gH[k] + depth[k]); }
   return null;
 }
 function lookingAt(meshes) { if (!inHouse()) return false; camera.getWorldDirection(_dir); raycaster.set(camera.position, _dir); raycaster.far = 3.0; return raycaster.intersectObjects(meshes, false).length > 0; }
@@ -1481,13 +1612,21 @@ function useVehicle(i) {
   }
   if (v.kind === 'fuel') while (st.energy < 60 && state.inv.fuel > 0) { state.inv.fuel--; st.energy = Math.min(100, st.energy + 40); toast('Abastecido com um galão!', 2, 'fuel'); }
   if (st.energy <= 0) { toast(v.kind === 'fuel' ? 'Sem combustível. Compre galões na loja ou ache na neve.' : 'Bateria vazia. Estacione perto da cabana para recarregar.', 3.5, v.kind === 'fuel' ? 'fuel' : 'battery'); return; }
-  state.driving = i; player.x = st.x; player.z = st.z; player.yaw = st.yaw + Math.PI; tone(220, 440, 0.08, 0.4, 'sawtooth');
+  state.driving = i; player.x = st.x; player.z = st.z; player.yaw = st.yaw + Math.PI; player.pitch = -0.3; tone(220, 440, 0.08, 0.4, 'sawtooth');
 }
 function exitVehicle() {
+  if (curBall) { curBall.att = false; curBall = null; }
   const v = VEH[state.driving]; v.st.x = player.x; v.st.z = player.z; v.st.yaw = player.yaw - Math.PI;
   state.driving = -1; player.x += Math.cos(player.yaw) * 2.2; player.z -= Math.sin(player.yaw) * 2.2; collide(player, 0.3);
 }
 
+function snapSnow(x, z, s) {     // se o ponto não tem neve, procura a célula com neve mais próxima (barrancos e beiradas)
+  const k = idxOf(x, z); if (k >= 0 && depth[k] > 0.015) return _hit.set(x, s, z);
+  let best = -1, bd = 1e9; const i0 = Math.round((x + HALF) / CELL), j0 = Math.round((z + HALF) / CELL);
+  for (let j = j0 - 2; j <= j0 + 2; j++) for (let i = i0 - 2; i <= i0 + 2; i++) { if (i < 0 || j < 0 || i >= N || j >= N) continue; const kk = j * N + i; if (depth[kk] > 0.015) { const d = (i - i0) ** 2 + (j - j0) ** 2; if (d < bd) { bd = d; best = kk; } } }
+  if (best < 0) return _hit.set(x, s, z);
+  return _hit.set(gx(best % N), gH[best] + depth[best], gx(best / N | 0));
+}
 function update(dt, t) {
   const drv = state.driving >= 0, V = drv ? VEH[state.driving] : null;
   let ix = joy.x, iz = joy.y;
@@ -1501,18 +1640,30 @@ function update(dt, t) {
     const st = V.st, has = st.energy > 0;
     player.yaw -= ix * 1.5 * dt * (iz < -0.1 ? -1 : 1);
     const ahead = idxOf(player.x + fx * 1.8, player.z + fz * 1.8), deep = ahead >= 0 ? depth[ahead] : 0;
-    const sp = iz * V.speed * (has ? 1 : 0) * (1 - clamp(deep - 0.6, 0, 2.5) * 0.3);
+    const sp = iz * V.speed * (1 + 0.1 * state.upg.vehSpeed) * (has ? 1 : 0) * (1 - clamp(deep - 0.6, 0, 2.5) * 0.25) * (curBall ? 1 - 0.3 * curBall.r / ballMaxR(V) : 1);
     player.vx = damp(player.vx, fx * sp, 3, dt); player.vz = damp(player.vz, fz * sp, 3, dt);
     player.x += player.vx * dt; player.z += player.vz * dt; collide(player, 1.2);
     const hs = Math.hypot(player.vx, player.vz); moving = hs > 0.5;
     if (has) st.energy = Math.max(0, st.energy - V.burn * (moving ? 1 : 0.15) * dt * (1 - 0.15 * state.upg.fuelEff));
     else { noFuelT -= dt; if (noFuelT <= 0) { noFuelT = 4; toast(V.kind === 'fuel' ? 'Acabou o combustível! Saia e use um galão.' : 'Bateria vazia! Volte perto da cabana.', 3, V.kind === 'fuel' ? 'fuel' : 'battery'); } }
-    if (moving || actHeld) {
-      const vol = clearAt(player.x + fx * 1.9, player.z + fz * 1.9, V.r * (1 + 0.15 * state.upg.plow), V.rate * (1 + 0.1 * state.upg.power), dt, V.cap - state.vbag);
-      if (vol > 0) { const u = vol * UNITS * comboMult(); state.vbag = Math.min(V.cap, state.vbag + u); gainAcc += u;
-        for (let n = 0; n < 3; n++) spawn(bits, player.x + fx * 2.2 + fr(-1, 1), groundAt(player.x, player.z) + 0.6, player.z + fz * 2.2 + fr(-1, 1), rx * fr(-3, 3) + fx * 2, fr(2, 5), rz * fr(-3, 3) + fz * 2, fr(0.05, 0.1), 1.5, -99);
-        crunchT -= dt; if (crunchT <= 0) { crunchT = 0.09; crunch(0.08, 900); } shake = Math.max(shake, 0.02); }
+    const maxR = ballMaxR(V);
+    if (!curBall) { const px = player.x + fx * 2.1, pz = player.z + fz * 2.1; for (const bl of balls) if (!bl.melt && Math.hypot(bl.x - px, bl.z - pz) < bl.r + 0.7) { curBall = bl; bl.att = true; tone(300, 500, 0.06, 0.2, 'triangle'); break; } }
+    if (curBall) {
+      rollBall(curBall, player.x + fx * (2.1 + curBall.r), player.z + fz * (2.1 + curBall.r));
+      for (let n = balls.length - 1; n >= 0; n--) { const o = balls[n]; if (o === curBall || o.melt) continue; if (Math.hypot(o.x - curBall.x, o.z - curBall.z) < curBall.r + o.r * 0.8) { curBall.vol += o.vol; scene.remove(o.m); balls.splice(n, 1); thump(0.18, 140); vibrate(30); floatText('Bolas unidas!', new THREE.Vector3(curBall.x, curBall.m.position.y + curBall.r + 0.5, curBall.z), '#bff0ff', 18, 'ball'); } }
     }
+    if (has && (moving || actHeld)) {
+      const r0 = curBall ? curBall.r : 0, cx = player.x + fx * (2.3 + r0 * 1.2), cz = player.z + fz * (2.3 + r0 * 1.2);
+      const left = curBall ? (4.18879 * maxR ** 3 / COMPACT - curBall.vol) : 1e9;
+      const vol = left > 0.5 ? clearAt(cx, cz, Math.max(V.r * (1 + 0.15 * state.upg.plow), r0 * 1.1), V.rate * (1 + 0.1 * state.upg.power), dt, left * UNITS) : 0;
+      if (vol > 0) {
+        if (!curBall) { curBall = makeBall(player.x + fx * 2.2, player.z + fz * 2.2, 0); curBall.att = true; }
+        curBall.vol += vol;
+        for (let n = 0; n < 2; n++) spawn(bits, cx + fr(-1, 1), groundAt(cx, cz) + 0.4, cz + fr(-1, 1), rx * fr(-3, 3), fr(2, 4), rz * fr(-3, 3), fr(0.05, 0.1), 1.2, -99);
+        crunchT -= dt; if (crunchT <= 0) { crunchT = 0.09; crunch(0.08, 700 - Math.min(400, curBall.r * 150)); } shake = Math.max(shake, 0.02);
+      } else if (curBall && left <= 0.5) { ballFullT -= dt; if (ballFullT <= 0) { ballFullT = 6; toast('Bola no tamanho máximo! Empurre até o Derretedor.', 3, 'ball'); } }
+    }
+    if (curBall) placeBall(curBall);
     st.x = player.x; st.z = player.z; st.yaw = player.yaw - Math.PI;
     if (actPressed) { exitVehicle(); actPressed = false; }
   } else {
@@ -1544,7 +1695,7 @@ function update(dt, t) {
     else if (vi >= 0) { const v = VEH[vi]; ctx = `${ic(v.st.fixed ? 'enter' : 'wrench')}${v.st.fixed ? 'Dirigir ' + v.name : 'Consertar ' + v.name}`; if (actPressed) useVehicle(vi); if (!v.st.found) { v.st.found = true; toast(`Você achou: ${v.name}!`, 3, v.icon); chime(659, 5); } }
     else if (heatHeld && state.heat >= 0) {
       const H = HEATS[state.heat], hit = aimSnow(H.reach); heating = true;
-      if (hit) { ret = { x: hit.x, y: hit.y, z: hit.z, r: H.r, heat: true }; const m = meltAt(hit.x, hit.z, H.r, H.melt * (1 + 0.15 * state.upg.iceBreak), dt);
+      if (hit) { ret = { x: hit.x, y: hit.y, z: hit.z, r: H.r, heat: true }; const m = meltAt(hit.x, hit.z, H.r, H.melt * (1 + 0.15 * state.upg.iceBreak) * (1 + 0.2 * state.upg.heatPow), dt);
         fireT -= dt; if (fireT <= 0) { fireT = 0.03; spawn(fires, hit.x + fr(-H.r, H.r) * 0.6, hit.y + 0.1, hit.z + fr(-H.r, H.r) * 0.6, fr(-.5, .5), fr(1, 2.5), fr(-.5, .5), fr(0.06, 0.14) * (1 + H.r), 0.6); if (m.n && Math.random() < 0.4) emitSteam(hit.x, hit.y + 0.2, hit.z, fr(-.3, .3), 1.5, fr(-.3, .3), 1.2); }
         crunchT -= dt; if (crunchT <= 0) { crunchT = 0.1; crunch(0.05, 300, 0.15); } }
     } else {
@@ -1584,13 +1735,14 @@ function update(dt, t) {
   if (absorbed > 0) { absorbed = 0; const b = $('bagBar'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
   if (patchBonus > 0) { patchBonus = 0; advance(3); }
 
+  updateBalls(dt);
   // --- vender ---
   if (!drv && state.upg.pipe && state.bag > 0) { const c = state.bag * stat.value() * 0.8; state.coins += c; sellAcc += c; state.bag = 0; }
-  const dm = Math.hypot(player.x - MELT.x, player.z - MELT.z), bagNow = drv ? state.vbag : state.bag;
+  const dm = Math.hypot(player.x - MELT.x, player.z - MELT.z), bagNow = state.bag;
   const selling = dm < (drv ? 4.5 : 3.0) && bagNow > 0;
   if (selling) {
-    const amount = Math.min(bagNow, Math.max(25, (drv ? V.cap : cap) * 0.9) * dt), c = amount * stat.value();
-    if (drv) state.vbag -= amount; else state.bag -= amount; state.coins += c; sellAcc += c; advance(1);
+    const amount = Math.min(bagNow, Math.max(25, cap * 0.9) * dt), c = amount * stat.value();
+    state.bag -= amount; state.coins += c; sellAcc += c; advance(1);
     if (Math.random() < 0.6) spawn(coins3, MELT.x + fr(-0.4, 0.4), 2.9, MELT.z + fr(-0.4, 0.4), fr(-2, 2), fr(4, 7), fr(-2, 2), 1, 1.4);
   }
   sellT -= dt;
@@ -1659,6 +1811,7 @@ function loop() {
 
 /* ---------- início ---------- */
 const loaded = load();
+(state.balls || []).forEach(([x, z, v]) => makeBall(x, z, v));
 buildFence(); syncRobots(); equipTool(state.tool); equipHeat(state.heat); markAll(); updateDay(0);
 VEH.forEach(v => { v.beam.visible = !v.st.fixed; });
 drawBoard();
@@ -1675,7 +1828,7 @@ $('btnStart').addEventListener('click', () => {
 });
 refreshHUD();
 window.__gameStarted = true;
-window.__game = { state, player, TOOLS, HEATS, toggleShop, buyZone, toolAction, heatAction, craft, pct, items, VEH, clearAt, meltAt, useVehicle, exitVehicle, DAY, dispZone, zoneSnowFraction };
+window.__game = { balls, makeBall, BALL_MISSIONS, state, player, TOOLS, HEATS, toggleShop, buyZone, toolAction, heatAction, craft, pct, items, VEH, clearAt, meltAt, useVehicle, exitVehicle, DAY, dispZone, zoneSnowFraction };
 loop();
 </script>
 </body>
