@@ -28,13 +28,17 @@
 
   /* ---------- HUD ---------- */
   #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
-  #stats{position:absolute;left:calc(10px + var(--safe-l));top:calc(10px + var(--safe-t));display:flex;flex-direction:column;gap:6px;max-width:280px}
+  #stats{position:absolute;left:calc(8px + var(--safe-l));top:calc(8px + var(--safe-t));display:flex;flex-direction:column;gap:4px;max-width:240px}
   .pill{background:rgba(10,26,46,.6);border:2px solid rgba(255,255,255,.18);border-radius:14px;padding:4px 11px;font-size:13px;font-weight:800;
     text-shadow:0 1px 2px #000;align-self:flex-start;display:flex;align-items:center;gap:6px}
-  #coinsPill{font-size:21px;font-weight:900;color:var(--gold);text-shadow:0 2px 0 #7a4a00}
+  .toprow{display:flex;gap:6px;align-items:center}
+  #starsPill{font-size:16px;font-weight:900;color:#ffe27a;text-shadow:0 2px 0 #7a5a00;padding:3px 9px}
+  #starsPill .ic{width:18px;height:18px}
+  #blizz{position:absolute;left:50%;top:calc(58px + var(--safe-t));transform:translateX(-50%);display:none;padding:4px 14px;border-radius:14px;font-size:13px;font-weight:900;color:#3b2500;background:linear-gradient(#fff3b0,#ffc93d);border:2px solid #7a4a00;box-shadow:0 0 18px rgba(255,201,61,.8);animation:pulse .7s infinite alternate}
+  #coinsPill{font-size:19px;font-weight:900;color:var(--gold);text-shadow:0 2px 0 #7a4a00}
   #coinsPill.bump{animation:cbump .35s}
   @keyframes cbump{40%{transform:scale(1.25);filter:brightness(1.35)}}
-  .bar{position:relative;width:210px;height:22px;border-radius:12px;background:rgba(10,26,46,.65);border:2px solid rgba(255,255,255,.6);overflow:hidden}
+  .bar{position:relative;width:180px;height:18px;border-radius:12px;background:rgba(10,26,46,.65);border:2px solid rgba(255,255,255,.6);overflow:hidden}
   .bar .fill{position:absolute;inset:0;width:0;background:linear-gradient(#ffffff,#8fdcff 60%,#59b9ea);transition:width .12s}
   .bar .txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11.5px;font-weight:900;color:#06263a;text-shadow:0 0 3px rgba(255,255,255,.9)}
   #bagBar.pop{animation:bpop .18s}
@@ -43,7 +47,9 @@
   #fuelBar{display:none}
   #fuelBar .fill{background:linear-gradient(#fff2b0,#ffb627)}
   @keyframes pulse{to{filter:brightness(1.35)}}
-  #objective{font-size:12px;font-weight:800;color:#fff;background:rgba(40,110,170,.65);border-color:rgba(127,216,255,.6)}
+  #prog{font-size:11px;padding:2px 8px;border:0;background:rgba(10,26,46,.45)}
+  #objective{font-size:11px;font-weight:800;color:#e8f6ff;background:rgba(10,26,46,.4);border:0;border-left:3px solid var(--ice);border-radius:6px;padding:2px 7px;line-height:1.3;max-width:230px}
+  #objective .ic{width:14px;height:14px;flex-shrink:0}
   #objective:empty{display:none}
   #topRight{position:absolute;right:calc(10px + var(--safe-r));top:calc(10px + var(--safe-t));display:flex;gap:8px;pointer-events:auto}
   .iconbtn{width:44px;height:44px;border-radius:50%;background:rgba(10,26,46,.55);border:2px solid rgba(255,255,255,.35);font-size:22px;display:flex;align-items:center;justify-content:center}
@@ -119,6 +125,10 @@
   .need span{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:900;padding:4px 8px;border-radius:10px;background:rgba(0,0,0,.3)}
   .need span .ic{width:22px;height:22px}.need span b{margin-left:auto}
   .need span.ok{color:#9ff0b0}.need span.no{color:#ff9d9d}
+  .quest{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:7px;border-radius:12px;background:linear-gradient(#2a5585,#1b3b60);border:3px solid var(--ink)}
+  .quest>.ic{width:34px;height:34px;flex-shrink:0}.quest .qb{flex:1;display:flex;flex-direction:column;gap:4px;font-size:12.5px}
+  .quest .qr{display:flex;align-items:center;gap:3px;font-weight:900;color:#ffe27a;font-size:15px}.quest .qr .ic{width:18px;height:18px}
+  .diary{width:100%;text-align:left;background:#f3e6c4;color:#3b2a14;border-radius:6px;padding:6px 9px}.diary b{font:italic 900 12px Georgia,serif}.diary p{margin:3px 0 0;color:#4a3618;font:italic 12px/1.4 Georgia,serif}
   .mis{display:flex;align-items:center;gap:6px;width:100%;font-size:11.5px;font-weight:800;padding:4px 8px;border-radius:9px;background:rgba(0,0,0,.28);color:#bcd6ee}
   .mis .ic{width:18px;height:18px}.mis.done{color:#9ff0b0}.mis.cur{color:#fff;box-shadow:inset 0 0 0 2px #7fd8ff}.mis b{margin-left:auto;color:#ffd166}
   /* árvore de habilidades: mapa arrastável */
@@ -144,6 +154,10 @@
   .zoomBtns{position:absolute;right:8px;bottom:8px;display:flex;gap:6px}
   .zoomBtns button{width:36px;height:36px;border-radius:10px;font-size:20px;font-weight:900;color:#fff;background:#24476f;border:3px solid var(--ink)}
   .settings{margin-top:10px}
+  .paper{position:relative;max-width:420px;width:100%;padding:24px 26px 18px;background:linear-gradient(#fbf3dc,#efe0b8);color:#3b2a14;border-radius:6px;transform:rotate(-1.2deg);box-shadow:0 14px 40px rgba(0,0,0,.6),inset 0 0 40px rgba(150,110,50,.25);text-align:center}
+  .paper h3{margin:0 0 10px;font:italic 900 17px Georgia,serif;color:#5a3a12}
+  .paper p{margin:0 0 16px;font:italic 15px/1.55 Georgia,serif}
+  .paper .pin{position:absolute;top:-8px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ff9a8a,#c0302a);box-shadow:0 2px 3px rgba(0,0,0,.5)}
   #win .modal{max-width:440px;height:auto;text-align:center}
   #win .body{padding:18px 20px;line-height:1.55;font-size:14px;color:#cfe3f7}
   #win .body b{color:#fff}
@@ -178,7 +192,7 @@
 <body>
 <div id="hud">
   <div id="stats">
-    <div class="pill" id="coinsPill"><span class="ico-coin"></span><span id="coins">0</span></div>
+    <div class="toprow"><div class="pill" id="coinsPill"><span class="ico-coin"></span><span id="coins">0</span></div><div class="pill" id="starsPill"></div></div>
     <div class="bar" id="bagBar"><div class="fill"></div><div class="txt" id="bagText"></div></div>
     <div class="bar" id="fuelBar"><div class="fill"></div><div class="txt" id="fuelText"></div></div>
     <div class="pill" id="prog"></div>
@@ -187,6 +201,7 @@
   <div id="topRight"><button class="iconbtn" id="btnSound"></button><button class="iconbtn" id="btnHelp"></button></div>
   <div id="cross"></div>
   <div id="combo"></div>
+  <div id="blizz"></div>
   <div id="section"><div class="ring"></div><span id="secText"></span></div>
   <div id="ctx"></div>
   <div id="toast"></div>
@@ -207,8 +222,10 @@
     <div class="page" id="pg-bancada"></div>
     <div class="page" id="pg-arvore"></div>
     <div class="page" id="pg-mochila"></div>
+    <div class="page" id="pg-missoes"></div>
   </div>
 </div>
+<div class="modalWrap" id="note"><div class="paper"><div class="pin"></div><h3 id="noteT"></h3><p id="noteB"></p><button class="gbtn blue" id="noteOk">Guardar no diário</button></div></div>
 <div class="modalWrap" id="win">
   <div class="modal">
     <header><h2>Vale limpo!</h2></header>
@@ -269,6 +286,10 @@ const sv = b => `<svg viewBox="0 0 64 64" class="ic">${b}</svg>`;
 const ln = (d, c, w = 5) => `<path d="${d}" fill="none" stroke="#1b2a3c" stroke-width="${w + 4}" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
 const shovelIc = c => sv(ln('M46 6L30 36', '#b07a45', 5) + `<path d="M18 32l17 8-6 15c-6 2-13-2-15-9z" fill="${c}" ${O}/>` + ln('M41 4l10 5', '#222831', 5));
 const ICON = {
+  drone: sv(`<rect x="20" y="26" width="24" height="14" rx="7" fill="#e9f3ff" ${O}/><path d="M8 22h16M40 22h16M16 22v6M48 22v6" stroke="#22344d" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="33" r="4" fill="#6fe0ff"/><circle cx="32" cy="50" r="8" fill="#fff" ${O}/>`),
+  house: sv(`<path d="M10 30L32 12l22 18v24H10z" fill="#e9b07a" ${O}/><path d="M6 32L32 9l26 23" fill="none" stroke="#c0443a" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/><rect x="27" y="38" width="10" height="16" fill="#7a4a2a" ${O}/><rect x="40" y="34" width="8" height="8" fill="#ffd08f"/>`),
+  chest: sv(`<rect x="9" y="26" width="46" height="28" rx="4" fill="#a8652e" ${O}/><path d="M9 30c0-12 46-12 46 0" fill="#c47a3a" ${O}/><rect x="9" y="30" width="46" height="5" fill="#ffd166"/><rect x="28" y="30" width="8" height="12" rx="2" fill="#ffd166" ${O}/>`),
+  note: sv(`<path d="M14 8h28l10 10v38H14z" fill="#f6ecd2" ${O}/><path d="M21 24h22M21 32h22M21 40h16" stroke="#8a6a3a" stroke-width="3.5" stroke-linecap="round"/>`),
   ball: sv(`<circle cx="32" cy="34" r="24" fill="#f4fbff" ${O}/><path d="M17 28c6-7 15-9 23-5M21 45c8 4 17 3 23-3" stroke="#a9d8f2" stroke-width="4" fill="none" stroke-linecap="round"/>`),
   coin: sv(`<circle cx="32" cy="32" r="25" fill="#ffcc33" ${O}/><circle cx="32" cy="32" r="16" fill="none" stroke="#d99a10" stroke-width="3"/><path d="M32 22v20M26 28h12" stroke="#d99a10" stroke-width="5" stroke-linecap="round"/>`),
   snow: sv(ln('M32 8v48M11 20l42 24M11 44l42-24M26 12l6 6 6-6M26 52l6-6 6 6', '#c9f1ff', 5)),
@@ -344,7 +365,7 @@ camera.rotation.order = 'YXZ';
 scene.add(camera);
 const DPR_STEPS = IS_TOUCH ? [2, 1.75, 1.5, 1.25, 1] : [2, 1.5, 1.25, 1];
 let dprIdx = IS_TOUCH ? 1 : 0;
-function resize() { renderer.setPixelRatio(Math.min(devicePixelRatio || 1, DPR_STEPS[dprIdx])); renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
+function resize() { renderer.setPixelRatio(Math.min(devicePixelRatio || 1, DPR_STEPS[dprIdx])); renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.fov = clamp(2 * Math.atan(Math.tan(44 * Math.PI / 180) / camera.aspect) * 180 / Math.PI, 50, 70); camera.updateProjectionMatrix(); if (window.flMat) flMat.uniforms.uScale.value = renderer.getPixelRatio() * innerHeight / (2 * Math.tan(camera.fov * Math.PI / 360)); }
 addEventListener('resize', resize); resize();
 const hemi = new THREE.HemisphereLight(0xc4e2ff, 0xffffff, 1.0); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff0d6, 2.4);
@@ -499,11 +520,11 @@ function textTexture(lines, w = 256, h = 128, bg = '#0b2a1a', fg = '#7dffb0') {
    ===================================================================== */
 const HALF = 90, CELL = 0.6, N = Math.round(HALF * 2 / CELL) + 1, CELL_A = CELL * CELL;
 const UNITS = 10;
-const ZONES = [20, 36, 54, 72, 89], ZONE_COST = [0, 1500, 9000, 40000, 160000];
+const ZONES = [20, 36, 54, 72, 89], ZONE_STARS = [0, 15, 50, 120, 220];
 const DEPTH_Z = [1, 1.5, 2.0, 2.6, 3.2], HARD_Z = [1, 1.35, 1.8, 2.4, 3.1];
 const HW = 6, HD = 4.5;
 const MELT = { x: 8.2, z: 8.6 };
-const POND = { x: -34, z: 30, r: 11 };
+const POND = { x: 9999, z: 9999, r: 0.01 };   // lago removido (parecia água que não derretia)
 const HOUSE = { x0: -HW, x1: HW, z0: -HD, z1: HD };
 const ROAD_X = 0, ROAD_W = 1.8;
 // construções da vila (x, z, tipo, girada 90°)
@@ -594,26 +615,30 @@ const CH = 30, NC = (N - 1) / CH, CV = CH + 1;
 const surf = k => depth[k] > 0.015 ? gH[k] + depth[k] : gH[k] - 0.12;
 const snowMat = toon({ map: TEX.snow, color: 0xffffff });
 snowMat.onBeforeCompile = sh => {
-  sh.uniforms.uNight = { value: 0 }; snowMat.userData.sh = sh;
-  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aDepth;\nattribute float aIce;\nvarying float vDepth;\nvarying float vIce;\nvarying vec3 vWPos;\nvarying vec3 vWN;')
+  sh.uniforms.uNight = { value: 0 }; sh.uniforms.uGold = { value: 0 }; snowMat.userData.sh = sh;
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aDepth;\nattribute float aIce;\nattribute float aHard;\nvarying float vHard;\nvarying float vDepth;\nvarying float vIce;\nvarying vec3 vWPos;\nvarying vec3 vWN;')
     .replace('#include <defaultnormal_vertex>', '#include <defaultnormal_vertex>\nvWN = normalize((modelMatrix * vec4(objectNormal, 0.0)).xyz);')
-    .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvDepth = aDepth; vIce = aIce;\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvDepth = aDepth; vIce = aIce; vHard = aHard;\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
   sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-      uniform float uNight; varying float vDepth; varying float vIce; varying vec3 vWPos; varying vec3 vWN;
+      uniform float uNight; uniform float uGold; varying float vHard; varying float vDepth; varying float vIce; varying vec3 vWPos; varying vec3 vWN;
       float hash13(vec3 p3){ p3 = fract(p3 * 0.1031); p3 += dot(p3, p3.zyx + 31.32); return fract((p3.x + p3.y) * p3.z); }`)
     .replace('#include <color_fragment>', `#include <color_fragment>
       float slope = 1.0 - clamp(normalize(vWN).y, 0.0, 1.0);
       float wall = smoothstep(0.12, 0.42, slope);
       diffuseColor.rgb *= mix(vec3(1.0), vec3(0.3, 0.62, 1.0), wall);
       diffuseColor.rgb *= mix(vec3(0.72, 0.84, 0.96), vec3(1.0), smoothstep(0.0, 0.25, vDepth));
+      float hd = clamp((vHard - 1.0) / 2.1, 0.0, 1.0);
+      float crust = fract(sin(dot(floor(vWPos.xz * 4.0), vec2(12.9, 78.2))) * 437.5);
+      diffuseColor.rgb *= mix(vec3(1.0), vec3(0.7, 0.79, 0.93) * (0.9 + 0.12 * crust), hd * (1.0 - wall));
+      diffuseColor.rgb *= mix(1.0, 0.78 + 0.22 * step(0.5, fract(vWPos.y * 3.2)), hd * wall);
       float ic = smoothstep(0.1, 0.6, vIce);
       float crack = step(0.93, fract(sin(dot(floor(vWPos.xz * 1.6), vec2(12.9, 78.2))) * 437.5) ) * 0.0 + step(0.96, abs(sin(vWPos.x * 2.1 + vWPos.z * 1.3)) * abs(sin(vWPos.z * 2.7 - vWPos.x * 0.9)));
-      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.78, 1.0) * (1.0 - crack * 0.35), ic * 0.85);`)
+      diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.3, 0.66, 0.98), vec3(1.0), crack), ic * 0.92);`)
     .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
       vec3 vdir = normalize(cameraPosition - vWPos);
       float hs = hash13(floor(vWPos * 26.0));
       float tw = step(0.972 - uNight * 0.01, fract(hs * 57.0 + dot(vdir, vec3(4.1, 2.3, 3.7)) * 1.4));
-      totalEmissiveRadiance += vec3(0.85, 0.95, 1.0) * tw * step(0.5, hs) * 1.8 * (1.0 - wall);
+      totalEmissiveRadiance += mix(vec3(0.85, 0.95, 1.0), vec3(1.0, 0.75, 0.2) * 1.6, uGold) * tw * step(0.5 - uGold * 0.3, hs) * 1.8 * (1.0 - wall) * (1.0 - hd * 0.6);
       float rim = smoothstep(0.08, 0.2, slope) * (1.0 - smoothstep(0.24, 0.4, slope));
       totalEmissiveRadiance += vec3(0.55, 0.8, 1.0) * rim * 0.35 + vec3(0.1, 0.32, 0.6) * wall * 0.55;
       float fres = pow(1.0 - max(dot(vdir, normalize(vWN)), 0.0), 2.0);
@@ -624,10 +649,12 @@ const sharedIndex = (() => { const a = new Uint16Array(CH * CH * 6); let n = 0; 
 const chunks = [];
 for (let cj = 0; cj < NC; cj++) for (let ci = 0; ci < NC; ci++) {
   const geo = new THREE.BufferGeometry();
-  const pos = new Float32Array(CV * CV * 3), nor = new Float32Array(CV * CV * 3), uv = new Float32Array(CV * CV * 2), dep = new Float32Array(CV * CV), ice = new Float32Array(CV * CV);
+  const pos = new Float32Array(CV * CV * 3), nor = new Float32Array(CV * CV * 3), uv = new Float32Array(CV * CV * 2), dep = new Float32Array(CV * CV), ice = new Float32Array(CV * CV), hd = new Float32Array(CV * CV);
   for (let jj = 0; jj < CV; jj++) for (let ii = 0; ii < CV; ii++) { const v = jj * CV + ii, x = gx(ci * CH + ii), z = gx(cj * CH + jj); pos[v * 3] = x; pos[v * 3 + 2] = z; uv[v * 2] = x / 6; uv[v * 2 + 1] = z / 6; }
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
   geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); geo.setAttribute('aDepth', new THREE.BufferAttribute(dep, 1)); geo.setAttribute('aIce', new THREE.BufferAttribute(ice, 1));
+  for (let jj = 0; jj < CV; jj++) for (let ii = 0; ii < CV; ii++) hd[jj * CV + ii] = hard[Math.min(N - 1, cj * CH + jj) * N + Math.min(N - 1, ci * CH + ii)];
+  geo.setAttribute('aHard', new THREE.BufferAttribute(hd, 1));
   geo.setIndex(sharedIndex);
   geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(gx(ci * CH + CH / 2), 2, gx(cj * CH + CH / 2)), CH * CELL * 0.75 + 5);
   const m = new THREE.Mesh(geo, snowMat); m.receiveShadow = true; scene.add(m);
@@ -654,7 +681,7 @@ markAll(); flushSnow();
 
 // retira neve: mais devagar em neve dura e muito devagar em gelo
 const _clr = [], _touched = new Set();
-let lastIceHit = 0;
+let lastIceHit = 0, lastHardHit = 0, clearHard = 99;   // clearHard: o quanto de neve dura a ferramenta atual aguenta
 function cellsIn(cx, cz, radius) {
   return [Math.max(0, Math.floor((cx - radius + HALF) / CELL)), Math.min(N - 1, Math.ceil((cx + radius + HALF) / CELL)), Math.max(0, Math.floor((cz - radius + HALF) / CELL)), Math.min(N - 1, Math.ceil((cz + radius + HALF) / CELL))];
 }
@@ -666,6 +693,7 @@ function clearAt(cx, cz, radius, rate, dt, capLeft = Infinity, iceMul = 0.06) {
     const k = j * N + i; if (depth[k] <= 0) continue;
     const d = Math.hypot(x - cx, z - cz); if (d > radius) continue;
     let r = rate * (0.4 + 0.6 * (1 - (d / radius) ** 2)) * brk / hard[k];
+    if (hard[k] > clearHard * brk) { r *= 0.12; lastHardHit = performance.now(); }
     if (iceA[k] > 0) { r *= iceMul; iced++; }
     const a = Math.min(depth[k], r * dt);
     if (a > 0) { _clr.push(k, a); want += a; }
@@ -691,7 +719,7 @@ function meltAt(cx, cz, radius, rate, dt) {
     const x = gx(i), z = gx(j); if (Math.abs(x) > b || Math.abs(z) > b) continue;
     const k = j * N + i; if (iceA[k] <= 0) continue;
     const d = Math.hypot(x - cx, z - cz); if (d > radius) continue;
-    iceA[k] = Math.max(0, iceA[k] - rate * (0.5 + 0.5 * (1 - d / radius)) * dt); n++; if (!iceA[k]) done++;
+    iceA[k] = Math.max(0, iceA[k] - rate * (0.5 + 0.5 * (1 - d / radius)) * dt); n++; if (!iceA[k]) { done++; state.cnt.ice++; }
   }
   if (n) markDirty(i0, i1, j0, j1);
   return { n, done };
@@ -972,17 +1000,17 @@ const vstate = VEH.map(v => ({ fixed: false, energy: v.kind === 'fuel' ? 35 : 0,
 VEH.forEach((v, i) => { v.g = buildVehicle(v); v.st = vstate[i]; });
 
 const TOOLS = [
-  { id: 'hands', name: 'Mãos', r: .6, rate: .85, reach: 2.6, cost: 0, desc: 'Devagar e gelado, mas é um começo.' },
-  { id: 'wood', name: 'Pá de Madeira', r: .85, rate: 1.25, reach: 3, cost: 30, desc: 'Uma pá simples. Já ajuda muito.' },
-  { id: 'steel', name: 'Pá de Aço', r: 1.1, rate: 1.9, reach: 3.4, cost: 300, desc: 'Lâmina que corta neve dura.' },
-  { id: 'wide', name: 'Pá Larga Dupla', r: 1.45, rate: 2.3, reach: 3.6, cost: 1500, desc: 'Lâmina enorme para abrir caminho.' },
-  { id: 'vacuum', name: 'Aspirador de Neve', r: 1.6, rate: 2.9, reach: 6.5, craft: 'vacuum', desc: 'Suga a neve de longe.' },
-  { id: 'turbo', name: 'Soprador Turbo', r: 1.9, rate: 3.6, reach: 7.5, cost: 9000, desc: 'Jato potente de longo alcance.' },
-  { id: 'rotary', name: 'Pá Rotativa', r: 2.2, rate: 4.6, reach: 5, craft: 'rotary', desc: 'Lâminas girando que mastigam neve dura.' },
-  { id: 'heat', name: 'Canhão de Calor', r: 2.3, rate: 5, reach: 8.5, direct: .75, melt: 2.5, craft: 'heat', desc: 'Derrete neve e gelo: vira moeda na hora (75%).' },
-  { id: 'magnet', name: 'Ímã de Flocos', r: 3, rate: 5.5, reach: 10, direct: .85, cost: 60000, desc: 'Puxa os flocos. Paga 85% na hora.' },
-  { id: 'vortex', name: 'Vórtice Polar', r: 3.6, rate: 7, reach: 13, direct: 1, craft: 'vortex', desc: 'Suga um círculo enorme, 100% na hora.' },
-  { id: 'hole', name: 'Buraco Negro de Bolso', r: 5, rate: 10, reach: 16, direct: 1, cost: 450000, desc: 'Absurdo. Melhor não perguntar.' },
+  { id: 'hands', name: 'Mãos', r: .6, rate: .85, reach: 2.6, hard: 1.1, cost: 0, desc: 'Devagar e gelado, mas é um começo.' },
+  { id: 'wood', name: 'Pá de Madeira', r: .85, rate: 1.25, reach: 3, hard: 1.4, cost: 30, desc: 'Uma pá simples. Já ajuda muito.' },
+  { id: 'steel', name: 'Pá de Aço', r: 1.1, rate: 1.9, reach: 3.4, hard: 1.9, cost: 300, desc: 'Lâmina que corta neve dura.' },
+  { id: 'wide', name: 'Pá Larga Dupla', r: 1.45, rate: 2.3, reach: 3.6, hard: 1.7, cost: 1500, desc: 'Lâmina enorme para abrir caminho.' },
+  { id: 'vacuum', name: 'Aspirador de Neve', r: 1.6, rate: 2.9, reach: 6.5, hard: 2.0, craft: 'vacuum', desc: 'Suga a neve de longe.' },
+  { id: 'turbo', name: 'Soprador Turbo', r: 1.9, rate: 3.6, reach: 7.5, hard: 2.3, cost: 9000, desc: 'Jato potente de longo alcance.' },
+  { id: 'rotary', name: 'Pá Rotativa', r: 2.2, rate: 4.6, reach: 5, hard: 3.4, craft: 'rotary', desc: 'Lâminas girando que mastigam neve dura.' },
+  { id: 'heat', name: 'Canhão de Calor', r: 2.3, rate: 5, reach: 8.5, hard: 3.1, melt: 2.5, craft: 'heat', desc: 'Tira neve e derrete gelo ao mesmo tempo.' },
+  { id: 'magnet', name: 'Ímã de Flocos', r: 3, rate: 5.5, reach: 10, hard: 2.6, cost: 60000, desc: 'Puxa flocos de longe. Enche a mochila num piscar.' },
+  { id: 'vortex', name: 'Vórtice Polar', r: 3.6, rate: 7, reach: 13, hard: 3.4, craft: 'vortex', desc: 'Suga um círculo enorme de neve dura.' },
+  { id: 'hole', name: 'Buraco Negro de Bolso', r: 5, rate: 10, reach: 16, hard: 4, cost: 450000, desc: 'Absurdo. Melhor não perguntar.' },
 ];
 const HEATS = [
   { id: 'lighter', name: 'Isqueiro', r: .45, melt: .8, reach: 2.4, cost: 40, desc: 'Derrete gelo devagar. Precisa estar perto.' },
@@ -1006,10 +1034,15 @@ const UPG = {   // árvore de habilidades em mapa: p = posição (x, y) em casas
   crit: { name: 'Técnica', icon: 'star', base: 600, mult: 2.2, max: 10, p: [1, -3.2], req: ['reach', 2], desc: 'Cada pazada rende mais neve.', fx: l => `+${l * 8}% de neve por pazada` },
   bag: { name: 'Mochila', icon: 'bag', base: 20, mult: 2.2, max: 15, p: [1.25, 0], req: ['core', 1], desc: 'Carrega mais neve por viagem.', fx: l => `${fmt(30 * Math.pow(1.6, l))} de capacidade` },
   melter: { name: 'Derretedor', icon: 'melter', base: 80, mult: 2.4, max: 15, p: [2.3, -0.6], req: ['bag', 1], desc: 'Cada floco derretido vale mais.', fx: l => `+${l * 30}% de moedas` },
-  pipe: { name: 'Tubo Pneumático', icon: 'rocket', base: 4000, mult: 1, max: 1, p: [3.4, -0.6], req: ['melter', 3], desc: 'A mochila esvazia sozinha, de qualquer lugar.', fx: l => l ? 'Ativo (80% do valor)' : 'Desligado' },
+  carrier: { name: 'Drone Carregador', icon: 'drone', base: 1200, mult: 2.0, max: 6, p: [2.3, 0.7], req: ['bag', 2], desc: 'Drones pegam a neve da sua mochila e voam até o Derretedor.', fx: l => `${l} drone${l === 1 ? '' : 's'}` },
+  carrierCap: { name: 'Caçamba do Drone', icon: 'bag', base: 1500, mult: 2.2, max: 8, p: [3.4, 0.2], req: ['carrier', 1], desc: 'Cada drone carrega mais neve por viagem.', fx: l => `+${l * 50}% de carga` },
+  carrierSpd: { name: 'Hélice Turbo', icon: 'rocket', base: 1500, mult: 2.2, max: 6, p: [3.4, 1.3], req: ['carrier', 1], desc: 'Drones voam mais rápido.', fx: l => `+${l * 25}% de velocidade` },
+  goldCombo: { name: 'Combo Dourado', icon: 'coin', base: 8000, mult: 1, max: 1, p: [1.9, -4.1], req: ['crit', 3], desc: 'Com combo ×1.5 ou mais, cada floco vale o dobro.', fx: l => l ? 'Ativo' : 'Desligado' },
+  treasureSense: { name: 'Faro de Tesouro', icon: 'gear', base: 500, mult: 2.3, max: 5, p: [-2.3, -0.8], req: ['boots', 2], desc: 'Peças enterradas mostram o feixe de luz de mais longe, mesmo sob a neve.', fx: l => `${12 + l * 8} m de faro` },
+  blizzard: { name: 'Caçador de Nevasca', icon: 'star', base: 2000, mult: 2.2, max: 5, p: [-3.4, -0.8], req: ['treasureSense', 1], desc: 'A nevasca dourada (tudo vale ×3) dura mais.', fx: l => `+${l * 10} s de nevasca` },
   boots: { name: 'Botas', icon: 'boots', base: 30, mult: 2, max: 8, p: [-1.25, 0], req: ['core', 1], desc: 'Anda mais rápido, até na neve funda.', fx: l => `+${l * 10}% de velocidade` },
-  robots: { name: 'Robô Limpa-neve', icon: 'robot', base: 400, mult: 1.75, max: 12, p: [-2.3, 0.6], req: ['boots', 1], desc: 'Robozinhos limpam sozinhos e pagam 60%.', fx: l => `${l} robôs` },
-  motor: { name: 'Motor dos Robôs', icon: 'motorUp', base: 600, mult: 2.5, max: 10, p: [-3.4, 0.6], req: ['robots', 1], desc: 'Robôs mais fortes.', fx: l => `+${l * 50}% de força` },
+  robots: { name: 'Robô Limpa-neve', icon: 'robot', base: 400, mult: 1.75, max: 12, p: [-2.3, 0.6], req: ['boots', 1], desc: 'Robôs cavam sozinhos e levam a neve ao Derretedor (você vê as viagens).', fx: l => `${l} robôs` },
+  motor: { name: 'Motor dos Robôs', icon: 'motorUp', base: 600, mult: 2.5, max: 10, p: [-3.4, 0.6], req: ['robots', 1], desc: 'Robôs cavam mais e carregam mais.', fx: l => `+${l * 50}% de força e carga` },
   fuelEff: { name: 'Motor Eficiente', icon: 'fuelEff', base: 800, mult: 2.2, max: 6, p: [0, 1.15], req: ['core', 1], desc: 'Veículos gastam menos energia.', fx: l => `-${l * 15}% de consumo` },
   vehSpeed: { name: 'Turbo de Veículo', icon: 'sled', base: 1500, mult: 2.2, max: 6, p: [-1, 2.1], req: ['fuelEff', 1], desc: 'Veículos andam mais rápido.', fx: l => `+${l * 10}% de velocidade` },
   plow: { name: 'Lâmina Maior', icon: 'plow', base: 1800, mult: 2.3, max: 6, p: [1, 2.1], req: ['fuelEff', 1], desc: 'A lâmina empurra uma faixa mais larga.', fx: l => `+${l * 15}% de largura` },
@@ -1018,17 +1051,18 @@ const UPG = {   // árvore de habilidades em mapa: p = posição (x, y) em casas
 };
 const FUEL_COST = 300;
 const state = {
-  coins: 0, bag: 0, ballM: 0, balls: [], tool: 0, heat: -1, owned: TOOLS.map((_, i) => i === 0), ownedHeat: HEATS.map(() => false),
+  coins: 0, stars: 0, bag: 0, ballM: 0, balls: [], notes: 0, houses: '', chests: '', quests: [], cnt: { sec: 0, ice: 0, ball: 0, coin: 0, treasure: 0, chest: 0 }, tool: 0, heat: -1, owned: TOOLS.map((_, i) => i === 0), ownedHeat: HEATS.map(() => false),
   upg: Object.fromEntries(Object.keys(UPG).map(k => [k, 0])), inv: Object.fromEntries(Object.keys(PARTS).map(k => [k, 0])),
   zone: 0, prestige: 0, step: 0, won: false, muted: false, played: 0, sections: 0, driving: -1, iceTip: false,
 };
+const blz = { t: 0, next: 150 };   // nevasca dourada
 const upgCost = id => Math.round(UPG[id].base * Math.pow(UPG[id].mult, state.upg[id]));
 const upgVis = id => !UPG[id].req || upgOpen(UPG[id].req[0]);
 const upgOpen = id => !UPG[id].req || state.upg[UPG[id].req[0]] >= UPG[id].req[1];
 const stat = {
   rate: () => TOOLS[state.tool].rate * (1 + 0.25 * state.upg.power) * (1 + 0.08 * state.upg.crit), radius: () => TOOLS[state.tool].r * (1 + 0.12 * state.upg.radius),
   reach: () => TOOLS[state.tool].reach * (1 + 0.1 * state.upg.reach), cap: () => Math.round(30 * Math.pow(1.6, state.upg.bag)),
-  speed: () => 1 + 0.1 * state.upg.boots, value: () => (1 + 0.3 * state.upg.melter) * Math.pow(1.5, state.prestige),
+  speed: () => 1 + 0.1 * state.upg.boots, value: () => (1 + 0.3 * state.upg.melter) * Math.pow(1.5, state.prestige) * (blz.t > 0 ? 3 : 1),
 };
 
 /* =====================================================================
@@ -1074,7 +1108,10 @@ const chime = (base = 784, n = 4) => [0, 4, 7, 12, 16, 19].slice(0, n).forEach((
 /* =====================================================================
    FERRAMENTAS NA MÃO: uma luva no cabo, manga saindo para fora da tela
    ===================================================================== */
-const vm = group(0, 0, 0, camera);
+// viewmodel com câmera própria (FOV fixo): o mundo usa FOV mais natural sem empurrar as ferramentas para fora da tela
+const vmScene = new THREE.Scene(), vmCam = new THREE.PerspectiveCamera(66, 1, 0.01, 10); vmScene.add(vmCam);
+const vmHemi = new THREE.HemisphereLight(0xc4e2ff, 0xffffff, 1.0), vmSun = new THREE.DirectionalLight(0xfff0d6, 2.0); vmSun.position.set(0.6, 1, 0.5); vmScene.add(vmHemi, vmSun);
+const vm = group(0, 0, 0, vmCam);
 function mitten(sd, parent, x, y, z) {                      // usado pelas mãos livres
   const h = group(x, y, z, parent);
   h.add(ol(ball(0.068, 0.058, 0.085, M.knit, 0, 0, 0), 0.01), ol(ball(0.06, 0.05, 0.055, M.knit, 0, 0.005, -0.07), 0.01));
@@ -1090,53 +1127,116 @@ function gripHand(parent, x, y, z) {                         // mão fechada no 
   const sl = ol(cyl(0.075, 0.095, 0.55, M.jacket, 0.27, -0.27, 0.22, 14), 0.012); sl.rotation.set(0.9, 0, -0.8); h.add(sl);
   return h;
 }
+// ---------- ferramentas: modelos mais caprichados (lâminas curvas, borracha, cromado, adesivos, peças que giram) ----------
+const DS = THREE.DoubleSide;
+const bladeTex = kind => makeTex(128, (g, S) => {
+  if (kind === 'wood') { g.fillStyle = '#c98a4b'; g.fillRect(0, 0, S, S); for (let i = 0; i < 26; i++) { g.strokeStyle = `rgba(110,60,20,${0.15 + rnd() * 0.2})`; g.lineWidth = 1 + rnd() * 2; g.beginPath(); const y = rnd() * S; g.moveTo(0, y); g.bezierCurveTo(S * 0.3, y + rr(-6, 6), S * 0.7, y + rr(-6, 6), S, y); g.stroke(); } g.fillStyle = '#cfd8e0'; g.fillRect(0, 0, 14, S); g.fillStyle = '#8c98a4'; g.fillRect(12, 0, 3, S); }
+  else if (kind === 'steel') { g.fillStyle = '#d7e0e8'; g.fillRect(0, 0, S, S); for (let i = 0; i < 60; i++) { g.fillStyle = `rgba(255,255,255,${rnd() * 0.25})`; g.fillRect(0, rnd() * S, S, 1); } g.fillStyle = '#d8392b'; g.fillRect(S - 30, 0, 30, S); g.fillStyle = '#fff'; g.fillRect(S - 26, 0, 3, S); for (let y = 12; y < S; y += 26) { g.fillStyle = '#7d8893'; g.beginPath(); g.arc(S - 40, y, 4, 0, TAU); g.fill(); } g.fillStyle = '#9aa5b0'; g.fillRect(0, 0, 8, S); }
+  else { g.fillStyle = '#2f7fe0'; g.fillRect(0, 0, S, S); g.save(); g.beginPath(); g.rect(10, 0, 34, S); g.clip(); for (let y = -S; y < S * 2; y += 22) { g.fillStyle = '#ffd23d'; g.beginPath(); g.moveTo(10, y); g.lineTo(44, y + 22); g.lineTo(44, y + 33); g.lineTo(10, y + 11); g.fill(); } g.restore(); g.fillStyle = '#1c1e25'; g.fillRect(0, 0, 10, S); g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(60, 0, 6, S); }
+});
+const TM = {
+  rubber: toon({ color: 0x2b2f3a }), chrome: toon({ color: 0xe6eef6, emissive: 0x1a2a3a, emissiveIntensity: 0.3 }), brass: toon({ color: 0xe5b44c }),
+  orange: toon({ color: 0xff8a1f }), navy: toon({ color: 0x2a4f93 }), black: toon({ color: 0x1f222b }), cream: toon({ color: 0xf3e6c8 }), lime: toon({ color: 0x7bd84a }),
+  glowPurple: new THREE.MeshBasicMaterial({ color: 0xc77dff, toneMapped: false, side: DS }), glowBlue: new THREE.MeshBasicMaterial({ color: 0x6fe0ff, toneMapped: false, side: DS }),
+  bladeWood: toon({ map: bladeTex('wood'), side: DS }), bladeSteel: toon({ map: bladeTex('steel'), side: DS }), bladeWide: toon({ map: bladeTex('wide'), side: DS }),
+};
 function buildTool(id) {
   const g = new THREE.Group(); g.userData.id = id;
   const s = group(0.24, -0.32, -0.55, g); g.userData.s = s; g.userData.base = [0.24, -0.32, -0.55];
-  const tube = (r, len, mat, z) => { const t = ol(cyl(r, r, len, mat, 0, 0, z, 14), 0.01); t.rotation.x = Math.PI / 2; s.add(t); return t; };
+  const tip = new THREE.Object3D(); g.userData.tip = tip; s.add(tip);
+  const add = (m, o = 0.008) => { s.add(o ? ol(m, o) : m); return m; };
+  const tubeZ = (r1, r2, len, mat, z, x = 0, y = 0, o = 0.008) => { const m = cyl(r1, r2, len, mat, x, y, z, 18); m.rotation.x = Math.PI / 2; return add(m, o); };
+  const ringZ = (r, t, mat, z, x = 0, y = 0) => add(mesh(new THREE.TorusGeometry(r, t, 8, 26), mat, x, y, z, false), 0);
+  const discZ = (r, t, mat, z, x = 0, y = 0) => tubeZ(r, r, t, mat, z, x, y, 0.006);
+  const capsZ = (r, len, mat, x, y, z) => add(mesh(new THREE.CapsuleGeometry(r, len, 6, 16).rotateX(Math.PI / 2), mat, x, y, z, false), 0.01);
   if (id === 'hands') { g.remove(s); g.userData.s = null; g.userData.L = mitten(-1, g, -0.27, -0.3, -0.48); g.userData.R = mitten(1, g, 0.27, -0.3, -0.48); }
   else if (id === 'wood' || id === 'steel' || id === 'wide') {
     s.position.set(0.2, -0.36, -0.42); g.userData.base = [0.2, -0.36, -0.42];
-    const shaft = ol(cyl(0.02, 0.022, 1.0, id === 'wood' ? M.lightWood : M.darkMetal, 0, -0.06, -0.42, 10), 0.008); shaft.rotation.x = -1.87; s.add(shaft);
-    const bm = id === 'wood' ? M.wood : id === 'steel' ? M.steel : M.blue, w = id === 'wide' ? 0.62 : id === 'steel' ? 0.38 : 0.3;
-    const blade = group(0, -0.2, -1.0, s); blade.rotation.x = -0.25;
-    blade.add(ol(box(w, 0.022, 0.36, bm, 0, 0, 0), 0.01), ol(box(w, 0.1, 0.022, bm, 0, 0.04, 0.17), 0.008), box(w + 0.01, 0.026, 0.04, M.darkMetal, 0, 0, -0.17));
-    for (const sx of [-1, 1]) blade.add(ol(box(0.022, 0.08, 0.34, bm, sx * w / 2, 0.03, 0), 0.006));
-    const load = ball(w * 0.42, 0.08, 0.14, M.bit, 0, 0.05, -0.02); load.scale.setScalar(0.001); blade.add(load); g.userData.load = load;
+    const a = -1.87, dir = new THREE.Vector3(0, Math.cos(a), Math.sin(a)), at = t => new THREE.Vector3(0, -0.06, -0.42).addScaledVector(dir, t);
+    const along = (r1, r2, len, mat, t, o = 0.008) => { const p = at(t), m = cyl(r1, r2, len, mat, p.x, p.y, p.z, 14); m.rotation.x = a; return add(m, o); };
+    along(0.02, 0.022, 1.0, id === 'wood' ? M.lightWood : id === 'steel' ? TM.navy : TM.black, 0);
+    along(0.027, 0.027, 0.2, id === 'wood' ? M.darkWood : TM.rubber, -0.37);                       // empunhadura
+    for (const t of [-0.46, -0.28]) along(0.029, 0.029, 0.015, id === 'wood' ? M.wood : TM.chrome, t, 0);
+    along(0.03, 0.024, 0.12, id === 'wood' ? TM.brass : TM.chrome, 0.43);                              // virola
+    if (id === 'steel') along(0.0225, 0.0225, 0.08, M.red, 0.15, 0);
+    const bm = id === 'wood' ? TM.bladeWood : id === 'steel' ? TM.bladeSteel : TM.bladeWide, w = id === 'wide' ? 0.62 : id === 'steel' ? 0.4 : 0.32;
+    const blade = group(0, -0.2, -1.0, s); blade.rotation.x = 0.35;
+    blade.add(ol(mesh(new THREE.CylinderGeometry(0.5, 0.5, w, 16, 1, true, -2.18, 1.22).rotateZ(Math.PI / 2), bm, 0, 0.5, 0, false), 0.008));
+    blade.add(box(w + 0.012, 0.016, 0.03, id === 'wide' ? TM.black : TM.chrome, 0, 0.088, -0.29));
+    for (const sx of [-1, 1]) { const side = new THREE.Shape(); side.moveTo(-0.29, 0.09); side.quadraticCurveTo(0, -0.04, 0.29, 0.09); side.lineTo(0.29, 0.18); side.quadraticCurveTo(0, 0.06, -0.29, 0.12); side.closePath();
+      const sm = ol(mesh(new THREE.ExtrudeGeometry(side, { depth: 0.012, bevelEnabled: false }), bm, sx * w / 2 - (sx > 0 ? 0.012 : 0), 0, 0, false), 0.004); sm.rotation.y = -Math.PI / 2 * sx; if (sx < 0) sm.rotation.y = Math.PI / 2; blade.add(sm); }
+    blade.add(ol(cyl(0.035, 0.05, 0.1, id === 'wood' ? TM.brass : TM.chrome, 0, 0.1, 0.25, 12), 0.006));
+    for (const x of [-0.06, 0, 0.06]) blade.add(ball(0.012, 0.012, 0.012, id === 'wood' ? TM.brass : TM.black, x, 0.16, 0.3));
+    if (id === 'wide') for (const sx of [-1, 1]) { const br = box(0.02, 0.02, 0.36, TM.chrome, sx * 0.16, 0.2, 0.22); br.rotation.set(-0.5, sx * 0.4, 0); blade.add(ol(br, 0.004)); }
+    const load = ball(w * 0.42, 0.08, 0.14, M.bit, 0, 0.07, -0.02); load.scale.setScalar(0.001); blade.add(load); g.userData.load = load;
     gripHand(s, 0, 0.06, 0.02);
   } else if (id === 'vacuum') {
-    tube(0.05, 0.62, M.plastic, -0.2); const head = ol(cyl(0.12, 0.07, 0.2, M.plastic, 0, 0, -0.58, 16), 0.012); head.rotation.x = Math.PI / 2; s.add(head);
-    s.add(mesh(new THREE.TorusGeometry(0.115, 0.014, 8, 22), M.glowCyan, 0, 0, -0.685, false));
-    for (let i = 0; i < 8; i++) { const r = mesh(cached('hose', () => new THREE.TorusGeometry(0.05, 0.016, 6, 14)), M.darkMetal, 0.04 + i * 0.035, -0.05 - i * 0.05, 0.12 + i * 0.02, false); r.rotation.y = 0.5; s.add(r); }
-    gripHand(s, 0, -0.05, 0.0);
+    capsZ(0.085, 0.2, TM.orange, 0.09, -0.11, 0.1); ringZ(0.088, 0.012, TM.chrome, 0.0, 0.09, -0.11); ringZ(0.088, 0.012, TM.chrome, 0.2, 0.09, -0.11);
+    const gauge = cyl(0.035, 0.035, 0.012, M.glowCyan, 0.177, -0.11, 0.1, 14); gauge.rotation.z = Math.PI / 2; s.add(gauge);
+    tubeZ(0.03, 0.03, 0.46, TM.chrome, -0.3, 0, 0.02); tubeZ(0.036, 0.036, 0.12, TM.rubber, -0.08, 0, 0.02);
+    tubeZ(0.05, 0.13, 0.17, TM.orange, -0.61, 0, 0.02); ringZ(0.126, 0.014, M.glowCyan, -0.695, 0, 0.02); discZ(0.1, 0.01, TM.black, -0.69, 0, 0.02);
+    const hose = new THREE.CatmullRomCurve3([new THREE.Vector3(0.09, -0.11, -0.03), new THREE.Vector3(0.08, -0.05, -0.12), new THREE.Vector3(0.03, 0.01, -0.14), new THREE.Vector3(0, 0.02, -0.16)]);
+    add(mesh(new THREE.TubeGeometry(hose, 16, 0.022, 8), TM.rubber, 0, 0, 0, false), 0.005);
+    for (let i = 1; i < 6; i++) { const p = hose.getPoint(i / 6); s.add(mesh(cached('hring', () => new THREE.TorusGeometry(0.024, 0.006, 6, 12)), TM.chrome, p.x, p.y, p.z, false)); }
+    tip.position.set(0, 0.02, -0.7); gripHand(s, 0, -0.03, -0.05);
   } else if (id === 'turbo') {
-    s.add(ol(box(0.2, 0.22, 0.34, M.blue, 0, 0, 0.02), 0.012)); tube(0.07, 0.4, M.darkMetal, -0.32);
-    s.add(mesh(new THREE.TorusGeometry(0.075, 0.012, 8, 20), M.glowCyan, 0, 0, -0.53, false)); gripHand(s, 0, -0.14, 0.06);
+    capsZ(0.1, 0.16, TM.navy, 0, 0, 0.06);
+    for (let i = 0; i < 5; i++) discZ(0.125, 0.012, TM.chrome, -0.03 + i * 0.042);
+    tubeZ(0.103, 0.103, 0.04, M.yellow, 0.2, 0, 0, 0.006); discZ(0.08, 0.02, TM.black, 0.27); ringZ(0.07, 0.01, TM.chrome, 0.282);
+    for (let i = 0; i < 6; i++) { const v = box(0.006, 0.12, 0.004, TM.chrome, 0, 0, 0.283); v.rotation.z = i * Math.PI / 6; s.add(v); }
+    tubeZ(0.075, 0.042, 0.46, TM.black, -0.33); ringZ(0.047, 0.012, M.glowCyan, -0.565); tubeZ(0.08, 0.08, 0.05, M.yellow, -0.13, 0, 0, 0.006);
+    const hdl = mesh(new THREE.TorusGeometry(0.075, 0.017, 8, 16, Math.PI), TM.rubber, 0, 0.1, 0.06, false); hdl.rotation.y = Math.PI / 2; add(hdl, 0.005);
+    tip.position.set(0, 0, -0.58); gripHand(s, 0, -0.14, 0.06);
   } else if (id === 'rotary') {
-    tube(0.035, 0.5, M.darkMetal, -0.15); const rot = group(0, 0, -0.45, s); g.userData.spin = rot;
-    rot.add(ol(cyl(0.16, 0.16, 0.05, M.yellow, 0, 0, 0, 18).rotateX(Math.PI / 2), 0.01));
-    for (let i = 0; i < 4; i++) { const b = ol(box(0.36, 0.04, 0.03, M.steel, 0, 0, -0.03), 0.006); b.rotation.z = i * Math.PI / 4; rot.add(b); }
-    s.add(ol(box(0.14, 0.14, 0.18, M.yellow, 0, 0, 0.08), 0.01)); gripHand(s, 0, -0.08, 0.1);
+    capsZ(0.09, 0.15, M.yellow, 0, 0, 0.12); tubeZ(0.092, 0.092, 0.035, TM.black, 0.06, 0, 0, 0.005); discZ(0.05, 0.03, TM.chrome, 0.24);
+    tubeZ(0.045, 0.035, 0.26, TM.chrome, -0.12);
+    ringZ(0.2, 0.018, TM.black, -0.33); for (let i = 0; i < 3; i++) { const st = box(0.012, 0.012, 0.2, TM.black, Math.cos(i * TAU / 3) * 0.15, Math.sin(i * TAU / 3) * 0.15, -0.24); st.lookAt(0, 0, -0.1); s.add(st); }
+    const rot = group(0, 0, -0.36, s); g.userData.spin = rot;
+    rot.add(ol(cyl(0.06, 0.06, 0.04, TM.chrome, 0, 0, 0, 16).rotateX(Math.PI / 2), 0.006));
+    for (let i = 0; i < 6; i++) { const arm = group(0, 0, 0, rot); arm.rotation.z = i * TAU / 6; const bl = ol(box(0.13, 0.04, 0.012, TM.chrome, 0.1, 0, 0), 0.005); bl.rotation.x = 0.5; arm.add(bl); }
+    const cone = mesh(new THREE.ConeGeometry(0.04, 0.08, 14), M.red, 0, 0, -0.05, false); cone.rotation.x = -Math.PI / 2; rot.add(ol(cone, 0.005));
+    const side = box(0.045, 0.045, 0.16, TM.rubber, -0.14, -0.02, 0.0); side.rotation.y = 0.9; add(side, 0.006);
+    tip.position.set(0, 0, -0.42); gripHand(s, 0, -0.08, 0.12);
   } else if (id === 'heat') {
-    tube(0.11, 0.55, M.darkMetal, -0.1);
-    for (let i = 0; i < 3; i++) s.add(mesh(cached('ring', () => new THREE.TorusGeometry(0.12, 0.018, 8, 22)), M.glowOrange, 0, 0, -0.3 - i * 0.07, false));
-    const tip = ol(mesh(new THREE.ConeGeometry(0.1, 0.2, 16, 1, true), M.copper, 0, 0, -0.48), 0.008); tip.rotation.x = -Math.PI / 2; s.add(tip); gripHand(s, 0, -0.13, 0.08);
+    tubeZ(0.1, 0.1, 0.42, TM.black, -0.05);
+    for (let i = 0; i < 4; i++) { ringZ(0.112, 0.016, M.glowOrange, -0.12 - i * 0.055); discZ(0.13, 0.008, TM.chrome, -0.095 - i * 0.055); }
+    tubeZ(0.1, 0.16, 0.13, M.copper, -0.32); discZ(0.13, 0.01, M.glowOrange, -0.385);
+    const tank = cyl(0.055, 0.055, 0.28, TM.orange, 0.11, -0.11, 0.03, 14); tank.rotation.x = Math.PI / 2; add(tank, 0.006); ringZ(0.057, 0.008, TM.chrome, 0.12, 0.11, -0.11);
+    const gg = cyl(0.04, 0.04, 0.015, TM.cream, 0, 0.11, 0.06, 16); add(gg, 0.005); const nd = box(0.004, 0.003, 0.03, M.red, 0, 0.12, 0.06); nd.rotation.y = 0.7; s.add(nd);
+    tip.position.set(0, 0, -0.4); gripHand(s, 0, -0.13, 0.1);
   } else if (id === 'magnet') {
-    const u = group(0, 0, -0.35, s); for (const sx of [-1, 1]) u.add(ol(box(0.07, 0.07, 0.3, M.red, sx * 0.1, 0, 0), 0.008), box(0.075, 0.075, 0.08, M.steel, sx * 0.1, 0, -0.18));
-    u.add(ol(box(0.27, 0.07, 0.07, M.red, 0, 0, 0.15), 0.008)); tube(0.03, 0.3, M.darkMetal, 0.0); gripHand(s, 0, -0.04, 0.08);
+    const u = group(0, 0, -0.32, s); const hs = ol(mesh(new THREE.TorusGeometry(0.11, 0.042, 12, 22, Math.PI), M.red, 0, 0, 0, false), 0.008); hs.rotation.x = Math.PI / 2; u.add(hs);
+    for (const sx of [-1, 1]) { const t = cyl(0.043, 0.043, 0.07, TM.chrome, sx * 0.11, 0, -0.035, 14); t.rotation.x = Math.PI / 2; u.add(ol(t, 0.006)); }
+    for (let i = 0; i < 4; i++) { const c = mesh(cached('coil', () => new THREE.TorusGeometry(0.048, 0.008, 6, 14)), M.copper, 0, 0, 0.11, false); c.rotation.y = Math.PI / 2; c.position.x = -0.03 + i * 0.02; u.add(c); }
+    const arc = cyl(0.008, 0.008, 0.2, M.glowCyan, 0, 0, -0.07, 6); arc.rotation.z = Math.PI / 2; u.add(arc); g.userData.arc = arc;
+    tubeZ(0.03, 0.03, 0.22, TM.rubber, 0.05); discZ(0.045, 0.02, TM.chrome, -0.07);
+    tip.position.set(0, 0, -0.42); gripHand(s, 0, -0.04, 0.08);
   } else if (id === 'vortex' || id === 'hole') {
-    tube(0.06, 0.3, M.steel, 0.0);
-    const ring = mesh(new THREE.TorusGeometry(0.12, 0.02, 10, 32), id === 'hole' ? M.purple : M.glowCyan, 0, 0, -0.22, false); s.add(ring); g.userData.ring = ring;
-    s.add(ball(0.045, 0.045, 0.045, id === 'hole' ? M.coal : M.glowCyan, 0, 0, -0.22)); gripHand(s, 0, -0.05, 0.08);
+    const hole = id === 'hole';
+    tubeZ(0.045, 0.065, 0.24, TM.chrome, 0.05); for (let i = 0; i < 3; i++) { const f = box(0.006, 0.07, 0.12, TM.black, Math.cos(i * TAU / 3) * 0.06, Math.sin(i * TAU / 3) * 0.06, 0.1); f.rotation.z = i * TAU / 3; s.add(f); }
+    discZ(0.07, 0.03, hole ? TM.black : TM.navy, -0.08);
+    s.add(ball(0.06, 0.06, 0.06, hole ? TM.black : M.glowCyan, 0, 0, -0.25));
+    const gy = []; const gm = hole ? TM.glowPurple : TM.glowBlue;
+    [0.11, 0.145, 0.18].forEach((r, i) => { const t = mesh(new THREE.TorusGeometry(r, 0.008 + i * 0.002, 8, 40), i === 1 ? TM.chrome : gm, 0, 0, -0.25, false); t.rotation.set(i * 0.9, i * 0.6, 0); s.add(t); gy.push(t); });
+    if (hole) { const disc = mesh(new THREE.RingGeometry(0.075, 0.2, 40), TM.glowPurple, 0, 0, -0.25, false); disc.material = disc.material.clone(); disc.material.transparent = true; disc.material.opacity = 0.55; disc.rotation.x = 1.2; s.add(disc); gy.push(disc); }
+    g.userData.gyro = gy; tip.position.set(0, 0, -0.25); gripHand(s, 0, -0.05, 0.1);
   } else if (id === 'lighter') {
     s.position.set(0.18, -0.24, -0.42); g.userData.base = [0.18, -0.24, -0.42];
-    s.add(ol(box(0.05, 0.09, 0.03, M.red, 0, 0, 0), 0.006), box(0.03, 0.025, 0.025, M.steel, 0, 0.055, 0));
-    const f = mesh(new THREE.ConeGeometry(0.018, 0.06, 8), M.glowYellow, 0, 0.1, 0, false); s.add(f); g.userData.flame = f; gripHand(s, 0.01, -0.04, 0.02);
-  } else if (id === 'torch' || id === 'flame') {
-    tube(id === 'flame' ? 0.06 : 0.035, 0.5, id === 'flame' ? M.metal : M.blue, -0.18);
-    if (id === 'flame') s.add(ol(cyl(0.1, 0.1, 0.32, M.green, 0, -0.14, 0.1, 14), 0.01));
-    const f = mesh(new THREE.ConeGeometry(0.05, 0.25, 10), id === 'flame' ? M.glowOrange : M.glowCyan, 0, 0, -0.55, false); f.rotation.x = -Math.PI / 2; s.add(f); g.userData.flame = f;
-    gripHand(s, 0, -0.06, 0.04);
+    add(box(0.05, 0.08, 0.026, TM.brass, 0, 0, 0), 0.005); s.add(box(0.052, 0.008, 0.028, TM.black, 0, 0.012, 0));
+    add(box(0.03, 0.03, 0.022, TM.chrome, 0, 0.055, 0), 0.004); for (const y of [0.048, 0.062]) for (const x of [-0.007, 0.007]) s.add(box(0.005, 0.005, 0.024, TM.black, x, y, 0));
+    const lid = box(0.05, 0.035, 0.026, TM.brass, 0.032, 0.07, 0); lid.rotation.z = -1.1; add(lid, 0.004);
+    const f = mesh(new THREE.ConeGeometry(0.016, 0.06, 8), M.glowYellow, 0, 0.1, 0, false); s.add(f); g.userData.flame = f; tip.position.set(0, 0.09, -0.01); gripHand(s, 0.01, -0.04, 0.02);
+  } else if (id === 'torch') {
+    tubeZ(0.058, 0.058, 0.2, M.blue, 0.08, 0, -0.04); add(mesh(new THREE.SphereGeometry(0.058, 16, 8, 0, TAU, 0, Math.PI / 2).rotateX(-Math.PI / 2), M.blue, 0, -0.04, -0.02, false), 0.005);
+    tubeZ(0.02, 0.02, 0.05, TM.brass, -0.04, 0, -0.04, 0.004); const kn = cyl(0.022, 0.022, 0.02, M.red, 0.035, -0.04, -0.04, 12); kn.rotation.z = Math.PI / 2; add(kn, 0.004);
+    tubeZ(0.014, 0.02, 0.3, TM.chrome, -0.2, 0, -0.01); tubeZ(0.022, 0.022, 0.03, TM.brass, -0.34, 0, -0.01, 0.004);
+    const f = mesh(new THREE.ConeGeometry(0.03, 0.16, 10), M.glowCyan, 0, -0.01, -0.44, false); f.rotation.x = -Math.PI / 2; s.add(f); g.userData.flame = f; tip.position.set(0, -0.01, -0.37); gripHand(s, 0, -0.08, 0.1);
+  } else if (id === 'flame') {
+    tubeZ(0.03, 0.03, 0.5, TM.chrome, -0.18); tubeZ(0.06, 0.06, 0.26, TM.black, -0.22); for (let i = 0; i < 3; i++) ringZ(0.062, 0.008, M.glowOrange, -0.14 - i * 0.07);
+    const tank = cyl(0.08, 0.08, 0.3, TM.lime, 0.13, -0.12, 0.08, 16); tank.rotation.x = Math.PI / 2; add(tank, 0.008); ringZ(0.082, 0.01, TM.chrome, 0.0, 0.13, -0.12); ringZ(0.082, 0.01, TM.chrome, 0.16, 0.13, -0.12);
+    const hose = new THREE.CatmullRomCurve3([new THREE.Vector3(0.13, -0.05, -0.05), new THREE.Vector3(0.07, 0.0, -0.1), new THREE.Vector3(0.0, 0.02, -0.08)]); add(mesh(new THREE.TubeGeometry(hose, 10, 0.014, 6), TM.rubber, 0, 0, 0, false), 0.004);
+    add(box(0.04, 0.09, 0.04, TM.rubber, 0, -0.08, -0.24), 0.005); tubeZ(0.035, 0.035, 0.03, TM.brass, -0.43, 0, 0, 0.004);
+    const f = mesh(new THREE.ConeGeometry(0.03, 0.12, 10), M.glowOrange, 0, 0, -0.5, false); f.rotation.x = -Math.PI / 2; s.add(f); g.userData.flame = f; tip.position.set(0, 0, -0.45); gripHand(s, 0, -0.06, 0.06);
   }
   g.traverse(o => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
   return g;
@@ -1179,6 +1279,8 @@ function animateTool(dt, moving, clearing, heating) {
     s.position.set(b[0] + (Math.random() - 0.5) * 0.007 * k, b[1] + (Math.random() - 0.5) * 0.007 * k - 0.04 * k, b[2] + 0.03 * k);
     if (tm.userData.ring) tm.userData.ring.rotation.z += dt * (2 + 14 * k);
     if (tm.userData.spin) tm.userData.spin.rotation.z += dt * (3 + 25 * k);
+    if (tm.userData.gyro) tm.userData.gyro.forEach((r, i) => { r.rotation.x += dt * (0.8 + 6 * k) * (i % 2 ? 1 : -1); r.rotation.y += dt * (1.1 + 7 * k) * (i + 1) * 0.5; });
+    if (tm.userData.arc) tm.userData.arc.visible = k > 0.3 && Math.random() < 0.7;
     if (tm.userData.flame) { const f = tm.userData.flame; f.scale.setScalar(heating ? 1 + Math.random() * 0.5 + (id === 'lighter' ? 0 : 1.5) : 0.6); }
   }
 }
@@ -1218,6 +1320,33 @@ function updateSimple(P, dt, grav, mode) {
   }
   P.im.instanceMatrix.needsUpdate = true;
 }
+// chamas: partículas aditivas suaves (amarelo → laranja → fumaça), azul no maçarico
+const FL_N = 360, flPos = new Float32Array(FL_N * 3), flVel = new Float32Array(FL_N * 3), flLife = new Float32Array(FL_N), flMax = new Float32Array(FL_N).fill(1), flT = new Float32Array(FL_N).fill(1), flS = new Float32Array(FL_N), flH = new Float32Array(FL_N);
+const flGeo = new THREE.BufferGeometry(); flGeo.setAttribute('position', new THREE.BufferAttribute(flPos, 3)); flGeo.setAttribute('aT', new THREE.BufferAttribute(flT, 1)); flGeo.setAttribute('aS', new THREE.BufferAttribute(flS, 1)); flGeo.setAttribute('aH', new THREE.BufferAttribute(flH, 1));
+const flMat = window.flMat = new THREE.ShaderMaterial({ uniforms: { uScale: { value: 300 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  vertexShader: `attribute float aT; attribute float aS; attribute float aH; varying float vT; varying float vH; uniform float uScale;
+    void main(){ vT = aT; vH = aH; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = aT >= 1.0 ? 0.0 : aS * (0.7 + aT * 1.6) * uScale / max(0.1, -mv.z); }`,
+  fragmentShader: `varying float vT; varying float vH;
+    void main(){ vec2 c = gl_PointCoord - 0.5; float d = length(c) * 2.0; if (d > 1.0) discard; float a = pow(1.0 - d, 1.5) * (1.0 - vT);
+      vec3 hot = mix(vec3(1.0, 0.96, 0.75), vec3(0.75, 0.92, 1.0), vH), mid = mix(vec3(1.0, 0.45, 0.08), vec3(0.15, 0.4, 1.0), vH);
+      vec3 col = mix(hot, mid, smoothstep(0.0, 0.4, vT)); col = mix(col, vec3(0.35, 0.08, 0.03) * (1.0 - vH), smoothstep(0.55, 1.0, vT));
+      gl_FragColor = vec4(col * a * 1.7, a); }` });
+const flPts = new THREE.Points(flGeo, flMat); flPts.frustumCulled = false; flPts.renderOrder = 8; scene.add(flPts);
+let flNext = 0; const _tp = new THREE.Vector3();
+function flame(x, y, z, vx, vy, vz, size, life, hue) { const i = flNext++ % FL_N; flPos[i * 3] = x; flPos[i * 3 + 1] = y; flPos[i * 3 + 2] = z; flVel[i * 3] = vx; flVel[i * 3 + 1] = vy; flVel[i * 3 + 2] = vz; flLife[i] = flMax[i] = life; flS[i] = size; flH[i] = hue; flT[i] = 0; }
+function updateFlames(dt) {
+  const f = Math.exp(-2.2 * dt);
+  for (let i = 0; i < FL_N; i++) { if (flT[i] >= 1) continue; flLife[i] -= dt; if (flLife[i] <= 0) { flT[i] = 1; continue; } flT[i] = 1 - flLife[i] / flMax[i];
+    const o = i * 3; flVel[o] *= f; flVel[o + 2] *= f; flVel[o + 1] = flVel[o + 1] * f + 3.2 * dt; flPos[o] += flVel[o] * dt; flPos[o + 1] += flVel[o + 1] * dt; flPos[o + 2] += flVel[o + 2] * dt; }
+  flGeo.attributes.position.needsUpdate = true; flGeo.attributes.aT.needsUpdate = true; flGeo.attributes.aS.needsUpdate = true; flGeo.attributes.aH.needsUpdate = true;
+}
+function emitFlame(tm, hit, H, dt, hue) {
+  const tip = tm && tm.userData.tip; if (!tip) return; tip.getWorldPosition(_tp); const kf = Math.tan(camera.fov * Math.PI / 360) / Math.tan(vmCam.fov * Math.PI / 360); _tp.x *= kf; _tp.y *= kf; camera.localToWorld(_tp); camera.getWorldDirection(_dir);
+  const tx = hit ? hit.x : _tp.x + _dir.x * H.reach, ty = hit ? hit.y + 0.12 : _tp.y + _dir.y * H.reach, tz = hit ? hit.z : _tp.z + _dir.z * H.reach;
+  const dx = tx - _tp.x, dy = ty - _tp.y, dz = tz - _tp.z, L = Math.hypot(dx, dy, dz) || 1, life = 0.3, spd = L / life * 1.25, n = Math.ceil(dt * (50 + H.r * 110)), spr = spd * (0.06 + H.r * 0.05);
+  for (let k = 0; k < n; k++) flame(_tp.x, _tp.y, _tp.z, dx / L * spd + fr(-spr, spr), dy / L * spd + fr(-spr, spr), dz / L * spd + fr(-spr, spr), 0.035 + H.r * 0.07, life * fr(0.8, 1.25), hue);
+  if (hit) for (let k = 0; k < n * 0.6; k++) flame(hit.x + fr(-H.r, H.r) * 0.7, hit.y + 0.05, hit.z + fr(-H.r, H.r) * 0.7, fr(-.5, .5), fr(1, 2.6), fr(-.5, .5), 0.1 + H.r * 0.22, fr(0.35, 0.7), hue);
+}
 const waves = [];
 for (let n = 0; n < 6; n++) { const m = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xaaf0ff, transparent: true, opacity: 0, depthWrite: false, toneMapped: false })); m.visible = false; m.renderOrder = 6; scene.add(m); waves.push({ m, t: 1 }); }
 let waveIdx = 0;
@@ -1244,7 +1373,7 @@ function celebrate(x, z, bonus) {
   for (let n = 0; n < 8; n++) spawn(puffs, x + fr(-2.5, 2.5), y + 0.3, z + fr(-2.5, 2.5), fr(-1, 1), fr(0.8, 1.8), fr(-1, 1), fr(0.6, 1.1), fr(0.8, 1.2));
   for (let n = 0; n < 10; n++) spawn(coins3, x + fr(-1, 1), y + 0.5, z + fr(-1, 1), fr(-2, 2), fr(4, 7), fr(-2, 2), 1, 1.4);
   floatText(`SEÇÃO LIMPA! +${fmt(bonus)}`, new THREE.Vector3(x, y + 1.6, z), '#fff3b0', 22, 'coin');
-  chime(988, 6); vibrate([25, 40, 25]); state.sections++;
+  chime(988, 6); vibrate([25, 40, 25]); state.sections++; state.stars++; state.cnt.sec++; floatText('+1', new THREE.Vector3(x, y + 2.4, z), '#ffe27a', 22, 'star');
   const f = $('flash'); f.style.transition = 'none'; f.style.opacity = 0.9; requestAnimationFrame(() => { f.style.transition = 'opacity .6s'; f.style.opacity = 0; });
   bumpCoins();
 }
@@ -1255,22 +1384,60 @@ function celebrate(x, z, bonus) {
 const robots = []; let robotIncome = 0;
 function buildRobot() {
   const g = new THREE.Group();
-  g.add(ol(cyl(0.3, 0.32, 0.36, M.robot, 0, 0.32, 0, 16), 0.02), ol(ball(0.2, 0.16, 0.2, M.glass, 0, 0.56, 0), 0.015), ball(0.06, 0.05, 0.03, M.glowCyan, 0, 0.56, 0.18), ol(box(0.75, 0.24, 0.06, M.steel, 0, 0.16, 0.4), 0.015));
+  g.add(ol(cyl(0.3, 0.32, 0.36, M.robot, 0, 0.32, 0, 16), 0.02), ol(ball(0.2, 0.16, 0.2, M.glass, 0, 0.56, 0.08), 0.015), ball(0.06, 0.05, 0.03, M.glowCyan, 0, 0.56, 0.26), ol(box(0.75, 0.24, 0.06, M.steel, 0, 0.16, 0.4), 0.015));
+  g.add(ol(box(0.42, 0.05, 0.3, M.darkMetal, 0, 0.52, -0.16), 0.01));
   for (const [x, z] of [[0.3, 0.15], [-0.3, 0.15], [0.3, -0.15], [-0.3, -0.15]]) { const w = cyl(0.1, 0.1, 0.08, M.darkMetal, x, 0.1, z, 12); w.rotation.z = Math.PI / 2; g.add(w); }
+  const mound = ball(0.2, 0.16, 0.15, M.bit, 0, 0.6, -0.16); mound.scale.setScalar(0.001); g.add(mound); g.userData.mound = mound;
   return g;
+}
+const drones = []; let droneIncome = 0;
+function buildDrone() {
+  const g = new THREE.Group(); scene.add(g); g.userData.rot = [];
+  g.add(ol(cyl(0.2, 0.24, 0.12, M.white, 0, 0, 0, 16), 0.015), ol(ball(0.12, 0.08, 0.12, M.glass, 0, 0.08, 0), 0.01), ball(0.05, 0.03, 0.03, M.glowCyan, 0, 0.0, 0.22));
+  for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4, x = Math.cos(a) * 0.32, z = Math.sin(a) * 0.32; const arm = box(0.34, 0.03, 0.05, M.darkMetal, x / 2, 0.02, z / 2); arm.rotation.y = -a; g.add(arm);
+    const r = mesh(cached('rotor', () => new THREE.CylinderGeometry(0.14, 0.14, 0.01, 12)), M.glass, x, 0.07, z, false); g.add(r, cyl(0.03, 0.03, 0.06, M.darkMetal, x, 0.04, z, 8)); g.userData.rot.push(r); }
+  const load = ol(ball(0.2, 0.2, 0.2, M.snowBall || M.bit, 0, -0.3, 0), 0.015); load.scale.setScalar(0.001); g.add(load, box(0.02, 0.2, 0.02, M.darkMetal, 0, -0.12, 0)); g.userData.load = load;
+  return g;
+}
+function syncDrones() { while (drones.length < (state.upg.carrier || 0)) drones.push({ g: buildDrone(), x: player.x, y: player.y + 3, z: player.z, mode: 0, load: 0 }); while (drones.length > (state.upg.carrier || 0)) scene.remove(drones.pop().g); }
+const droneCap = () => stat.cap() * 0.3 * (1 + 0.5 * state.upg.carrierCap);
+function updateDrones(dt, t) {
+  const sp = 8 * (1 + 0.25 * state.upg.carrierSpd);
+  drones.forEach((d, i) => {
+    let tx, ty, tz;
+    if (d.mode === 0) {
+      const a = t * 0.7 + i * TAU / drones.length; tx = player.x + Math.cos(a) * 1.9; tz = player.z + Math.sin(a) * 1.9; ty = player.y + 2.7 + Math.sin(t * 2 + i) * 0.15;
+      if (state.bag >= Math.min(droneCap(), stat.cap() * 0.2) && state.bag > 1 && !inHouse()) { const take = Math.min(droneCap(), state.bag); state.bag -= take; d.load = take; d.mode = 1; tone(900, 1300, 0.03, 0.12, 'triangle');
+        for (let n = 0; n < 8; n++) spawn(puffs, d.x, d.y - 0.3, d.z, fr(-1, 1), fr(-1, 0.5), fr(-1, 1), fr(0.1, 0.2), 0.5); }
+    } else if (d.mode === 1) { tx = MELT.x; tz = MELT.z; ty = 5.2;
+      if (Math.hypot(d.x - MELT.x, d.z - MELT.z) < 0.7) { const c = d.load * stat.value(); state.coins += c; droneIncome += c; d.load = 0; d.mode = 2;
+        for (let n = 0; n < 6; n++) spawn(coins3, MELT.x + fr(-0.4, 0.4), 3.2, MELT.z + fr(-0.4, 0.4), fr(-2, 2), fr(4, 7), fr(-2, 2), 1, 1.4); emitSteam(MELT.x, 4.5, MELT.z, 0, 1.6, 0, 1.5); }
+    } else { tx = player.x; tz = player.z; ty = player.y + 2.7; if (Math.hypot(d.x - player.x, d.z - player.z) < 2.6) d.mode = 0; }
+    const dx = tx - d.x, dy = ty - d.y, dz = tz - d.z, l = Math.hypot(dx, dy, dz);
+    if (d.mode === 0) { const k = 1 - Math.exp(-3 * dt); d.x += dx * k; d.y += dy * k; d.z += dz * k; }
+    else if (l > 1e-4) { const st = Math.min(l, sp * dt); d.x += dx / l * st; d.y += dy / l * st; d.z += dz / l * st; }
+    d.g.position.set(d.x, d.y, d.z); if (Math.hypot(dx, dz) > 0.05) d.g.rotation.y = Math.atan2(dx, dz); d.g.rotation.x = d.mode ? 0.18 : 0;
+    d.g.userData.rot.forEach((r, n) => { r.rotation.y += dt * 40; });
+    d.g.userData.load.scale.setScalar(d.load > 0 ? 0.6 + Math.min(1, d.load / droneCap()) * 0.6 : 0.001);
+  });
 }
 function syncRobots() { while (robots.length < state.upg.robots) { const g = buildRobot(); scene.add(g); robots.push({ g, x: MELT.x - 1.5, z: MELT.z - 2, tx: 0, tz: 0, has: false, yaw: 0, t: Math.random() * 5 }); } while (robots.length > state.upg.robots) scene.remove(robots.pop().g); }
 function pickRobotTarget(r) { const b = ZONES[state.zone] - 0.8; for (let n = 0; n < 30; n++) { const near = n < 18, x = near ? r.x + fr(-10, 10) : fr(-b, b), z = near ? r.z + fr(-10, 10) : fr(-b, b); if (Math.abs(x) > b || Math.abs(z) > b || houseDist(x, z) < 1) continue; const k = idxOf(x, z); if (k >= 0 && depth[k] > 0.08 && !iceA[k]) { r.tx = x; r.tz = z; r.has = true; return; } } r.has = false; }
 function updateRobots(dt, t) {
-  const motor = 1 + 0.5 * state.upg.motor;
+  const motor = 1 + 0.5 * state.upg.motor, cap = 18 * motor;
   for (const r of robots) {
-    r.t += dt;
-    if (!r.has) { if (r.t > 0.5) { r.t = 0; pickRobotTarget(r); } }
+    r.t += dt; if (r.load === undefined) r.load = 0;
+    if (r.home) {
+      const dx = MELT.x - r.x, dz = MELT.z - r.z, d = Math.hypot(dx, dz);
+      if (d > 2.1) { r.yaw = Math.atan2(dx, dz); const sp = 2.8 + 0.2 * state.upg.motor; r.x += dx / d * sp * dt; r.z += dz / d * sp * dt; collide(r, 0.35); }
+      else { const c = r.load * stat.value(); state.coins += c; robotIncome += c; r.load = 0; r.home = false; r.has = false; spawn(coins3, MELT.x, 3, MELT.z, fr(-2, 2), fr(4, 7), fr(-2, 2), 1, 1.4); }
+    } else if (!r.has) { if (r.t > 0.5) { r.t = 0; pickRobotTarget(r); } }
     else { const dx = r.tx - r.x, dz = r.tz - r.z, d = Math.hypot(dx, dz);
-      if (d > 0.4) { r.yaw = Math.atan2(dx, dz); const sp = 2.2 * Math.min(1, d); r.x += dx / d * sp * dt; r.z += dz / d * sp * dt; if (houseDist(r.x, r.z) < 0.6) { r.x -= dx / d * sp * dt * 2; r.has = false; } }
-      const vol = clearAt(r.x + Math.sin(r.yaw) * 0.45, r.z + Math.cos(r.yaw) * 0.45, 0.9, 0.3 * motor, dt);
-      if (vol > 0) { const c = vol * UNITS * stat.value() * 0.6; state.coins += c; robotIncome += c; } else if (d <= 0.4) r.has = false; }
-    const k = idxOf(r.x, r.z); r.g.position.set(r.x, groundAt(r.x, r.z) + (k >= 0 ? depth[k] * 0.4 : 0) + Math.abs(Math.sin(t * 9 + r.tx)) * 0.03, r.z); r.g.rotation.y = r.yaw;
+      if (d > 0.4) { r.yaw = Math.atan2(dx, dz); const sp = 2.2 * Math.min(1, d); r.x += dx / d * sp * dt; r.z += dz / d * sp * dt; collide(r, 0.35); }
+      const vol = clearAt(r.x + Math.sin(r.yaw) * 0.45, r.z + Math.cos(r.yaw) * 0.45, 0.9, 0.35 * motor, dt, cap - r.load);
+      if (vol > 0) { r.load += vol * UNITS; if (r.load >= cap - 0.05) r.home = true; } else if (d <= 0.4) r.has = false; }
+    const k = idxOf(r.x, r.z); r.g.position.set(r.x, groundAt(r.x, r.z) + (k >= 0 ? Math.max(0, depth[k] - 0.3) : 0) + Math.abs(Math.sin(t * 9 + r.tx)) * 0.03, r.z); r.g.rotation.y = r.yaw;
+    r.g.userData.mound.scale.setScalar(Math.max(0.001, r.load / cap) * 1.3);
   }
 }
 
@@ -1363,7 +1530,7 @@ const dispZone = () => Math.min(100, (1 - zoneFrac) / 0.97 * 100);
 const OBJECTIVES = [
   () => 'Saia da cabana e segure o botão para tirar neve', () => 'Leve a neve ao Derretedor (perto da porta)',
   () => 'Compre a Pá de Madeira no computador da cabana', () => 'Limpe uma seção inteira (veja o % na mira)',
-  () => 'Zona limpa? Compre a Zona 2 na loja', () => 'Ache a motoneve (feixe vermelho) e a Vela de Ignição enterrada',
+  () => `Junte ${ZONE_STARS[1]} estrelas e compre a Zona 2 na loja`, () => 'Ache a motoneve (feixe vermelho) e a Vela de Ignição enterrada',
   () => `Limpe a vila inteira: ${dispPct().toFixed(1)}%`,
 ];
 function advance(step) { if (state.step === step) { state.step++; chime(660); } }
@@ -1380,7 +1547,7 @@ function refreshHUD() {
   else { $('bagBar').querySelector('.fill').style.width = (bag / cap * 100) + '%'; $('bagText').innerHTML = ic('snow') + (direct ? 'derrete na hora' : `${fmt(bag)} / ${fmt(cap)}`); $('bagBar').classList.toggle('full', !direct && !state.upg.pipe && bag >= cap - 0.01); }
   $('fuelBar').style.display = drv ? 'block' : 'none';
   if (drv) { $('fuelBar').querySelector('.fill').style.width = v.st.energy + '%'; $('fuelText').innerHTML = ic(v.kind === 'fuel' ? 'fuel' : 'battery') + `${Math.round(v.st.energy)}%`; }
-  $('prog').innerHTML = `${ic('star')} ${state.sections} · Vila ${dispPct().toFixed(1)}% · Zona ${state.zone + 1}: ${Math.round(dispZone())}%`;
+  $('prog').innerHTML = `Zona ${state.zone + 1}: ${Math.round(dispZone())}% · Vila ${dispPct().toFixed(1)}%`; $('starsPill').innerHTML = ic('star') + state.stars;
   $('objective').innerHTML = drv && state.ballM < BALL_MISSIONS.length ? ic('ball') + `Missão: bola de ${BALL_MISSIONS[state.ballM][0]} m no Derretedor (+${fmt(BALL_MISSIONS[state.ballM][1])})` : state.step < OBJECTIVES.length ? ic('radius') + OBJECTIVES[state.step]() : '';
   $('btnHeat').style.display = state.heat >= 0 && !drv ? 'flex' : 'none';
   if (shopOpen) renderShop();
@@ -1389,7 +1556,7 @@ function tickCoins(dt) { const prev = Math.floor(shownCoins); shownCoins = Math.
 function bumpCoins() { const c = $('coinsPill'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
 
 // ---------- loja com abas ----------
-const TABS = [['loja', 'Loja', 'shop'], ['bancada', 'Bancada', 'bench'], ['arvore', 'Habilidades', 'tree'], ['mochila', 'Mochila', 'bag']];
+const TABS = [['missoes', 'Missões', 'star'], ['loja', 'Loja', 'shop'], ['bancada', 'Bancada', 'bench'], ['arvore', 'Habilidades', 'tree'], ['mochila', 'Mochila', 'bag']];
 let tab = 'loja';
 $('tabs').innerHTML = TABS.map(([id, n, i]) => `<button class="tab" data-tab="${id}">${ic(i)}${n}</button>`).join('');
 $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { tab = b.dataset.tab; renderShop(true); } });
@@ -1397,7 +1564,7 @@ const bar = (n, v) => `<div class="stat"><span>${n}</span><i style="--v:${clamp(
 const need = parts => `<div class="need">${Object.entries(parts).map(([p, n]) => `<span class="${(state.inv[p] || 0) >= n ? 'ok' : 'no'}">${ic(p)}${PARTS[p]}<b>${state.inv[p] || 0}/${n}</b></span>`).join('')}</div>`;
 const RAR = [['Comum', '#8fb3d6'], ['Incomum', '#7be495'], ['Raro', '#59c3ee'], ['Épico', '#b48cff'], ['Lendário', '#ffb347']];
 const TOOL_TIER = [0, 0, 1, 1, 2, 2, 3, 3, 3, 4, 4], HEAT_TIER = [0, 2, 3];
-const selKey = { loja: 't1', bancada: 'vacuum', arvore: 'core', mochila: '' };
+const selKey = { missoes: '', loja: 't1', bancada: 'vacuum', arvore: 'core', mochila: '' };
 const slot = (key, icon, label, cls, rc, cnt) => `<button class="slot ${cls} ${selKey[tab] === key ? 'sel' : ''}" data-sel="${key}" style="--rc:${rc}">${cnt !== undefined ? `<span class="cnt">${cnt}</span>` : ''}${ic(icon)}<i>${label}</i></button>`;
 const price = (c, ok) => `${ic('coin')}${fmt(c)}`;
 const detail = (icon, rc, rar, name, body, btn) => `<div class="detail"><div class="big" style="--rc:${rc}">${ic(icon)}</div>${rar ? `<div class="rar" style="--rc:${rc}">${rar}</div>` : ''}<h3>${name}</h3>${body}${btn || ''}</div>`;
@@ -1421,19 +1588,28 @@ function renderShop(force) {
       h += slot('h' + i, t.id, own ? (state.heat === i ? 'Em uso' : 'Sua') : t.craft ? 'Bancada' : price(t.cost), `${own ? 'own' : t.craft ? 'lock' : c >= t.cost ? 'can' : 'no'} ${state.heat === i ? 'on' : ''}`, rc); });
     const z = state.zone + 1;
     h += `</div><div class="secTitle">${ic('radius')}Expansão e suprimentos</div><div class="srow">`;
-    h += slot('zone', 'radius', z < ZONES.length ? price(ZONE_COST[z]) : 'Tudo', z < ZONES.length ? (c >= ZONE_COST[z] ? 'can' : 'no') : 'own', '#ffb347');
+    h += slot('zone', 'radius', z < ZONES.length ? `${ic('star')}${ZONE_STARS[z]}` : 'Tudo', z < ZONES.length ? (state.stars >= ZONE_STARS[z] ? 'can' : 'no') : 'own', '#ffb347');
     h += slot('fuel', 'fuel', price(FUEL_COST), c >= FUEL_COST ? '' : 'no', '#ff8a8a', state.inv.fuel) + '</div></div>';
     let d;
     if (sk[0] === 't' || sk[0] === 'h') {
       const heat = sk[0] === 'h', i = +sk.slice(1), t = heat ? HEATS[i] : TOOLS[i], own = heat ? state.ownedHeat[i] : state.owned[i], on = heat ? state.heat === i : state.tool === i, [rn, rc] = RAR[(heat ? HEAT_TIER : TOOL_TIER)[i]];
-      const stats = heat ? bar('Área', t.r / 2) + bar('Calor', t.melt / 4) + bar('Alcance', t.reach / 7) : bar('Área', t.r / 5) + bar('Força', t.rate / 10) + bar('Alcance', t.reach / 16);
+      const stats = heat ? bar('Área', t.r / 2) + bar('Calor', t.melt / 4) + bar('Alcance', t.reach / 7) : bar('Área', t.r / 5) + bar('Força', t.rate / 10) + bar('Alcance', t.reach / 16) + bar('Dureza', t.hard / 4);
       const btn = own ? `<button class="gbtn ${on ? 'green' : 'blue'}" data-${heat ? 'heat' : 'tool'}="${i}">${on ? 'Em uso' : 'Equipar'}</button>` : t.craft ? `<button class="gbtn gray" data-goto="bancada">${ic('bench')}Fabricar na Bancada</button>` : `<button class="gbtn ${c >= t.cost ? '' : 'gray'}" data-${heat ? 'heat' : 'tool'}="${i}">${ic('coin')}${fmt(t.cost)}</button>`;
       d = detail(t.id, rc, rn, t.name, `<p>${t.desc}</p>${t.direct ? '<span class="tag">vira moeda na hora</span>' : ''}<div class="stats">${stats}</div>`, btn);
     } else if (sk === 'zone') {
-      d = z < ZONES.length ? detail('radius', '#ffb347', 'Expansão', `Zona ${z + 1}`, `<p>A cerca vai de ${ZONES[state.zone] * 2} m para ${ZONES[z] * 2} m. Neve mais alta e mais dura, gelo, casas e peças escondidas.</p>`, `<button class="gbtn ${c >= ZONE_COST[z] ? '' : 'gray'}" data-buy="zone">${ic('coin')}${fmt(ZONE_COST[z])}</button>`)
+      d = z < ZONES.length ? detail('radius', '#ffb347', 'Expansão', `Zona ${z + 1}`, `<p>A cerca vai de ${ZONES[state.zone] * 2} m para ${ZONES[z] * 2} m. Neve mais alta e mais dura, gelo, casas e peças escondidas.</p><p>Zonas se compram com <b>estrelas</b>: limpe seções, liberte casas e cumpra missões. Você tem <b>${state.stars}</b>.</p>`, `<button class="gbtn ${state.stars >= ZONE_STARS[z] ? '' : 'gray'}" data-buy="zone">${ic('star')}${ZONE_STARS[z]} estrelas</button>`)
         : detail('star', '#ffb347', 'Expansão', 'Vila inteira liberada', '<p>Não há mais cercas.</p>');
     } else d = detail('fuel', '#ff8a8a', 'Suprimento', 'Galão de Combustível', `<p>Abastece a motoneve (+40%). Você tem <b>${state.inv.fuel}</b>.</p>`, `<button class="gbtn ${c >= FUEL_COST ? '' : 'gray'}" data-buy="fuel">${ic('coin')}${fmt(FUEL_COST)}</button>`);
     setPage('loja', h + d);
+  } else if (tab === 'missoes') {
+    let h = `<div class="slots"><div class="secTitle">${ic('star')}Missões do dia (trocam ao completar)</div>`;
+    state.quests.forEach(q => { const Q = QUEST_T[q.t], pr = clamp((state.cnt[q.t] - q.b) / q.n, 0, 1);
+      h += `<div class="quest">${ic(Q.icon)}<div class="qb"><b>${Q.name(q.n)}</b><div class="stat"><i style="--v:${pr * 100}%"></i></div></div><span class="qr">${ic('star')}${q.r}</span></div>`; });
+    h += `<div class="secTitle" style="margin-top:12px">${ic('ball')}Missões de bola de neve (veículos)</div>`;
+    BALL_MISSIONS.forEach(([dd, cc, pp], i) => { h += `<div class="mis ${i < state.ballM ? 'done' : i === state.ballM ? 'cur' : ''}">${ic(i < state.ballM ? 'star' : 'ball')}Bola de ${dd} m no Derretedor${pp ? ' + ' + PARTS[pp].split(' ')[0] : ''}<b>${fmt(cc)} · ${ic('star')}3</b></div>`; });
+    const z = state.zone + 1, libs = BUILDINGS.filter(b => b.lib).length;
+    h += '</div>' + detail('star', '#ffe27a', 'Estrelas', `${state.stars} estrelas`, `<p>Estrelas compram novas zonas. Ganhe limpando seções (+1), libertando casas (+2), abrindo baús (+2), em missões e bolas de neve.</p><div class="fx">${z < ZONES.length ? `Zona ${z + 1}: <em>${state.stars}/${ZONE_STARS[z]}</em>` : 'Todas as zonas liberadas'}<br>Casas libertadas: <em>${libs}/${BUILDINGS.length}</em><br>Diário: <em>${state.notes}/${NOTES.length}</em></div>`, z < ZONES.length ? `<button class="gbtn ${state.stars >= ZONE_STARS[z] ? '' : 'gray'}" data-buy="zone">${ic('star')}Comprar Zona ${z + 1}</button>` : '');
+    setPage('missoes', h);
   } else if (tab === 'bancada') {
     let h = `<div class="slots"><div class="secTitle">${ic('bench')}Receitas com peças achadas na neve</div><div class="srow">`, d = '';
     RECIPES.forEach(r => {
@@ -1464,14 +1640,14 @@ function renderShop(force) {
     h += `</div><div class="secTitle">${ic('sled')}Veículos</div><div class="srow">`;
     VEH.forEach((v, i) => { h += slot('v' + i, v.icon, v.st.fixed ? 'Pronto' : v.st.found ? 'Quebrado' : '???', v.st.fixed ? 'own' : 'lock', '#ffb347'); });
     h += `</div><div class="secTitle">${ic('ball')}Missões de bola de neve</div><div class="srow">`;
-    h += slot('', 'ball', `${state.ballM}/${BALL_MISSIONS.length}`, '', '#bff0ff') + slot('reset', 'help', 'Opções', '', '#8fb3d6') + '</div></div>';
+    h += slot('', 'note', `${state.notes}/${NOTES.length}`, state.notes ? 'own' : 'lock', '#e8c98a') + slot('reset', 'help', 'Opções', '', '#8fb3d6') + '</div></div>';
     let d;
     if (sk[0] === 'p') { const p = sk.slice(1), uses = RECIPES.filter(r => r.parts[p]).map(r => (r.gives[0] === 'tool' ? TOOLS : HEATS)[r.gives[1]].name);
       d = detail(p, '#59c3ee', 'Peça', PARTS[p], `<p>Você tem <b>${state.inv[p]}</b>.</p><p>${p === 'fuel' ? 'Abastece a motoneve.' : p === 'plug' ? 'Conserta a motoneve.' : p === 'battery' ? 'Conserta o trator elétrico.' : uses.length ? 'Usada em: ' + uses.join(', ') : ''}</p>`); }
     else if (sk[0] === 'v') { const v = VEH[+sk.slice(1)];
       d = detail(v.icon, '#ffb347', 'Veículo', v.name, `<p>${v.st.fixed ? `Funcionando · ${v.kind === 'fuel' ? 'combustível' : 'bateria'} ${Math.round(v.st.energy)}%` : v.st.found ? `Achado! Falta: ${PARTS[v.part]}` : `Enterrado na zona ${zoneRing(v.x, v.z) + 1}. Siga o feixe de luz.`}</p><p>Empurra a neve e forma bolas gigantes. Bola máxima: Ø ${(ballMaxR(v) * 2).toFixed(1)} m. Leve ao Derretedor: quanto maior, mais vale.</p>`); }
     else if (sk === 'reset') d = detail('help', '#8fb3d6', '', 'Opções', `<p>Música e sons: botão no canto superior direito.</p>`, `<button class="gbtn gray" id="btnReset">Apagar progresso</button>`);
-    else d = detail('ball', '#bff0ff', 'Veículos', 'Missões de bola', BALL_MISSIONS.map(([dd, cc, pp], i) => `<div class="mis ${i < state.ballM ? 'done' : i === state.ballM ? 'cur' : ''}">${ic(i < state.ballM ? 'star' : 'ball')}Bola de ${dd} m${pp ? ' + ' + PARTS[pp].split(' ')[0] : ''}<b>${fmt(cc)}</b></div>`).join(''));
+    else d = detail('note', '#e8c98a', 'Diário da vila', `${state.notes} de ${NOTES.length} bilhetes`, state.notes ? NOTES.slice(0, state.notes).map(([t, b]) => `<div class="diary"><b>${t}</b><p>${b}</p></div>`).join('') : '<p>Liberte casas soterradas e abra os baús para achar bilhetes dos moradores.</p>');
     setPage('mochila', h + d);
   }
 }
@@ -1500,8 +1676,8 @@ $('pg-arvore').addEventListener('pointerup', tUp); $('pg-arvore').addEventListen
 $('pg-arvore').addEventListener('wheel', e => { e.preventDefault(); tree.s = clamp(tree.s * (e.deltaY < 0 ? 1.1 : 0.9), 0.45, 1.6); applyTree(); }, { passive: false });
 function toolAction(i) { const t = TOOLS[i]; if (state.owned[i]) equipTool(i); else if (!t.craft && state.coins >= t.cost) { state.coins -= t.cost; state.owned[i] = true; equipTool(i); chime(523, 5); toast(`Nova ferramenta: ${t.name}!`, 2.8, t.id); advance(2); } }
 function heatAction(i) { const t = HEATS[i]; if (state.ownedHeat[i]) equipHeat(i); else if (!t.craft && state.coins >= t.cost) { state.coins -= t.cost; state.ownedHeat[i] = true; equipHeat(i); chime(523, 5); toast(`${t.name}! Segure o botão de fogo para derreter gelo.`, 3.5, t.id); } }
-function buyUpg(id) { const u = UPG[id]; if (!upgOpen(id) || state.upg[id] >= u.max || state.coins < upgCost(id)) return; state.coins -= upgCost(id); state.upg[id]++; if (id === 'robots') syncRobots(); tone(600, 900, 0.07, 0.25, 'triangle'); }
-function buyZone() { const z = state.zone + 1; if (z >= ZONES.length || state.coins < ZONE_COST[z]) return; state.coins -= ZONE_COST[z]; state.zone = z; buildFence(); advance(4); chime(392, 6); toast(`Zona ${z + 1} liberada! Neve mais alta e mais dura pela frente.`, 3.5, 'radius'); }
+function buyUpg(id) { const u = UPG[id]; if (!upgOpen(id) || state.upg[id] >= u.max || state.coins < upgCost(id)) return; state.coins -= upgCost(id); state.upg[id]++; if (id === 'robots') syncRobots(); if (id === 'carrier') syncDrones(); tone(600, 900, 0.07, 0.25, 'triangle'); }
+function buyZone() { const z = state.zone + 1; if (z >= ZONES.length || state.stars < ZONE_STARS[z]) return; state.stars -= ZONE_STARS[z]; state.zone = z; buildFence(); advance(4); chime(392, 6); toast(`Zona ${z + 1} liberada! Neve mais alta e mais dura pela frente.`, 3.5, 'radius'); }
 function craft(id) {
   const r = RECIPES.find(x => x.id === id); if (!r) return;
   if (!Object.entries(r.parts).every(([p, n]) => state.inv[p] >= n) || state.coins < r.cost) return;
@@ -1515,6 +1691,7 @@ function toggleShop(force, which) {
   if (shopOpen) { renderShop(true); if (document.pointerLockElement) document.exitPointerLock(); joy.id = null; joy.x = joy.y = 0; joyIdle(); look.id = null; actHeld = heatHeld = false; releaseButtons(); for (const k in keys) keys[k] = false; }
 }
 $('shopClose').addEventListener('click', () => toggleShop(false));
+$('noteOk').addEventListener('click', () => { $('note').classList.remove('open'); shopOpen = false; save(); });
 function showWin() {
   state.won = true;
   $('winBody').innerHTML = `Você limpou a vila inteira e fechou <b>${state.sections}</b> seções em <b>${Math.round(state.played / 60)} min</b>.<br><br>Uma <b>Nova nevasca</b> cobre tudo de novo e reinicia ferramentas, mas suas moedas passam a valer <b>+50%</b> para sempre.`;
@@ -1529,6 +1706,7 @@ $('winPrestige').addEventListener('click', () => { const p = state.prestige + 1;
 const SAVE_KEY = 'nevezero_v4';
 const enc = (arr, mul) => { const q = new Uint8Array(N * N); for (let k = 0; k < N * N; k++) q[k] = Math.min(255, Math.round(arr[k] * mul)); let s = ''; for (let k = 0; k < q.length; k += 4096) s += String.fromCharCode.apply(null, q.subarray(k, k + 4096)); return btoa(s); };
 function save() {
+  state.houses = BUILDINGS.map(b => b.lib ? 1 : 0).join(''); state.chests = BUILDINGS.map(b => b.opened ? 1 : 0).join('');
   state.balls = balls.filter(b => !b.melt).map(b => [+b.x.toFixed(2), +b.z.toFixed(2), Math.round(b.vol)]);
   try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 4, state, snow: enc(depth, 60), ice: enc(iceA, 255), found: treasures.map(t => t.found ? 1 : 0).join(''), items: items.map(t => t.found ? 1 : 0).join(''), veh: vstate, player: [player.x, player.z, player.yaw], day: DAY.t })); } catch (_) {}
 }
@@ -1537,7 +1715,7 @@ function load() {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (!d || d.v !== 4) return false;
     if (d.prestigeOnly) { state.prestige = d.prestigeOnly; snowPhase = state.prestige * 1.7; fillSnow(); return false; }
     const keep = { upg: { ...state.upg, ...d.state.upg }, inv: { ...state.inv, ...d.state.inv } };
-    Object.assign(state, d.state, keep); state.driving = -1; if (Object.values(state.upg).some(v => v > 0)) state.upg.core = 1;
+    Object.assign(state, d.state, keep); state.driving = -1; if (Object.values(state.upg).some(v => v > 0)) state.upg.core = 1; delete state.upg.pipe; if (d.state.stars === undefined) state.stars = state.sections; state.cnt = { ...{ sec: 0, ice: 0, ball: 0, coin: 0, treasure: 0, chest: 0 }, ...(d.state.cnt || {}) };
     snowPhase = state.prestige * 1.7; fillSnow();
     const s = atob(d.snow), si = atob(d.ice); totalVol = 0;
     for (let k = 0; k < N * N; k++) { depth[k] = s.charCodeAt(k) / 60; iceA[k] = si.charCodeAt(k) / 255; totalVol += depth[k] * CELL_A; }
@@ -1552,6 +1730,81 @@ function load() {
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
 addEventListener('pagehide', save);
 
+/* ---------- casas que voltam à vida, baús, diário da vila ---------- */
+const NOTES = [
+  ['Bilhete na porta · Família Kowal', 'Fomos para a cidade no trem das seis. O Farol do Morro voltou a zumbir à noite e a neve não para. Ninguém sabe desligar aquela coisa.'],
+  ['Diário da padeira Rosa', 'Terceira semana de neve. A farinha acabou, mas o forno ainda esquenta a rua. Engraçado: perto do morro a neve cai mais grossa.'],
+  ['Carta do carteiro Ivo', 'Entreguei a última carta da vila. Era para a engenheira Olga, lá do Farol. O envelope estava gelado por dentro.'],
+  ['Caderno escolar · Lia, 9 anos', 'A professora disse que o Farol Polar foi feito para chamar chuva e salvar a colheita. Eu acho que ele chamou neve demais.'],
+  ['Anotação do celeiro', 'Levamos as vacas para o vale vizinho. O trator elétrico ficou perto do moinho, sem bateria. O Bento sabe onde ela está.'],
+  ['Recado do Bento', 'Escondi a bateria do trator na neve, longe de curiosos. Se alguém achar, cuide bem dele. Ele empurra neve como ninguém.'],
+  ['Diário de Olga · pág. 12', 'O Farol Polar funciona! Uma nuvem por dia, chuva na medida certa. A vila inteira veio comemorar.'],
+  ['Diário de Olga · pág. 31', 'Algo mudou no núcleo. As nuvens ficaram brancas e pesadas. Neve em pleno verão. Desligá-lo não adianta: ele religa sozinho.'],
+  ['Bilhete do padre Anselmo', 'Toquei o sino três dias para avisar a todos. Agora o sino está congelado. Que a próxima pessoa a entrar aqui traga uma pá.'],
+  ['Lista de compras · Seu Duda', 'Pá. Outra pá. Uma pá maior. Isqueiro para o gelo. Chocolate. Paciência, muita paciência.'],
+  ['Diário de Olga · pág. 40', 'Descobri: o núcleo se alimenta da própria neve do vale. Quanto mais neve, mais forte ele fica. Só existe um jeito: tirar a neve do vale inteiro.'],
+  ['Postal nunca enviado', 'Querida mãe, aqui é lindo, mas tudo é branco. Até o silêncio. Volto quando a primavera voltar.'],
+  ['Receita da vó Cida', 'Chocolate quente: leite, cacau e uma pitada de canela. Para quem passou o dia na pá. Guarde um pouco para os robôs, eles também trabalham.'],
+  ['Mapa rabiscado', 'Os cristais de gelo brilham azul quando a neve fica rasa. Olga dizia que eles alimentam máquinas muito estranhas.'],
+  ['Diário do Bento', 'Vi luzinhas andando sozinhas na neve. Os robôs da Olga! Cavam um pouco e levam tudo para o Derretedor. Teimosos como eu.'],
+  ['Diário de Olga · pág. 52', 'Construí o Derretedor perto da cabana. Cada floco derretido enfraquece o Farol. Talvez alguém termine o que eu comecei.'],
+  ['Bilhete na geladeira', 'Se você está lendo isto, a vila está voltando. Obrigado. Deixamos um presentinho no baú.'],
+  ['Última página de Olga', 'Quando o vale estiver limpo, o Farol vai se apagar e a primavera volta. Eu acredito em quem estiver com a pá na mão.'],
+];
+const houseCells = [], chestMeshes = [];
+const doorOf = b => b.rot ? [b.x + b.w / 2 + 1.7, b.z] : [b.x, b.z + b.d / 2 + 1.7];
+function initHouses() {
+  BUILDINGS.forEach((b, i) => {
+    const cells = []; let tot = 0; const [i0, i1, j0, j1] = cellsIn(b.x, b.z, Math.max(b.w, b.d) / 2 + 4);
+    for (let j = j0; j <= j1; j++) for (let ii = i0; ii <= i1; ii++) { const k = j * N + ii; if (rectDist(gx(ii), gx(j), b.x, b.z, b.w / 2, b.d / 2) < 3.5 && init[k] > 0.05) { cells.push(k); tot += init[k]; } }
+    houseCells[i] = { cells, tot }; b.lib = state.houses[i] === '1'; b.opened = state.chests[i] === '1';
+    const H = b.type === 'barn' ? 4.6 : 3.4; b.chim = b.type === 'house' ? (b.rot ? [b.x - b.d / 5, H + 2.8, b.z - b.w / 4] : [b.x + b.w / 4, H + 2.8, b.z - b.d / 5]) : null;
+    if (b.lib && !b.opened) makeChest(i);
+  });
+}
+function makeChest(i) {
+  const b = BUILDINGS[i], [x, z] = doorOf(b), g = group(x, groundAt(x, z), z); scene.add(g); g.rotation.y = b.rot ? Math.PI / 2 : 0;
+  g.add(ol(box(0.9, 0.5, 0.6, M.wood, 0, 0.25, 0), 0.025), ol(box(0.92, 0.22, 0.62, M.darkWood, 0, 0.6, 0), 0.025), box(0.94, 0.07, 0.64, M.gold, 0, 0.5, 0), ol(box(0.16, 0.2, 0.05, M.gold, 0, 0.45, 0.32), 0.01));
+  const beam = mesh(cached('cbeam', () => new THREE.CylinderGeometry(0.4, 0.4, 14, 10, 1, true)), M.beam, 0, 7, 0, false); g.add(beam);
+  chestMeshes[i] = g;
+}
+function showNote(t, b) { $('noteT').textContent = t; $('noteB').textContent = b; $('note').classList.add('open'); shopOpen = true; joy.id = null; joy.x = joy.y = 0; joyIdle(); look.id = null; actHeld = heatHeld = false; releaseButtons(); for (const k in keys) keys[k] = false; if (document.pointerLockElement) document.exitPointerLock(); }
+let houseT = 0, smokeT = 0, coinTrack = null;
+function updateWorld(dt, t) {
+  // casas: quando a neve em volta some, a casa "acorda" (fumaça na chaminé) e aparece um baú na porta
+  houseT -= dt;
+  if (houseT <= 0) { houseT = 1.2;
+    BUILDINGS.forEach((b, i) => { if (b.lib || zoneRing(b.x, b.z) > state.zone) return; const hc = houseCells[i]; if (!hc || hc.tot < 2) return; let cur = 0; for (const k of hc.cells) cur += depth[k];
+      if (cur <= hc.tot * 0.12) { b.lib = true; state.stars += 2; state.cnt.chest++; makeChest(i); toast('Casa libertada da neve! +2 estrelas. Um baú apareceu na porta.', 4, 'house'); chime(784, 6); vibrate([20, 40, 20]); wave(b.x, groundAt(b.x, b.z) + 0.1, b.z, 12); for (let n = 0; n < 24; n++) spawn(stars, b.x + fr(-3, 3), groundAt(b.x, b.z) + 1, b.z + fr(-3, 3), fr(-2, 2), fr(3, 7), fr(-2, 2), fr(0.06, 0.12), 1.2); } });
+    state.houses = BUILDINGS.map(b => b.lib ? 1 : 0).join('');
+  }
+  smokeT -= dt; if (smokeT <= 0) { smokeT = 0.25; BUILDINGS.forEach(b => { if (b.lib && b.chim && Math.hypot(b.x - player.x, b.z - player.z) < 70) emitSteam(b.chim[0] + fr(-.1, .1), b.chim[1], b.chim[2] + fr(-.1, .1), fr(-.1, .1) + 0.25, 1.1, fr(-.1, .1), 3.5); }); }
+  chestMeshes.forEach((g, i) => { if (!g) return; g.children[1].rotation.x = -0.15 - Math.abs(Math.sin(t * 3)) * 0.12;
+    if (state.driving < 0 && Math.hypot(player.x - g.position.x, player.z - g.position.z) < 1.9) { const b = BUILDINGS[i]; b.opened = true; scene.remove(g); chestMeshes[i] = null; state.chests = BUILDINGS.map(x => x.opened ? 1 : 0).join('');
+      const zr = zoneRing(b.x, b.z), c = Math.round(120 * Math.pow(zr + 1, 2.6)); state.coins += c; state.stars += 2; let part = '';
+      if (Math.random() < 0.5) { part = ['gear', 'pipe', 'motor', 'coil', 'tank', 'crystal', 'fuel'][(Math.random() * 7) | 0]; state.inv[part]++; }
+      for (let n = 0; n < 20; n++) spawn(coins3, g.position.x, g.position.y + 0.6, g.position.z, fr(-2, 2), fr(4, 8), fr(-2, 2), 1, 1.4);
+      chime(988, 7); vibrate([30, 30, 60]); floatText(`+${fmt(c)} · +2`, g.position.clone().setY(g.position.y + 1.4), '#ffd166', 24, 'chest');
+      if (part) toast(`Baú: ${PARTS[part]}!`, 3, part);
+      if (state.notes < NOTES.length) { const [nt, nb] = NOTES[state.notes++]; showNote(nt, nb); } } });
+  // nevasca dourada: de tempos em tempos tudo vale ×3
+  if (blz.t > 0) { blz.t -= dt; $('blizz').innerHTML = `${ic('star')} NEVASCA DOURADA ×3 · ${Math.ceil(blz.t)}s`; if (blz.t <= 0) { $('blizz').style.display = 'none'; fall.material.color.set(0xffffff); fall.material.size = 0.11; toast('A nevasca dourada passou.', 2.5, 'snow'); } }
+  else if ((blz.next -= dt) <= 0) { blz.t = 60 + 10 * state.upg.blizzard; blz.next = fr(240, 360); $('blizz').style.display = 'block'; fall.material.color.set(0xffd34d); fall.material.size = 0.16; toast('NEVASCA DOURADA! Tudo que chegar ao Derretedor vale ×3!', 4, 'star'); chime(660, 7); vibrate([40, 40, 40]); }
+  // contador de moedas ganhas (para as missões) e missões
+  if (coinTrack !== null && state.coins > coinTrack) state.cnt.coin += state.coins - coinTrack; coinTrack = state.coins;
+  checkQuests();
+}
+const QUEST_T = {
+  sec: { name: n => `Limpe ${n} seções`, icon: 'star', make: z => 3 + z * 2 },
+  ice: { name: n => `Derreta ${n} blocos de gelo`, icon: 'lighter', make: z => 40 + z * 30, ok: () => state.zone >= 1 && state.heat >= 0 },
+  ball: { name: n => `Derreta ${n} bolas de neve`, icon: 'ball', make: () => 2, ok: () => vstate.some(v => v.fixed) },
+  coin: { name: n => `Ganhe ${fmt(n)} moedas`, icon: 'coin', make: z => Math.round(600 * Math.pow(z + 1, 2.6) / 50) * 50 },
+  treasure: { name: n => `Ache ${n} moedas enterradas`, icon: 'coin', make: z => 3 + z },
+  chest: { name: n => `Liberte ${n} casa${n > 1 ? 's' : ''} da neve`, icon: 'house', make: () => 1, ok: () => BUILDINGS.some(b => !b.lib && zoneRing(b.x, b.z) <= state.zone) },
+};
+function newQuest() { const ks = Object.keys(QUEST_T).filter(k => (!QUEST_T[k].ok || QUEST_T[k].ok()) && !state.quests.some(q => q.t === k)); const t = ks[(Math.random() * ks.length) | 0] || 'coin'; return { t, n: QUEST_T[t].make(state.zone), b: state.cnt[t], r: 2 + state.zone }; }
+function fillQuests() { state.quests = (state.quests || []).filter(q => QUEST_T[q.t]); while (state.quests.length < 3) state.quests.push(newQuest()); }
+function checkQuests() { state.quests.forEach((q, i) => { if (state.cnt[q.t] - q.b >= q.n) { state.stars += q.r; toast(`Missão completa: ${QUEST_T[q.t].name(q.n)}! +${q.r} estrelas`, 3.5, 'star'); chime(880, 6); state.quests[i] = newQuest(); } }); }
 /* ---------- bolas de neve: os veículos não coletam, eles empurram e enrolam ---------- */
 const BALL_GEO = new THREE.IcosahedronGeometry(1, 3), balls = [], COMPACT = 0.06;
 M.snowBall = toon({ map: TEX.snow, color: 0xf4fbff });
@@ -1566,15 +1819,15 @@ function placeBall(b) { b.r = Math.max(0.15, ballR(b.vol)); b.m.scale.setScalar(
 function rollBall(b, nx, nz) { const mv = Math.hypot(nx - b.x, nz - b.z); if (mv > 1e-4) { _ax.set(nz - b.z, 0, b.x - nx).normalize(); _q.setFromAxisAngle(_ax, mv / b.r); b.m.quaternion.premultiply(_q); } b.x = nx; b.z = nz; }
 function ballMission(r) {
   while (state.ballM < BALL_MISSIONS.length && r * 2 >= BALL_MISSIONS[state.ballM][0] - 0.01) {
-    const [d, c, part] = BALL_MISSIONS[state.ballM++]; state.coins += c; if (part) state.inv[part]++;
-    toast(`Missão cumprida: bola de ${d} m! +${fmt(c)}${part ? ' e ' + PARTS[part] : ''}`, 4, 'ball'); chime(784, 6); vibrate([30, 40, 60]);
+    const [d, c, part] = BALL_MISSIONS[state.ballM++]; state.coins += c; state.stars += 3; if (part) state.inv[part]++;
+    toast(`Missão cumprida: bola de ${d} m! +${fmt(c)}, +3 estrelas${part ? ' e ' + PARTS[part] : ''}`, 4, 'ball'); chime(784, 6); vibrate([30, 40, 60]);
   }
 }
 function updateBalls(dt) {
   for (let n = balls.length - 1; n >= 0; n--) {
     const b = balls[n];
     if (!b.melt && Math.hypot(b.x - MELT.x, b.z - MELT.z) < 2.1 + b.r * 0.7) {
-      b.melt = true; b.peak = b.r; b.v0 = b.vol; b.att = false; if (curBall === b) curBall = null;
+      b.melt = true; b.peak = b.r; b.v0 = b.vol; state.cnt.ball++; b.att = false; if (curBall === b) curBall = null;
       floatText(`Bola Ø ${(b.r * 2).toFixed(1)} m · ×${ballMult(b.r).toFixed(1)}`, new THREE.Vector3(MELT.x, 4, MELT.z), '#bff0ff', 20, 'ball'); ballMission(b.r); thump(0.2, 120);
     }
     if (b.melt) {
@@ -1591,7 +1844,7 @@ function updateBalls(dt) {
    ===================================================================== */
 const clock = new THREE.Clock(), raycaster = new THREE.Raycaster();
 const _dir = new THREE.Vector3(), _hit = new THREE.Vector3();
-let hudT = 0, zoneT = 0, saveT = 0, sellAcc = 0, sellT = 0, crunchT = 0, fullT = 0, treasureT = 0, robotT = 0, zoneDone = -1;
+let hardTipT = 0, hudT = 0, zoneT = 0, saveT = 0, sellAcc = 0, sellT = 0, crunchT = 0, fullT = 0, treasureT = 0, robotT = 0, zoneDone = -1;
 let gainAcc = 0, gainT = 0, shake = 0, buzzT = 0, boardT = 0, puffT = 0, fireT = 0, noFuelT = 0;
 function aimSnow(reach) {
   camera.getWorldDirection(_dir); const o = camera.position;
@@ -1674,7 +1927,7 @@ function update(dt, t) {
     moving = Math.hypot(player.vx, player.vz) > 0.4;
   }
   const k1 = idxOf(player.x, player.z);
-  const ground = inHouse() ? 0 : groundAt(player.x, player.z) + (k1 >= 0 ? depth[k1] * (drv ? 0.25 : 0.55) : 0);
+  const ground = inHouse() ? 0 : groundAt(player.x, player.z) + (k1 >= 0 ? Math.max(0, depth[k1] - Math.min(drv ? 0.5 : 0.32, depth[k1] * 0.5)) : 0);   // pisa por cima da neve, afunda no máximo ~30 cm
   player.y = damp(player.y, ground, drv ? 8 : 14, dt);
   const prevStep = player.stepT; player.stepT += dt * Math.hypot(player.vx, player.vz) * 1.9;
   if (!drv && moving && Math.floor(player.stepT / Math.PI) !== Math.floor(prevStep / Math.PI) && !inHouse() && dHere > 0.1) crunch(0.05, 700, 0.1);
@@ -1694,9 +1947,9 @@ function update(dt, t) {
     else if (atBench) { ctx = `${ic('bench')}Abrir bancada`; if (actPressed) toggleShop(true, 'bancada'); }
     else if (vi >= 0) { const v = VEH[vi]; ctx = `${ic(v.st.fixed ? 'enter' : 'wrench')}${v.st.fixed ? 'Dirigir ' + v.name : 'Consertar ' + v.name}`; if (actPressed) useVehicle(vi); if (!v.st.found) { v.st.found = true; toast(`Você achou: ${v.name}!`, 3, v.icon); chime(659, 5); } }
     else if (heatHeld && state.heat >= 0) {
-      const H = HEATS[state.heat], hit = aimSnow(H.reach); heating = true;
+      const H = HEATS[state.heat], hit = aimSnow(H.reach); heating = true; emitFlame(heatMesh, hit, H, dt, H.id === 'torch' ? 1 : 0);
       if (hit) { ret = { x: hit.x, y: hit.y, z: hit.z, r: H.r, heat: true }; const m = meltAt(hit.x, hit.z, H.r, H.melt * (1 + 0.15 * state.upg.iceBreak) * (1 + 0.2 * state.upg.heatPow), dt);
-        fireT -= dt; if (fireT <= 0) { fireT = 0.03; spawn(fires, hit.x + fr(-H.r, H.r) * 0.6, hit.y + 0.1, hit.z + fr(-H.r, H.r) * 0.6, fr(-.5, .5), fr(1, 2.5), fr(-.5, .5), fr(0.06, 0.14) * (1 + H.r), 0.6); if (m.n && Math.random() < 0.4) emitSteam(hit.x, hit.y + 0.2, hit.z, fr(-.3, .3), 1.5, fr(-.3, .3), 1.2); }
+        fireT -= dt; if (fireT <= 0) { fireT = 0.03; if (m.n && Math.random() < 0.4) emitSteam(hit.x, hit.y + 0.2, hit.z, fr(-.3, .3), 1.5, fr(-.3, .3), 1.2); }
         crunchT -= dt; if (crunchT <= 0) { crunchT = 0.1; crunch(0.05, 300, 0.15); } }
     } else {
       const hit = aimSnow(stat.reach()), hk = hit ? idxOf(hit.x, hit.z) : -1, hasSnow = hk >= 0 && depth[hk] > 0.01;
@@ -1705,9 +1958,11 @@ function update(dt, t) {
       if (actHeld && hit) {
         if (tool.melt) meltAt(hit.x, hit.z, stat.radius(), tool.melt, dt);
         const capLeft = tool.direct || state.upg.pipe ? Infinity : cap - state.bag;
-        const vol = clearAt(hit.x, hit.z, stat.radius(), stat.rate(), dt, capLeft);
+        clearHard = tool.hard || 99; const vol = clearAt(hit.x, hit.z, stat.radius(), stat.rate(), dt, capLeft); clearHard = 99;
+        if (performance.now() - lastHardHit < 200 && (hardTipT -= dt) <= 0) { hardTipT = 25; toast('Neve compactada! Esta ferramenta mal arranha. Melhore o Quebra-gelo ou use algo mais forte.', 4, 'iceBreak'); }
+        if (tool.melt) emitFlame(toolMesh, hit, { reach: tool.reach, r: tool.r * 0.5 }, dt, 0);
         if (vol > 0) {
-          clearing = true; const units = vol * UNITS * comboMult();
+          clearing = true; const units = vol * UNITS * comboMult() * (state.upg.goldCombo && combo.lvl >= 5 ? 2 : 1);
           if (tool.direct) { const c = units * stat.value() * tool.direct; state.coins += c; sellAcc += c; } else state.bag = Math.min(cap, state.bag + units);
           gainAcc += units; advance(0); spray(hit, vol, tool);
           shake = Math.max(shake, tool.direct ? 0.025 : 0.01);
@@ -1737,7 +1992,6 @@ function update(dt, t) {
 
   updateBalls(dt);
   // --- vender ---
-  if (!drv && state.upg.pipe && state.bag > 0) { const c = state.bag * stat.value() * 0.8; state.coins += c; sellAcc += c; state.bag = 0; }
   const dm = Math.hypot(player.x - MELT.x, player.z - MELT.z), bagNow = state.bag;
   const selling = dm < (drv ? 4.5 : 3.0) && bagNow > 0;
   if (selling) {
@@ -1751,15 +2005,15 @@ function update(dt, t) {
   if (Math.random() < dt * 1.5) emitSteam(MELT.x + 0.75, 4.4, MELT.z + 0.4, fr(-.2, .2), 1.2, fr(-.2, .2), 2.2);
 
   // --- robôs, moedas e peças enterradas ---
-  updateRobots(dt, t);
-  robotT -= dt; if (robotT <= 0) { robotT = 4; if (robotIncome >= 1 && robots.length) { floatText(`+${fmt(robotIncome)}`, camera.position.clone().add(new THREE.Vector3(0, 0.6, 0)).addScaledVector(_dir, 2), '#9fe6ff', 15, 'robot'); robotIncome = 0; bumpCoins(); } }
+  updateRobots(dt, t); updateDrones(dt, t); updateWorld(dt, t);
+  robotT -= dt; if (robotT <= 0) { robotT = 4; robotIncome += droneIncome; droneIncome = 0; if (robotIncome >= 1 && (robots.length || drones.length)) { floatText(`+${fmt(robotIncome)}`, camera.position.clone().add(new THREE.Vector3(0, 0.6, 0)).addScaledVector(_dir, 2), '#9fe6ff', 15, 'robot'); robotIncome = 0; bumpCoins(); } }
   treasureT -= dt;
   if (treasureT <= 0) {
     treasureT = 0.2;
     for (const tr of treasures) { if (tr.found) { tr.m.visible = false; continue; } tr.m.visible = depth[tr.k] < 0.14;
-      if (tr.m.visible && Math.hypot(player.x - tr.x, player.z - tr.z) < 1.6) { tr.found = true; tr.m.visible = false; const c = tr.value * stat.value(); state.coins += c; bumpCoins(); floatText(`+${fmt(c)}`, tr.m.position.clone().setY(tr.m.position.y + 0.8), '#ffd166', 24, 'coin'); for (let n = 0; n < 12; n++) spawn(coins3, tr.x, tr.m.position.y, tr.z, fr(-2, 2), fr(4, 7), fr(-2, 2), 1, 1.4); chime(784, 5); vibrate(20); } }
-    for (const it of items) { if (it.found) { it.g.visible = false; continue; } it.g.visible = depth[it.k] < 0.3 && !iceA[it.k];
-      if (it.g.visible && Math.hypot(player.x - it.x, player.z - it.z) < (drv ? 3 : 1.8)) { it.found = true; it.g.visible = false; state.inv[it.part]++; floatText(PARTS[it.part], it.g.position.clone().setY(it.g.position.y + 1), '#bff4ff', 22, it.part); toast(`Peça encontrada: ${PARTS[it.part]}!`, 3, it.part); chime(659, 6); vibrate([20, 30, 20]);
+      if (tr.m.visible && Math.hypot(player.x - tr.x, player.z - tr.z) < 1.6) { tr.found = true; state.cnt.treasure++; tr.m.visible = false; const c = tr.value * stat.value(); state.coins += c; bumpCoins(); floatText(`+${fmt(c)}`, tr.m.position.clone().setY(tr.m.position.y + 0.8), '#ffd166', 24, 'coin'); for (let n = 0; n < 12; n++) spawn(coins3, tr.x, tr.m.position.y, tr.z, fr(-2, 2), fr(4, 7), fr(-2, 2), 1, 1.4); chime(784, 5); vibrate(20); } }
+    for (const it of items) { if (it.found) { it.g.visible = false; continue; } const rev = depth[it.k] < 0.3 && !iceA[it.k], dI = Math.hypot(player.x - it.x, player.z - it.z); it.g.visible = rev || (state.upg.treasureSense > 0 && dI < 12 + 8 * state.upg.treasureSense && zoneRing(it.x, it.z) <= state.zone);
+      if (rev && Math.hypot(player.x - it.x, player.z - it.z) < (drv ? 3 : 1.8)) { it.found = true; it.g.visible = false; state.inv[it.part]++; floatText(PARTS[it.part], it.g.position.clone().setY(it.g.position.y + 1), '#bff4ff', 22, it.part); toast(`Peça encontrada: ${PARTS[it.part]}!`, 3, it.part); chime(659, 6); vibrate([20, 30, 20]);
         for (let n = 0; n < 14; n++) spawn(stars, it.x, it.g.position.y, it.z, fr(-2, 2), fr(3, 6), fr(-2, 2), fr(0.06, 0.1), 1.1); } }
   }
   for (const tr of treasures) if (tr.m.visible) { tr.m.rotation.y += dt * 2; tr.m.position.y = groundAt(tr.x, tr.z) + 0.34 + Math.sin(t * 3 + tr.x) * 0.06; }
@@ -1798,21 +2052,23 @@ function loop() {
   const paused = !started || shopOpen || portrait || $('win').classList.contains('open');
   if (!paused) { update(dt, clock.elapsedTime); updateDay(dt); }
   else { camera.position.set(player.x, player.y + 1.62, player.z); camera.rotation.set(player.pitch, player.yaw, 0); if (!started) { player.yaw += dt * 0.05; updateDay(dt * 4); } }
-  skyU.uTime.value = clock.elapsedTime; if (snowMat.userData.sh) snowMat.userData.sh.uniforms.uNight.value = DAY.night;
-  updateBits(dt); updateSimple(puffs, dt, -0.2, 'puff'); updateSimple(stars, dt, 6, 'star'); updateSimple(coins3, dt, 12, 'coin'); updateSimple(fires, dt, -2, 'fire');
+  skyU.uTime.value = clock.elapsedTime; if (snowMat.userData.sh) { snowMat.userData.sh.uniforms.uNight.value = DAY.night; snowMat.userData.sh.uniforms.uGold.value = damp(snowMat.userData.sh.uniforms.uGold.value, blz.t > 0 ? 1 : 0, 2, dt); }
+  updateBits(dt); updateSimple(puffs, dt, -0.2, 'puff'); updateSimple(stars, dt, 6, 'star'); updateSimple(coins3, dt, 12, 'coin'); updateFlames(dt);
   updateWaves(dt); updateSteam(dt); updateSnowfall(dt, clock.elapsedTime); updateFloats(dt); tickCoins(dt); flushSnow();
   sky.position.copy(camera.position);
   sun.position.set(player.x, 0, player.z).addScaledVector(DAY.lightDir, 80); sun.target.position.set(player.x, 0, player.z);
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').style.display = 'none'; }
   if (helpT > 0) { helpT -= dt; if (helpT <= 0) $('help').classList.add('hide'); }
   autoQuality(dt);
-  renderer.render(scene, camera);
+  renderer.autoClear = true; renderer.render(scene, camera);
+  if (vm.visible) { vmCam.aspect = camera.aspect; vmCam.updateProjectionMatrix(); vmHemi.color.copy(hemi.color); vmHemi.groundColor.copy(hemi.groundColor); vmHemi.intensity = hemi.intensity; vmSun.color.copy(sun.color); vmSun.intensity = sun.intensity * 0.8 + 0.3;
+    renderer.autoClear = false; renderer.clearDepth(); renderer.render(vmScene, vmCam); renderer.autoClear = true; }
 }
 
 /* ---------- início ---------- */
 const loaded = load();
 (state.balls || []).forEach(([x, z, v]) => makeBall(x, z, v));
-buildFence(); syncRobots(); equipTool(state.tool); equipHeat(state.heat); markAll(); updateDay(0);
+buildFence(); syncRobots(); syncDrones(); initHouses(); fillQuests(); equipTool(state.tool); equipHeat(state.heat); markAll(); updateDay(0);
 VEH.forEach(v => { v.beam.visible = !v.st.fixed; });
 drawBoard();
 $('btnSound').innerHTML = ic(state.muted ? 'mute' : 'sound');
@@ -1828,7 +2084,7 @@ $('btnStart').addEventListener('click', () => {
 });
 refreshHUD();
 window.__gameStarted = true;
-window.__game = { balls, makeBall, BALL_MISSIONS, state, player, TOOLS, HEATS, toggleShop, buyZone, toolAction, heatAction, craft, pct, items, VEH, clearAt, meltAt, useVehicle, exitVehicle, DAY, dispZone, zoneSnowFraction };
+window.__game = { depthArr: depth, BUILDINGS, houseCells, equipTool, equipHeat, blz, drones, syncDrones, balls, makeBall, BALL_MISSIONS, state, player, TOOLS, HEATS, toggleShop, buyZone, toolAction, heatAction, craft, pct, items, VEH, clearAt, meltAt, useVehicle, exitVehicle, DAY, dispZone, zoneSnowFraction };
 loop();
 </script>
 </body>
