@@ -53,6 +53,10 @@
   #fuelBar .fill{background:linear-gradient(#fff2b0,#ffb627)}
   @keyframes pulse{to{filter:brightness(1.35)}}
   #prog{display:none !important;font-size:11px;padding:2px 8px;border:0;background:rgba(10,26,46,.45)}
+  #minRow{display:flex;gap:4px;flex-wrap:wrap}#minRow:empty{display:none}
+  #minRow span{display:flex;align-items:center;gap:2px;font-size:12px;font-weight:900;padding:1px 7px 1px 3px;border-radius:10px;background:rgba(10,26,46,.55)}#minRow .ic{width:16px;height:16px}
+  .hlab{position:absolute;left:0;top:0;transform:translate(-50%,-100%);text-align:center;white-space:nowrap;font-weight:900;font-size:12px;color:#bff6ff;text-shadow:0 0 6px #000,0 1px 0 #000;pointer-events:none;display:none}
+  .hlab b{font-size:13px;color:#fff}.hlab .c{display:flex;gap:5px;justify-content:center;font-size:11.5px;margin-top:2px}.hlab .c span{display:flex;align-items:center;gap:1px}.hlab .c .ic{width:14px;height:14px}.hlab .no{color:#ff9d9d}
   #objective.fade{opacity:0;transition:opacity 1s}
   #objective{font-size:11px;font-weight:800;color:#e8f6ff;background:rgba(10,26,46,.4);border:0;border-left:3px solid var(--ice);border-radius:6px;padding:2px 7px;line-height:1.3;max-width:230px}
   #objective .ic{width:14px;height:14px;flex-shrink:0}
@@ -207,6 +211,7 @@
     <div class="bar" id="fuelBar"><div class="fill"></div><div class="txt" id="fuelText"></div></div>
     <div class="bar" id="coldBar"><div class="fill"></div><div class="txt" id="coldText"></div></div>
     <div class="pill" id="prog"></div>
+    <div id="minRow"></div>
     <div class="pill" id="objective"></div>
   </div>
   <div id="topRight"><button class="iconbtn" id="btnCam"></button><button class="iconbtn" id="btnSound"></button><button class="iconbtn" id="btnHelp"></button></div>
@@ -306,6 +311,11 @@ const ICON = {
   geo: sv(`<path d="M22 58L27 8h10l5 50z" fill="#c9d3de" ${O}/><path d="M25 20h14M24 32h16M23 44h18" stroke="#ff8a2a" stroke-width="4"/><circle cx="32" cy="8" r="6" fill="#ffe27a" ${O}/>`),
   cam: sv(`<rect x="8" y="18" width="48" height="32" rx="10" fill="#f1e2c2" ${O}/><circle cx="24" cy="34" r="7" fill="#6fe0ff" ${O}/><circle cx="42" cy="34" r="7" fill="#6fe0ff" ${O}/>`),
   radiator: sv(`<rect x="10" y="14" width="44" height="36" rx="6" fill="#ff8a2a" ${O}/><path d="M20 20v24M28 20v24M36 20v24M44 20v24" stroke="#7a3a10" stroke-width="4"/>`),
+  gelita: sv(`<path d="M32 4l12 20-12 36-12-36z" fill="#6fd6ff" ${O}/><path d="M32 4v56M20 24h24" stroke="#d8f6ff" stroke-width="2.5"/>`),
+  ferrite: sv(`<path d="M10 40l8-20 18-8 16 12 2 18-14 12-20-2z" fill="#ff9a4a" ${O}/><path d="M22 30l10 6M36 22l4 14" stroke="#ffd2a8" stroke-width="3"/>`),
+  lumen: sv(`<path d="M32 4l10 14-4 30-6 12-6-12-4-30z" fill="#c77dff" ${O}/><path d="M18 28l8-6M46 28l-8-6" stroke="#f0d8ff" stroke-width="3"/><circle cx="32" cy="30" r="5" fill="#fff" opacity=".8"/>`),
+  nucleo: sv(`<circle cx="32" cy="32" r="14" fill="#ffd34d" ${O}/><path d="M32 4v12M32 48v12M4 32h12M48 32h12M12 12l8 8M44 44l8 8M52 12l-8 8M20 44l-8 8" stroke="#ffb020" stroke-width="5" stroke-linecap="round"/>`),
+  fab: sv(`<path d="M8 52h48v6H8z" fill="#34405a" ${O}/><rect x="20" y="16" width="24" height="36" rx="5" fill="#9fe9ff" ${O}/><path d="M20 30h24M20 40h24" stroke="#1f7f9a" stroke-width="3"/><path d="M8 20l12 8M56 20l-12 8" stroke="#ff7a2a" stroke-width="5" stroke-linecap="round"/>`),
   drone: sv(`<rect x="20" y="26" width="24" height="14" rx="7" fill="#e9f3ff" ${O}/><path d="M8 22h16M40 22h16M16 22v6M48 22v6" stroke="#22344d" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="33" r="4" fill="#6fe0ff"/><circle cx="32" cy="50" r="8" fill="#fff" ${O}/>`),
   house: sv(`<path d="M10 30L32 12l22 18v24H10z" fill="#e9b07a" ${O}/><path d="M6 32L32 9l26 23" fill="none" stroke="#c0443a" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/><rect x="27" y="38" width="10" height="16" fill="#7a4a2a" ${O}/><rect x="40" y="34" width="8" height="8" fill="#ffd08f"/>`),
   chest: sv(`<rect x="9" y="26" width="46" height="28" rx="4" fill="#a8652e" ${O}/><path d="M9 30c0-12 46-12 46 0" fill="#c47a3a" ${O}/><rect x="9" y="30" width="46" height="5" fill="#ffd166"/><rect x="28" y="30" width="8" height="12" rx="2" fill="#ffd166" ${O}/>`),
@@ -1067,21 +1077,22 @@ const vstate = VEH.map(v => ({ fixed: false, energy: v.kind === 'fuel' ? 35 : 0,
 VEH.forEach((v, i) => { v.g = buildVehicle(v); v.st = vstate[i]; });
 
 const TOOLS = [
-  { id: 'hands', name: 'Mãos', r: .6, rate: .85, reach: 2.6, hard: 1.1, cost: 0, desc: 'Devagar e gelado, mas é um começo.' },
-  { id: 'wood', name: 'Pá de Madeira', r: .85, rate: 1.25, reach: 3, hard: 1.4, cost: 30, desc: 'Uma pá simples. Já ajuda muito.' },
-  { id: 'steel', name: 'Pá de Aço', r: 1.1, rate: 1.9, reach: 3.4, hard: 1.9, cost: 300, desc: 'Lâmina que corta neve dura.' },
-  { id: 'wide', name: 'Pá Larga Dupla', r: 1.45, rate: 2.3, reach: 3.6, hard: 1.7, cost: 1500, desc: 'Lâmina enorme para abrir caminho.' },
-  { id: 'vacuum', name: 'Aspirador de Neve', r: 1.6, rate: 2.9, reach: 6.5, hard: 2.0, craft: 'vacuum', desc: 'Suga a neve de longe.' },
-  { id: 'turbo', name: 'Soprador Turbo', r: 1.9, rate: 3.6, reach: 7.5, hard: 2.3, cost: 9000, desc: 'Jato potente de longo alcance.' },
-  { id: 'rotary', name: 'Pá Rotativa', r: 2.2, rate: 4.6, reach: 5, hard: 3.4, craft: 'rotary', desc: 'Lâminas girando que mastigam neve dura.' },
-  { id: 'heat', name: 'Canhão de Calor', r: 2.3, rate: 5, reach: 8.5, hard: 3.1, melt: 2.5, craft: 'heat', desc: 'Tira neve e derrete gelo ao mesmo tempo.' },
+  { id: 'hands', name: 'Garras do PIP', r: .6, rate: .85, reach: 2.6, hard: 1.1, cost: 0, desc: 'Devagar e gelado, mas é um começo.' },
+  { id: 'wood', name: 'Pá de Plasma', r: .85, rate: 1.25, reach: 3, hard: 1.4, cost: 30, desc: 'Uma pá simples. Já ajuda muito.' },
+  { id: 'steel', name: 'Pá de Fóton', r: 1.1, rate: 1.9, reach: 3.4, hard: 1.9, cost: 300, desc: 'Lâmina que corta neve dura.' },
+  { id: 'wide', name: 'Lâmina Dupla', r: 1.45, rate: 2.3, reach: 3.6, hard: 1.7, cost: 1500, desc: 'Lâmina enorme para abrir caminho.' },
+  { id: 'vacuum', name: 'Sugador de Pulso', r: 1.6, rate: 2.9, reach: 6.5, hard: 2.0, craft: 'vacuum', desc: 'Suga a neve de longe.' },
+  { id: 'turbo', name: 'Soprador Iônico', r: 1.9, rate: 3.6, reach: 7.5, hard: 2.3, cost: 9000, desc: 'Jato potente de longo alcance.' },
+  { id: 'rotary', name: 'Broca Rotativa', r: 2.2, rate: 4.6, reach: 5, hard: 3.4, craft: 'rotary', desc: 'Lâminas girando que mastigam neve dura.' },
+  { id: 'heat', name: 'Canhão Térmico', r: 2.3, rate: 5, reach: 8.5, hard: 3.1, melt: 2.5, craft: 'heat', desc: 'Tira neve e derrete gelo ao mesmo tempo.' },
   { id: 'magnet', name: 'Ímã de Flocos', r: 3, rate: 5.5, reach: 10, hard: 2.6, cost: 60000, desc: 'Puxa flocos de longe. Enche a mochila num piscar.' },
   { id: 'vortex', name: 'Vórtice Polar', r: 3.6, rate: 7, reach: 13, hard: 3.4, craft: 'vortex', desc: 'Suga um círculo enorme de neve dura.' },
   { id: 'hole', name: 'Buraco Negro de Bolso', r: 5, rate: 10, reach: 16, hard: 4, cost: 450000, desc: 'Absurdo. Melhor não perguntar.' },
 ];
+TOOLS.forEach((t, i) => { if (i) t.craft = 'fab'; });
 const HEATS = [
-  { id: 'lighter', name: 'Isqueiro', r: .45, melt: .8, reach: 2.4, cost: 40, desc: 'Derrete gelo devagar. Precisa estar perto.' },
-  { id: 'torch', name: 'Maçarico', r: .9, melt: 1.8, reach: 3.4, cost: 1200, desc: 'Chama azul que derrete gelo rápido.' },
+  { id: 'lighter', name: 'Faísca', r: .45, melt: .8, reach: 2.4, cost: 40, desc: 'Derrete gelo devagar. Precisa estar perto.' },
+  { id: 'torch', name: 'Maçarico de Plasma', r: .9, melt: 1.8, reach: 3.4, cost: 1200, desc: 'Chama azul que derrete gelo rápido.' },
   { id: 'flame', name: 'Lança-chamas', r: 1.7, melt: 3.8, reach: 6.5, craft: 'flame', desc: 'Derrete placas inteiras de gelo.' },
 ];
 const RECIPES = [
@@ -1107,6 +1118,7 @@ const UPG = {   // árvore de habilidades em mapa: p = posição (x, y) em casas
   goldCombo: { name: 'Combo Dourado', icon: 'coin', base: 8000, mult: 1, max: 1, p: [1.9, -4.1], req: ['crit', 3], desc: 'Com combo ×1.5 ou mais, cada floco vale o dobro.', fx: l => l ? 'Ativo' : 'Desligado' },
   treasureSense: { name: 'Faro de Tesouro', icon: 'gear', base: 500, mult: 2.3, max: 5, p: [-2.3, -0.8], req: ['boots', 2], desc: 'Peças enterradas mostram o feixe de luz de mais longe, mesmo sob a neve.', fx: l => `${12 + l * 8} m de faro` },
   radiator: { name: 'Radiador', icon: 'radiator', base: 300, mult: 2.4, max: 6, p: [-2.6, 1.8], req: ['boots', 1], desc: 'O robô aguenta frio mais intenso. Regiões distantes são muito mais frias.', fx: l => `aguenta até ${-8 - 9 * l} °C` },
+  magnet: { name: 'Ímã de Cristais', icon: 'magnet', base: 150, mult: 2.2, max: 6, p: [9, 9], desc: 'Puxa cristais e minerais de mais longe.', fx: l => `${(1.6 + 0.7 * l).toFixed(1)} m de alcance` },
   blizzard: { name: 'Caçador de Nevasca', icon: 'star', base: 2000, mult: 2.2, max: 5, p: [-3.4, -0.8], req: ['treasureSense', 1], desc: 'A nevasca dourada (tudo vale ×3) dura mais.', fx: l => `+${l * 10} s de nevasca` },
   boots: { name: 'Botas', icon: 'boots', base: 30, mult: 2, max: 8, p: [-1.25, 0], req: ['core', 1], desc: 'Anda mais rápido, até na neve funda.', fx: l => `+${l * 10}% de velocidade` },
   robots: { name: 'Robô Limpa-neve', icon: 'robot', base: 400, mult: 1.75, max: 12, p: [-2.3, 0.6], req: ['boots', 1], desc: 'Robôs cavam sozinhos e levam a neve ao Derretedor (você vê as viagens).', fx: l => `${l} robôs` },
@@ -1117,9 +1129,11 @@ const UPG = {   // árvore de habilidades em mapa: p = posição (x, y) em casas
   ballMax: { name: 'Bola Gigante', icon: 'ball', base: 2500, mult: 2.4, max: 5, p: [1.6, 3.1], req: ['plow', 1], desc: 'As bolas de neve podem crescer mais.', fx: l => `+${l * 20}% de tamanho máximo` },
   ballValue: { name: 'Bola Valiosa', icon: 'coin', base: 3000, mult: 2.3, max: 10, p: [-0.4, 3.2], req: ['vehSpeed', 1], desc: 'Bolas derretidas pagam mais.', fx: l => `+${l * 20}% por bola` },
 };
+['power', 'radius', 'reach', 'bag', 'boots', 'radiator', 'magnet'].forEach(k => { UPG[k].mod = true; });
+UPG.power.name = 'Motor do Braço'; UPG.radius.name = 'Bocal Largo'; UPG.reach.name = 'Extensor'; UPG.bag.name = 'Tanque'; UPG.boots.name = 'Turbinas';
 const FUEL_COST = 300;
 const state = {
-  coins: 0, stars: 0, heaters: [], heatInv: [0, 0, 0], heatUnl: [true, false, false], cold: 100, cam3: true, bag: 0, ballM: 0, balls: [], notes: 0, houses: '', chests: '', quests: [], cnt: { sec: 0, ice: 0, ball: 0, coin: 0, treasure: 0, chest: 0 }, tool: 0, heat: -1, owned: TOOLS.map((_, i) => i === 0), ownedHeat: HEATS.map(() => false),
+  coins: 0, stars: 0, min: { gelita: 0, ferrite: 0, lumen: 0, nucleo: 0 }, dep: '', heaters: [], heatInv: [0, 0, 0], heatUnl: [true, false, false], cold: 100, cam3: true, bag: 0, ballM: 0, balls: [], notes: 0, houses: '', chests: '', quests: [], cnt: { sec: 0, ice: 0, ball: 0, coin: 0, treasure: 0, chest: 0 }, tool: 0, heat: -1, owned: TOOLS.map((_, i) => i === 0), ownedHeat: HEATS.map(() => false),
   upg: Object.fromEntries(Object.keys(UPG).map(k => [k, 0])), inv: Object.fromEntries(Object.keys(PARTS).map(k => [k, 0])),
   zone: 4, prestige: 0, step: 0, won: false, muted: false, played: 0, sections: 0, driving: -1, iceTip: false,
 };
@@ -1609,7 +1623,7 @@ let zoneFrac = 1;
 const dispZone = () => Math.min(100, (1 - zoneFrac) / 0.97 * 100);
 const OBJECTIVES = [
   () => 'Desça da nave e tire a neve rasa em volta', () => 'Leve a neve ao Coletor da nave (o tanque laranja)',
-  () => 'Compre uma ferramenta melhor na Oficina (holograma ao pé da rampa)', () => 'Limpe uma seção inteira (veja o % na mira)',
+  () => 'Ache cristais na neve e fabrique o Braço Mk1 na Fabricadora (ao lado da nave)', () => 'Limpe uma seção inteira (veja o % na mira)',
   () => 'Compre uma Fogueira e posicione: onde é quente, a neve não volta', () => 'Cave até a motoneve (feixe vermelho) e ache a Vela de Ignição',
   () => `Degele o planeta: ${dispPct().toFixed(1)}%`,
 ];
@@ -1630,7 +1644,7 @@ function refreshHUD() {
   if (drv) { $('fuelBar').querySelector('.fill').style.width = v.st.energy + '%'; $('fuelText').innerHTML = ic(v.kind === 'fuel' ? 'fuel' : 'battery') + `${Math.round(v.st.energy)}%`; }
   const rz = zoneRing(player.x, player.z), tH = inHouse() ? 20 : tempAt(player.x, player.z); $('prog').innerHTML = `${REGIONS[rz]} · ${Math.round(tH)} °C · Planeta ${dispPct().toFixed(1)}%`;
   $('coldBar').style.display = state.cold < 99 ? 'block' : 'none'; $('coldBar').querySelector('.fill').style.width = state.cold + '%'; $('coldText').innerHTML = ic('radiator') + `Calor ${Math.round(state.cold)}%`;
-  const hinv = state.heatInv.reduce((a, b) => a + b, 0); $('btnPlace').style.display = hinv > 0 && !drv && !inHouse() ? 'flex' : 'none'; if (hinv) { let ti = 0; for (let n = 2; n >= 0; n--) if (state.heatInv[n]) { ti = n; break; } $('btnPlace').innerHTML = ic(HEATERS[ti].id) + `<span id="placeCnt">${hinv}</span>`; } $('starsPill').innerHTML = ic('star') + state.stars;
+  const hinv = state.heatInv.reduce((a, b) => a + b, 0); $('btnPlace').style.display = hinv > 0 && !drv && !inHouse() ? 'flex' : 'none'; if (hinv) { let ti = 0; for (let n = 2; n >= 0; n--) if (state.heatInv[n]) { ti = n; break; } $('btnPlace').innerHTML = ic(HEATERS[ti].id) + `<span id="placeCnt">${hinv}</span>`; } $('starsPill').innerHTML = ic('star') + state.stars; $('minRow').innerHTML = Object.keys(MINS).filter(k => state.min[k] > 0).map(k => `<span>${ic(k)}${state.min[k]}</span>`).join('');
   const objHtml = drv && state.ballM < BALL_MISSIONS.length ? ic('ball') + `Missão: bola de ${BALL_MISSIONS[state.ballM][0]} m no Derretedor (+${fmt(BALL_MISSIONS[state.ballM][1])})` : state.step < OBJECTIVES.length ? ic('radius') + OBJECTIVES[state.step]() : ''; if (objHtml !== lastObj) { lastObj = objHtml; objT = 9; $('objective').innerHTML = objHtml; $('objective').classList.remove('fade'); } else if ((objT -= 0.25) <= 0) $('objective').classList.add('fade');
   $('btnHeat').style.display = state.heat >= 0 && !drv ? 'flex' : 'none';
   if (shopOpen) renderShop();
@@ -1639,7 +1653,7 @@ function tickCoins(dt) { const prev = Math.floor(shownCoins); shownCoins = Math.
 function bumpCoins() { const c = $('coinsPill'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
 
 // ---------- loja com abas ----------
-const TABS = [['missoes', 'Missões', 'star'], ['loja', 'Loja', 'shop'], ['bancada', 'Bancada', 'bench'], ['arvore', 'Habilidades', 'tree'], ['mochila', 'Mochila', 'bag']];
+const TABS = [['missoes', 'Missões', 'star'], ['loja', 'Oficina', 'shop'], ['arvore', 'Habilidades', 'tree'], ['mochila', 'Mochila', 'bag']];
 let tab = 'loja';
 $('tabs').innerHTML = TABS.map(([id, n, i]) => `<button class="tab" data-tab="${id}">${ic(i)}${n}</button>`).join('');
 $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { tab = b.dataset.tab; renderShop(true); } });
@@ -1647,7 +1661,7 @@ const bar = (n, v) => `<div class="stat"><span>${n}</span><i style="--v:${clamp(
 const need = parts => `<div class="need">${Object.entries(parts).map(([p, n]) => `<span class="${(state.inv[p] || 0) >= n ? 'ok' : 'no'}">${ic(p)}${PARTS[p]}<b>${state.inv[p] || 0}/${n}</b></span>`).join('')}</div>`;
 const RAR = [['Comum', '#8fb3d6'], ['Incomum', '#7be495'], ['Raro', '#59c3ee'], ['Épico', '#b48cff'], ['Lendário', '#ffb347']];
 const TOOL_TIER = [0, 0, 1, 1, 2, 2, 3, 3, 3, 4, 4], HEAT_TIER = [0, 2, 3];
-const selKey = { missoes: '', loja: 't1', bancada: 'vacuum', arvore: 'core', mochila: '' };
+const selKey = { missoes: '', loja: 'q0', bancada: 'vacuum', arvore: 'core', mochila: '' };
 const slot = (key, icon, label, cls, rc, cnt) => `<button class="slot ${cls} ${selKey[tab] === key ? 'sel' : ''}" data-sel="${key}" style="--rc:${rc}">${cnt !== undefined ? `<span class="cnt">${cnt}</span>` : ''}${ic(icon)}<i>${label}</i></button>`;
 const price = (c, ok) => `${ic('coin')}${fmt(c)}`;
 const detail = (icon, rc, rar, name, body, btn) => `<div class="detail"><div class="big" style="--rc:${rc}">${ic(icon)}</div>${rar ? `<div class="rar" style="--rc:${rc}">${rar}</div>` : ''}<h3>${name}</h3>${body}${btn || ''}</div>`;
@@ -1663,12 +1677,12 @@ function renderShop(force) {
   $('shopCoins').innerHTML = ic('coin') + fmt(state.coins);
   const c = state.coins, sk = selKey[tab];
   if (tab === 'loja') {
-    let h = `<div class="slots"><div class="secTitle">${ic('wood')}Ferramentas de neve</div><div class="srow">`;
+    let h = `<div class="slots"><div class="secTitle">${ic('wood')}Ferramentas (fabricadas na Fabricadora, ao lado da nave)</div><div class="srow">`;
     TOOLS.forEach((t, i) => { const own = state.owned[i], rc = RAR[TOOL_TIER[i]][1];
-      h += slot('t' + i, t.id, own ? (state.tool === i ? 'Em uso' : 'Sua') : t.craft ? 'Bancada' : price(t.cost), `${own ? 'own' : t.craft ? 'lock' : c >= t.cost ? 'can' : 'no'} ${state.tool === i ? 'on' : ''}`, rc); });
+      h += slot('t' + i, t.id, own ? (state.tool === i ? 'Em uso' : 'Sua') : 'Fabricar', `${own ? 'own' : t.craft ? 'lock' : c >= t.cost ? 'can' : 'no'} ${state.tool === i ? 'on' : ''}`, rc); });
     h += `</div><div class="secTitle">${ic('lighter')}Calor (derrete gelo)</div><div class="srow">`;
     HEATS.forEach((t, i) => { const own = state.ownedHeat[i], rc = RAR[HEAT_TIER[i]][1];
-      h += slot('h' + i, t.id, own ? (state.heat === i ? 'Em uso' : 'Sua') : t.craft ? 'Bancada' : price(t.cost), `${own ? 'own' : t.craft ? 'lock' : c >= t.cost ? 'can' : 'no'} ${state.heat === i ? 'on' : ''}`, rc); });
+      h += slot('h' + i, t.id, own ? (state.heat === i ? 'Em uso' : 'Sua') : 'Fabricar', `${own ? 'own' : t.craft ? 'lock' : c >= t.cost ? 'can' : 'no'} ${state.heat === i ? 'on' : ''}`, rc); });
     const z = state.zone + 1;
     h += `</div><div class="secTitle">${ic('fire')}Aquecedores e suprimentos</div><div class="srow">`;
     HEATERS.forEach((H, i) => { const unl = state.heatUnl[i], cost = heaterCost(i); h += slot('q' + i, H.id, unl ? price(cost) : `${ic('star')}${H.stars}`, unl ? (c >= cost ? 'can' : 'no') : (state.stars >= H.stars ? 'can' : 'lock'), '#ffb347', state.heatInv[i] || undefined); });
@@ -1677,7 +1691,7 @@ function renderShop(force) {
     if (sk[0] === 't' || sk[0] === 'h') {
       const heat = sk[0] === 'h', i = +sk.slice(1), t = heat ? HEATS[i] : TOOLS[i], own = heat ? state.ownedHeat[i] : state.owned[i], on = heat ? state.heat === i : state.tool === i, [rn, rc] = RAR[(heat ? HEAT_TIER : TOOL_TIER)[i]];
       const stats = heat ? bar('Área', t.r / 2) + bar('Calor', t.melt / 4) + bar('Alcance', t.reach / 7) : bar('Área', t.r / 5) + bar('Força', t.rate / 10) + bar('Alcance', t.reach / 16) + bar('Dureza', t.hard / 4);
-      const btn = own ? `<button class="gbtn ${on ? 'green' : 'blue'}" data-${heat ? 'heat' : 'tool'}="${i}">${on ? 'Em uso' : 'Equipar'}</button>` : t.craft ? `<button class="gbtn gray" data-goto="bancada">${ic('bench')}Fabricar na Bancada</button>` : `<button class="gbtn ${c >= t.cost ? '' : 'gray'}" data-${heat ? 'heat' : 'tool'}="${i}">${ic('coin')}${fmt(t.cost)}</button>`;
+      const btn = own ? `<button class="gbtn ${on ? 'green' : 'blue'}" data-${heat ? 'heat' : 'tool'}="${i}">${on ? 'Em uso' : 'Equipar'}</button>` : t.craft ? `<button class="gbtn gray">${ic('fab')}Fabrique na Fabricadora</button>` : `<button class="gbtn ${c >= t.cost ? '' : 'gray'}" data-${heat ? 'heat' : 'tool'}="${i}">${ic('coin')}${fmt(t.cost)}</button>`;
       d = detail(t.id, rc, rn, t.name, `<p>${t.desc}</p>${t.direct ? '<span class="tag">vira moeda na hora</span>' : ''}<div class="stats">${stats}</div>`, btn);
     } else if (sk[0] === 'q') {
       const i = +sk.slice(1), H = HEATERS[i], unl = state.heatUnl[i], cost = heaterCost(i);
@@ -1706,7 +1720,8 @@ function renderShop(force) {
   } else if (tab === 'arvore') {
     const U = 110; let lines = '', nodes = '';
     for (const [id, u] of Object.entries(UPG)) {
-      if (u.req) { const q = UPG[u.req[0]].p, lit = upgOpen(id), x1 = 1000 + q[0] * U, y1 = 1000 + q[1] * U, x2 = 1000 + u.p[0] * U, y2 = 1000 + u.p[1] * U;
+      if (u.mod) continue;
+      if (u.req && !UPG[u.req[0]].mod) { const q = UPG[u.req[0]].p, lit = upgOpen(id), x1 = 1000 + q[0] * U, y1 = 1000 + q[1] * U, x2 = 1000 + u.p[0] * U, y2 = 1000 + u.p[1] * U;
         lines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#08111f" stroke-width="12" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${lit ? '#7fd8ff' : '#2a4262'}" stroke-width="6" stroke-linecap="round" ${lit ? '' : 'stroke-dasharray="2 10"'}/>`; }
       const lv = state.upg[id], open = upgOpen(id), vis = upgVis(id), max = lv >= u.max, can = open && !max && c >= upgCost(id);
       const cls = `${id === 'core' ? 'core' : ''} ${!vis ? 'myst' : !open ? 'lock' : ''} ${max ? 'max' : ''} ${can ? 'can' : ''} ${sk === id ? 'sel' : ''}`;
@@ -1791,6 +1806,7 @@ $('winPrestige').addEventListener('click', () => { const p = state.prestige + 1;
 const SAVE_KEY = 'degelo_v1';
 const enc = (arr, mul) => { const q = new Uint8Array(N * N); for (let k = 0; k < N * N; k++) q[k] = Math.min(255, Math.round(arr[k] * mul)); let s = ''; for (let k = 0; k < q.length; k += 4096) s += String.fromCharCode.apply(null, q.subarray(k, k + 4096)); return btoa(s); };
 function save() {
+  state.dep = deposits.map(d => d.found ? 1 : 0).join('');
   state.houses = BUILDINGS.map(b => b.lib ? 1 : 0).join(''); state.chests = BUILDINGS.map(b => b.opened ? 1 : 0).join('');
   state.balls = balls.filter(b => !b.melt).map(b => [+b.x.toFixed(2), +b.z.toFixed(2), Math.round(b.vol)]);
   try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 4, state, snow: enc(depth, 60), ice: enc(iceA, 255), found: treasures.map(t => t.found ? 1 : 0).join(''), items: items.map(t => t.found ? 1 : 0).join(''), veh: vstate, player: [player.x, player.z, player.yaw], day: DAY.t })); } catch (_) {}
@@ -1806,6 +1822,7 @@ function load() {
     for (let k = 0; k < N * N; k++) { depth[k] = s.charCodeAt(k) / 60; iceA[k] = si.charCodeAt(k) / 255; totalVol += depth[k] * CELL_A; }
     recomputePatches();
     (d.found || '').split('').forEach((c, i) => { if (treasures[i]) treasures[i].found = c === '1'; });
+    (d.state.dep || '').split('').forEach((c, i) => { if (deposits[i]) deposits[i].found = c === '1'; }); state.min = { gelita: 0, ferrite: 0, lumen: 0, nucleo: 0, ...(d.state.min || {}) };
     (d.items || '').split('').forEach((c, i) => { if (items[i]) items[i].found = c === '1'; });
     (d.veh || []).forEach((v, i) => Object.assign(vstate[i], v));
     if (d.player) [player.x, player.z, player.yaw] = d.player; if (d.day) DAY.t = d.day;
@@ -1855,6 +1872,8 @@ function updateBot(dt, t, moving, clearing, heating) {
   // parado por um tempo: PIP vira e olha para você
   idleT = moving || clearing || heating ? 0 : idleT + dt; b.body.rotation.y = damp(b.body.rotation.y, idleT > 2.5 ? Math.PI + Math.sin(t * 0.8) * 0.3 : 0, 4, dt); b.tipL.scale.setScalar(0.8 + 0.4 * Math.abs(Math.sin(t * 3)));
   if ((jetT -= dt) <= 0) { jetT = 0.05; flame(player.x + fr(-.08, .08), bot.position.y - 0.38, player.z + fr(-.08, .08), fr(-.2, .2), -1.2, fr(-.2, .2), 0.06, 0.22, 1); }
+  if (b.turbines && moving && Math.random() < 0.6) for (const tg of b.turbines) { tg.getWorldPosition(_tp); flame(_tp.x, _tp.y, _tp.z, Math.sin(player.yaw) * 2.5, 0.2, Math.cos(player.yaw) * 2.5, 0.05, 0.2, 1); }
+  if (b.halo) b.halo.rotation.z += dt * 2;
   syncBotTool(heating && state.heat >= 0 ? HEATS[state.heat].id : TOOLS[state.tool].id);
   if (botTool) { if (botTool.userData.spin) botTool.userData.spin.rotation.z += dt * (3 + (clearing ? 25 : 0)); if (botTool.userData.gyro) botTool.userData.gyro.forEach((r, i) => { r.rotation.x += dt * 2 * (i % 2 ? 1 : -1); r.rotation.y += dt * 1.5 * (i + 1); }); }
 }
@@ -1864,6 +1883,7 @@ const HEATERS = [
   { id: 'boiler', name: 'Caldeira a Vapor', r: 12, t: 24, cost: 3000, stars: 10, melt: 0.005, desc: 'Calor forte em área média. Também derrete a neve em volta sozinha.' },
   { id: 'geo', name: 'Torre Geotérmica', r: 20, t: 38, cost: 40000, stars: 40, melt: 0.006, desc: 'Puxa calor do centro do planeta. Aquece uma área enorme.' },
 ];
+HEATS.forEach(h => { h.craft = 'fab'; });
 const heaterCost = i => Math.round(HEATERS[i].cost * Math.pow(1.4, state.heaters.filter(h => h.t === i).length + state.heatInv[i]));
 const tempP = new Float32Array(NP * NP), meltP = new Float32Array(NP * NP), heaterMeshes = [];
 function recomputeTemp() {
@@ -1925,6 +1945,149 @@ function updateClimate(dt, t) {
   ship.userData.dish.rotation.y += dt * 0.6; ship.userData.lamp1.visible = (t % 1.2) < 0.6; ship.userData['lamp-1'].visible = ((t + 0.6) % 1.2) < 0.6; if (terminal.holo) { terminal.holo.lookAt(camera.position.x, terminal.holo.position.y, camera.position.z); terminal.holo.material.opacity = 0.75 + Math.sin(t * 5) * 0.1; }
   heaterMeshes.forEach((g, i) => { const h = state.heaters[i]; g.position.set(h.x, surfAt(h.x, h.z), h.z); g.userData.fl.forEach((f, n) => { const s = 1 + Math.sin(t * 12 + n * 2) * 0.12; f.scale.set(s, s * (1 + Math.sin(t * 17 + n) * 0.15), s); });
     if (h.t === 1 && Math.random() < dt * 2) emitSteam(h.x + 0.3, g.position.y + 2.6, h.z + 0.2, 0.2, 1.2, 0, 2.5); });
+}
+/* ---------- minerais e cristais escondidos na neve ---------- */
+const MINS = { gelita: { name: 'Gelita', col: 0x6fd6ff, css: '#9fe6ff' }, ferrite: { name: 'Ferrita', col: 0xff9a4a, css: '#ffc08a' }, lumen: { name: 'Lúmen', col: 0xc77dff, css: '#e2b8ff' }, nucleo: { name: 'Núcleo Estelar', col: 0xffd34d, css: '#ffe27a' } };
+const deposits = [], depMesh = {};
+{
+  const add = (x, z, type, n) => { if (inDeck(x, z) || BUILDINGS.some(b => rectDist(x, z, b.x, b.z, b.w / 2 + 0.4, b.d / 2 + 0.4) < 0.1)) return false; deposits.push({ x, z, k: idxOf(x, z), type, n, found: false, rev: false, s: rr(0.85, 1.35), ry: rnd() * TAU }); return true; };
+  for (let i = 0; i < 16; i++) { const a = i / 16 * TAU + rr(-0.2, 0.2), r = rr(9, 19); add(Math.cos(a) * r, 1 + Math.sin(a) * r, i % 3 === 0 ? 'gelita' : i % 3 === 1 ? 'ferrite' : 'gelita', 1 + (i % 2)); }
+  for (let n = 0, tries = 0; n < 420 && tries < 6000; tries++) {
+    const x = rr(-HALF + 3, HALF - 3), z = rr(-HALF + 3, HALF - 3), zr = zoneRing(x, z), r = rnd();
+    const type = zr >= 3 && r < 0.05 ? 'nucleo' : r < [0.04, 0.1, 0.22, 0.32, 0.4][zr] ? 'lumen' : r < 0.55 ? 'gelita' : 'ferrite';
+    if (add(x, z, type, 1 + Math.floor(rnd() * (2 + zr)))) n++;
+  }
+  const geo = { gelita: new THREE.OctahedronGeometry(0.2, 0).scale(1, 1.9, 1), ferrite: new THREE.DodecahedronGeometry(0.24, 0), lumen: new THREE.OctahedronGeometry(0.2, 0).scale(1, 2.3, 1), nucleo: new THREE.IcosahedronGeometry(0.24, 0) };
+  for (const t of Object.keys(MINS)) { const list = deposits.filter(d => d.type === t), im = new THREE.InstancedMesh(geo[t], toon({ color: MINS[t].col, emissive: MINS[t].col, emissiveIntensity: t === 'ferrite' ? 0.25 : 0.7 }), Math.max(1, list.length * 3));
+    im.frustumCulled = false; im.castShadow = true; scene.add(im); depMesh[t] = { im, list }; }
+}
+function updateDepositMeshes() {
+  for (const t of Object.keys(depMesh)) { const { im, list } = depMesh[t];
+    list.forEach((d, n) => { for (let c = 0; c < 3; c++) { const a = d.ry + c * 2.1, o = c ? 0.22 : 0; _d.position.set(d.x + Math.cos(a) * o, groundAt(d.x, d.z) + 0.18 + (c ? -0.05 : 0), d.z + Math.sin(a) * o); _d.rotation.set(c ? 0.4 : 0, a, c ? 0.3 : 0); _d.scale.setScalar(d.found || !d.rev ? 0 : d.s * (c ? 0.6 : 1)); _d.updateMatrix(); im.setMatrixAt(n * 3 + c, _d.matrix); } });
+    im.instanceMatrix.needsUpdate = true; }
+}
+const magR = () => 1.7 + 0.7 * state.upg.magnet;
+let depT = 0;
+function gainMineral(type, n, x, y, z) { state.min[type] += n; floatText(`+${n} ${MINS[type].name}`, new THREE.Vector3(x, y + 0.8, z), MINS[type].css, 20, type); for (let i = 0; i < 10; i++) spawn(stars, x, y + 0.3, z, fr(-2, 2), fr(2, 5), fr(-2, 2), fr(0.05, 0.09), 0.9); chime(1046 + Math.random() * 200, 4); vibrate(15);
+  comm('min1', `Isso é ${MINS[type].name}! Minerais e cristais servem para fabricar peças novas para você na Fabricadora, ao lado da nave.`); }
+function updateDeposits(dt) {
+  depT -= dt; if (depT > 0) return; depT = 0.2; let ch = false; const R2 = magR();
+  for (const d of deposits) { if (d.found) continue; const rev = d.k >= 0 && depth[d.k] < 0.22; if (rev !== d.rev) { d.rev = rev; ch = true; if (rev && Math.hypot(player.x - d.x, player.z - d.z) < 14) { tone(1400, 1800, 0.03, 0.15, 'triangle'); } }
+    if (rev && state.driving < 0 && Math.hypot(player.x - d.x, player.z - d.z) < R2 && Math.abs(player.y - groundAt(d.x, d.z)) < 3) { d.found = true; ch = true; gainMineral(d.type, d.n, d.x, groundAt(d.x, d.z), d.z); } }
+  if (ch) updateDepositMeshes();
+  // meteoritos: na chuva de meteoros, fragmentos caem perto do PIP
+  if (WX.k.met > 0.5 && (meteorFallT -= 0.2) <= 0) { meteorFallT = fr(12, 20); const a = Math.random() * TAU, r = fr(12, 28); fallingRocks.push({ x: player.x + Math.cos(a) * r, z: player.z + Math.sin(a) * r, y: 80, t: 0, m: null }); comm('metfall', 'Um fragmento de meteoro caiu aqui perto! Eles trazem Núcleo Estelar, o mineral mais raro.'); }
+}
+let meteorFallT = 6; const fallingRocks = [], meteorites = [];
+function updateMeteorites(dt) {
+  for (let i = fallingRocks.length - 1; i >= 0; i--) { const f = fallingRocks[i]; f.y -= dt * 55; const gy = surfAt(f.x, f.z);
+    for (let n = 0; n < 3; n++) flame(f.x + fr(-.3, .3), f.y + n * 0.8, f.z + fr(-.3, .3), fr(-.5, .5), 6, fr(-.5, .5), 0.9, 0.5, 0);
+    if (f.y <= gy) { fallingRocks.splice(i, 1); thump(0.3, 80); shake = Math.max(shake, 0.12); wave(f.x, gy + 0.1, f.z, 6); for (let n = 0; n < 24; n++) spawn(blocks, f.x, gy + 0.3, f.z, fr(-5, 5), fr(3, 8), fr(-5, 5), fr(0.1, 0.25), 1.4);
+      const g = group(f.x, gy + 0.2, f.z); scene.add(g); g.add(ol(mesh(new THREE.DodecahedronGeometry(0.45, 0), toon({ color: 0x3a2f45, emissive: 0xff7a1a, emissiveIntensity: 0.35 }), 0, 0, 0, false), 0.03), mesh(new THREE.OctahedronGeometry(0.2, 0), M.glowYellow, 0.25, 0.25, 0, false));
+      g.add(mesh(cached('ibeam', () => new THREE.CylinderGeometry(0.25, 0.25, 8, 10, 1, true)), M.beam, 0, 4, 0, false)); meteorites.push({ x: f.x, z: f.z, g }); } }
+  for (let i = meteorites.length - 1; i >= 0; i--) { const m = meteorites[i]; m.g.rotation.y += dt; m.g.position.y = surfAt(m.x, m.z) + 0.3;
+    if (state.driving < 0 && Math.hypot(player.x - m.x, player.z - m.z) < magR() + 0.4) { scene.remove(m.g); meteorites.splice(i, 1); gainMineral('nucleo', 1, m.x, m.g.position.y, m.z); gainMineral('lumen', 2, m.x, m.g.position.y, m.z); } }
+}
+/* ---------- módulos do PIP e a Fabricadora (hologramas no mundo) ---------- */
+const MODS = [
+  { id: 'arm', name: 'Braço de Coleta', icon: 'wood', max: 10, base: 25, mins: ['ferrite', 'gelita'], desc: 'Nova ferramenta na ponta do braço.' },
+  { id: 'motor', upg: 'power', name: 'Motor do Braço', icon: 'power', max: 12, base: 40, mins: ['ferrite', 'gelita'], desc: 'Arranca mais neve por segundo.' },
+  { id: 'tank', upg: 'bag', name: 'Tanque', icon: 'bag', max: 12, base: 20, mins: ['gelita', 'ferrite'], desc: 'Carrega mais neve por viagem.' },
+  { id: 'turbo', upg: 'boots', name: 'Turbinas', icon: 'rocket', max: 8, base: 60, mins: ['ferrite', 'lumen'], desc: 'Voa mais rápido.' },
+  { id: 'nozzle', upg: 'radius', name: 'Bocal Largo', icon: 'radius', max: 10, base: 80, mins: ['gelita', 'lumen'], desc: 'Pega uma área maior de neve.' },
+  { id: 'antenna', upg: 'reach', name: 'Extensor', icon: 'turbo', max: 8, base: 90, mins: ['gelita', 'ferrite'], desc: 'Alcança neve mais longe.' },
+  { id: 'magnet', upg: 'magnet', name: 'Ímã de Cristais', icon: 'magnet', max: 6, base: 150, mins: ['lumen', 'gelita'], desc: 'Puxa minerais de mais longe.' },
+  { id: 'radiator', upg: 'radiator', name: 'Radiador', icon: 'radiator', max: 6, base: 200, mins: ['ferrite', 'lumen'], desc: 'Aguenta regiões mais frias.' },
+  { id: 'torch', name: 'Maçarico', icon: 'torch', max: 3, base: 60, mins: ['ferrite', 'lumen'], desc: 'Derrete placas de gelo.' },
+];
+const modLv = m => m.id === 'arm' ? state.owned.lastIndexOf(true) : m.id === 'torch' ? state.ownedHeat.filter(Boolean).length : state.upg[m.upg] || 0;
+const modMax = m => m.upg ? Math.min(m.max, UPG[m.upg].max) : m.max;
+function modCost(m) {
+  const lv = modLv(m), c = { coins: Math.round(m.base * Math.pow(2.1, lv)) }; c[m.mins[0]] = 2 + lv * 2; c[m.mins[1]] = (c[m.mins[1]] || 0) + 1 + lv;
+  if (lv >= 3) c.lumen = (c.lumen || 0) + lv - 2; if (lv >= 6) c.nucleo = lv - 5; return c;
+}
+const canPay = c => Object.entries(c).every(([k, v]) => (k === 'coins' ? state.coins : state.min[k]) >= v);
+const FAB = { x: -6.3, z: 6.8 }, holos = [];
+const fab = group(FAB.x, BASE_Y, FAB.z); scene.add(fab);
+{
+  fab.add(ol(cyl(1.3, 1.5, 0.4, M.hullDark, 0, 0.2, 0, 6), 0.03), ol(cyl(0.55, 0.65, 1.6, M.hull, 0, 1.2, 0, 16), 0.03), mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.2, 16, 1, true), M.cockpit, 0, 1.25, 0, false));
+  const core = mesh(new THREE.TorusGeometry(0.5, 0.06, 8, 24), M.glowCyan, 0, 1.3, 0, false); core.rotation.x = Math.PI / 2; fab.add(core); fab.userData.core = core;
+  fab.userData.arms = [];
+  for (const sx of [-1, 1]) { const a = group(sx * 0.9, 0.5, 0, fab); a.add(ol(box(0.16, 1.4, 0.16, M.hullOr, 0, 0.7, 0), 0.015), ol(box(0.5, 0.12, 0.12, M.hullOr, -sx * 0.25, 1.4, 0), 0.012)); fab.userData.arms.push(a); }
+  fab.add(mesh(new THREE.PlaneGeometry(1.5, 0.36), new THREE.MeshBasicMaterial({ map: textTexture([['FABRICADORA', 34]], 256, 60, '#3a1d06', '#ffc08a'), toneMapped: false, side: THREE.DoubleSide }), 0, 2.35, 0, false));
+  fab.traverse(o => { if (o.isMesh && o.material !== OUTLINE) o.castShadow = true; });
+  addWall(FAB.x - 1.2, FAB.x + 1.2, FAB.z - 1.2, FAB.z + 1.2, BASE_Y + 2.4);
+  const holoMat = c => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+  const shape = id => { const g = new THREE.Group(); const m = holoMat(0x7fe9ff);
+    if (id === 'arm') g.add(new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.6), m), new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.04, 0.26), m).translateZ(-0.36));
+    else if (id === 'motor') for (let i = 0; i < 3; i++) g.add(new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.04, 6, 18), m).translateY(i * 0.12 - 0.12));
+    else if (id === 'tank') g.add(new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.3, 4, 12), m));
+    else if (id === 'turbo') { g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 0.4, 14), m).rotateX(Math.PI / 2)); g.add(new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.03, 6, 16), m).translateZ(0.2)); }
+    else if (id === 'nozzle') g.add(new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.35, 16, 1, true), m));
+    else if (id === 'antenna') g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.7, 6), m), new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8), m).translateY(0.38));
+    else if (id === 'magnet') g.add(new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.06, 8, 18, Math.PI), m));
+    else if (id === 'radiator') for (let i = 0; i < 4; i++) g.add(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.4, 0.3), m).translateX(i * 0.09 - 0.14));
+    else g.add(new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 12), m).rotateX(-Math.PI / 2));
+    g.userData.mat = m; return g; };
+  MODS.forEach((md, i) => { const a = (i / (MODS.length - 1) - 0.5) * 3.0, x = FAB.x + Math.sin(a) * 4.0, z = FAB.z + Math.cos(a) * 4.0;
+    const base = mesh(new THREE.CircleGeometry(0.45, 20), holoMat(0x7fe9ff), x, BASE_Y + 0.02, z, false); base.rotation.x = -Math.PI / 2; scene.add(base);
+    const sh = shape(md.id); sh.position.set(x, BASE_Y + 1.1, z); scene.add(sh);
+    const lab = document.createElement('div'); lab.className = 'hlab'; $('fx').appendChild(lab);
+    holos.push({ md, x, z, base, sh, lab }); });
+}
+let fabAnim = null, lastFabBest = null;
+function tryCraft(h) {
+  if (fabAnim) return; const m = h.md, lv = modLv(m); if (lv >= modMax(m)) { toast(`${m.name} já está no máximo.`, 2, m.icon); return; }
+  const c = modCost(m); if (!canPay(c)) { const miss = Object.entries(c).filter(([k, v]) => (k === 'coins' ? state.coins : state.min[k]) < v).map(([k, v]) => `${v - (k === 'coins' ? Math.floor(state.coins) : state.min[k])} ${k === 'coins' ? 'créditos' : MINS[k].name}`); toast('Faltam: ' + miss.join(', '), 2.5, m.icon); tone(220, 160, 0.06, 0.2, 'square'); vibrate([20, 30, 20]); return; }
+  for (const [k, v] of Object.entries(c)) { if (k === 'coins') state.coins -= v; else state.min[k] -= v; }
+  fabAnim = { h, t: 0 }; chime(523, 5); vibrate(25);
+}
+function finishCraft(h) {
+  const m = h.md;
+  if (m.id === 'arm') { const i = modLv(m) + 1; state.owned[i] = true; equipTool(i); advance(2); }
+  else if (m.id === 'torch') { const i = modLv(m); state.ownedHeat[i] = true; equipHeat(i); }
+  else { state.upg[m.upg]++; if (m.upg === 'robots') syncRobots(); }
+  syncBotParts(); const lv = modLv(m); toast(`${m.name} Mk${lv} instalado!`, 3, m.icon); chime(784, 7); wave(player.x, surfAt(player.x, player.z) + 0.1, player.z, 3);
+  for (let n = 0; n < 24; n++) spawn(stars, player.x, player.y, player.z, fr(-3, 3), fr(1, 5), fr(-3, 3), fr(0.05, 0.1), 1);
+  comm('craft1', 'Primeira peça fabricada! Cada módulo muda o PIP por fora também. Monte o robô do seu jeito.'); save(); refreshHUD();
+}
+function updateFab(dt, t) {
+  fab.userData.core.rotation.z += dt * (fabAnim ? 12 : 1.2); fab.userData.arms.forEach((a, i) => { a.rotation.y = fabAnim ? Math.sin(t * 14 + i * 3) * 1.2 : Math.sin(t * 0.8 + i) * 0.2; });
+  if (fabAnim) { fabAnim.t += dt; if (Math.random() < 0.6) flame(FAB.x + fr(-.3, .3), BASE_Y + 1.4, FAB.z + fr(-.3, .3), fr(-2, 2), fr(1, 3), fr(-2, 2), 0.12, 0.3, Math.random() < 0.5 ? 1 : 0);
+    if (Math.random() < 0.5) spawn(stars, player.x, player.y, player.z, (FAB.x - player.x) * 1.2, 2, (FAB.z - player.z) * 1.2, 0.06, 0.8);
+    if (fabAnim.t > 1.3) { const h = fabAnim.h; fabAnim = null; finishCraft(h); } }
+  const near = Math.hypot(player.x - FAB.x, player.z - FAB.z) < 12;
+  let best = null, bd = 1.9;
+  for (const h of holos) { const m = h.md, lv = modLv(m), max = lv >= modMax(m), c = max ? null : modCost(m), ok = c && canPay(c);
+    h.sh.rotation.y += dt * 1.2; h.sh.position.y = BASE_Y + 1.1 + Math.sin(t * 2 + h.x) * 0.06; const col = max ? 0xffd34d : ok ? 0x7fffb0 : 0x7fe9ff; h.sh.userData.mat.color.setHex(col); h.base.material.color.setHex(col); h.sh.userData.mat.opacity = 0.45 + 0.2 * Math.sin(t * 6 + h.x);
+    const d = Math.hypot(player.x - h.x, player.z - h.z); if (d < bd && state.driving < 0) { bd = d; best = h; }
+    if (!near || d > 4.5 || h !== lastFabBest) { h.lab.style.display = 'none'; continue; }
+    _v.set(h.x, BASE_Y + 1.6, h.z).project(camera); if (_v.z > 1) { h.lab.style.display = 'none'; continue; }
+    const key = `${lv}|${ok}|${d < 4}`; if (h.lab.dataset.k !== key) { h.lab.dataset.k = key;
+      h.lab.innerHTML = `<b>${m.name}</b> ${max ? 'MÁX' : 'Mk' + (lv + 1)}` + (d < 4 && c ? `<div class="c">${Object.entries(c).map(([k, v]) => `<span class="${(k === 'coins' ? state.coins : state.min[k]) >= v ? '' : 'no'}">${ic(k === 'coins' ? 'coin' : k)}${k === 'coins' ? fmt(v) : v}</span>`).join('')}</div>` : ''); }
+    h.lab.style.display = 'block'; h.lab.style.transform = `translate(${(_v.x * .5 + .5) * innerWidth}px,${(-_v.y * .5 + .5) * innerHeight}px) translate(-50%,-100%)`; }
+  if (!best) { let bd2 = 4.5; for (const h of holos) { const d = Math.hypot(player.x - h.x, player.z - h.z); if (d < bd2) { bd2 = d; lastFabBest = h; } } if (bd2 >= 4.5) lastFabBest = null; } else lastFabBest = best;
+  return best;
+}
+// peças visíveis no PIP conforme os módulos
+const ACCENTS = [0xff8a2a, 0x2ad4ff, 0xb46bff, 0xffd34d];
+function syncBotParts() {
+  const b = bot.userData; if (!b.mods) b.mods = group(0, 0, 0, b.body); const g = b.mods; while (g.children.length) g.remove(g.children[0]);
+  if (b.holdMods) b.hold.remove(b.holdMods); b.holdMods = group(0, 0, 0, b.hold); if (b.armMods) b.armR.remove(b.armMods); b.armMods = group(0, 0, 0, b.armR);
+  const L = id => modLv(MODS.find(m => m.id === id)); b.turbines = []; b.halo = null;
+  const tk = L('tank'); b.pack.scale.setScalar(1 + 0.06 * tk);
+  if (tk >= 3) for (const sx of [-1, 1]) g.add(ol(cyl(0.06, 0.06, 0.3, M.botAccent, sx * 0.24, 0.0, 0.38, 10), 0.01), mesh(new THREE.SphereGeometry(0.03, 6, 5), M.glowCyan, sx * 0.24, 0.17, 0.38, false));
+  if (tk >= 7) g.add(ol(mesh(new THREE.CapsuleGeometry(0.09, 0.2, 4, 10), M.cockpit, 0, 0.3, 0.42, false), 0.01));
+  const tb = L('turbo');
+  if (tb >= 1) for (const sx of [-1, 1]) { const tg = group(sx * (0.42 + 0.01 * tb), -0.08, 0.1, g); const r = 0.08 + 0.012 * tb; const c = ol(cyl(r, r * 1.25, 0.32, M.hullDark, 0, 0, 0, 14), 0.01); c.rotation.x = Math.PI / 2; tg.add(c); const gl = cyl(r * 0.8, r * 0.8, 0.02, M.glowCyan, 0, 0, 0.17, 14); gl.rotation.x = Math.PI / 2; tg.add(gl); tg.add(box(0.1, 0.04, 0.12, M.botAccent, -sx * 0.08, 0, 0)); b.turbines.push(tg); }
+  if (tb >= 4) { const tg = group(0, -0.2, 0.42, g); const c = ol(cyl(0.13, 0.17, 0.3, M.hullDark, 0, 0, 0, 16), 0.01); c.rotation.x = Math.PI / 2; tg.add(c, mesh(new THREE.TorusGeometry(0.15, 0.025, 6, 18), M.glowOrange, 0, 0, 0.16, false)); b.turbines.push(tg); }
+  const nz = L('nozzle'); if (nz >= 1) { const dsh = ol(mesh(new THREE.ConeGeometry(0.08 + 0.03 * nz, 0.16, 16, 1, true), M.botAccent, 0, 0, -0.05, false), 0.008); dsh.rotation.x = -Math.PI / 2; b.holdMods.add(dsh); }
+  const mo = L('motor'); for (let i = 0; i < Math.min(5, Math.ceil(mo / 2)); i++) { const c = mesh(new THREE.TorusGeometry(0.05, 0.015, 6, 14), M.glowOrange, 0, 0, -0.06 - i * 0.045, false); b.armMods.add(c); }
+  const an = L('antenna'); if (an >= 1) { g.add(cyl(0.01, 0.01, 0.12 * an, M.botDark, 0, 0.57 + 0.06 * an, 0.05, 6), mesh(new THREE.SphereGeometry(0.04, 8, 6), M.glowCyan, 0, 0.6 + 0.12 * an, 0.05, false)); if (an >= 4) { const ds = ol(mesh(new THREE.SphereGeometry(0.12, 10, 6, 0, TAU, 0, Math.PI / 3), M.hull, 0.16, 0.48, 0.12, false), 0.008); ds.rotation.z = -0.8; g.add(ds); } }
+  const ra = L('radiator'); for (let i = 0; i < ra; i++) g.add(ol(box(0.022, 0.12, 0.16, M.hullDark, -0.1 + i * 0.045, 0.33, 0.18), 0.005));
+  const mg = L('magnet'); if (mg >= 1) { const h = mesh(new THREE.TorusGeometry(0.46 + 0.02 * mg, 0.012 + 0.003 * mg, 6, 36), M.glowCyan, 0, 0, 0, false); h.rotation.x = Math.PI / 2; g.add(h); b.halo = h; }
+  if (state.ownedHeat.some(Boolean)) b.armL.add(b.torchM || (b.torchM = ol(mesh(new THREE.ConeGeometry(0.035, 0.12, 8), M.hullOr, 0, 0, -0.32, false), 0.006)));
+  const tot = MODS.reduce((a, m) => a + modLv(m), 0); M.botAccent.color.setHex(ACCENTS[Math.min(3, Math.floor(tot / 14))]);
 }
 /* ---------- casas que voltam à vida, baús, diário da vila ---------- */
 // ---------- MÃE-SOL fala com você (fila de mensagens com efeito de digitação) ----------
@@ -2125,7 +2288,7 @@ function snapSnow(x, z, s) {     // se o ponto não tem neve, procura a célula 
   if (best < 0) return _hit.set(x, s, z);
   return _hit.set(gx(best % N), gH[best] + depth[best], gx(best / N | 0));
 }
-let camT = 1, camDist = 0, lastRegion = -1, coldWarnT = 0;
+let fabNear = null, camT = 1, camDist = 0, lastRegion = -1, coldWarnT = 0;
 function aimFrom(reach) { const h = aimSnow(reach + camDist); return h && Math.hypot(h.x - player.x, h.z - player.z) <= reach + 0.7 ? h : null; }
 function toggleCam() { state.cam3 = !state.cam3; toast(state.cam3 ? 'Câmera em terceira pessoa' : 'Câmera em primeira pessoa', 1.5, 'cam'); }
 function update(dt, t) {
@@ -2197,7 +2360,9 @@ function update(dt, t) {
   let clearing = false, heating = false, ret = null, ctx = '';
   if (!drv) {
     const atShop = Math.hypot(player.x - TERM.x, player.z - TERM.z) < 2.6, atBench = false, vi = nearVehicle();
-    if (atShop) { ctx = `${ic('shop')}Abrir loja`; if (actPressed) toggleShop(true, 'loja'); }
+    const fh = fabNear;
+    if (fh && !fabAnim) { const lv = modLv(fh.md); ctx = lv >= modMax(fh.md) ? `${ic(fh.md.icon)}${fh.md.name}: máximo` : `${ic('fab')}Fabricar ${fh.md.name} Mk${lv + 1}`; if (actPressed) tryCraft(fh); }
+    else if (atShop) { ctx = `${ic('shop')}Abrir oficina`; if (actPressed) toggleShop(true, 'loja'); }
     else if (atBench) { ctx = `${ic('bench')}Abrir bancada`; if (actPressed) toggleShop(true, 'bancada'); }
     else if (vi >= 0) { const v = VEH[vi]; ctx = `${ic(v.st.fixed ? 'enter' : 'wrench')}${v.st.fixed ? 'Dirigir ' + v.name : 'Consertar ' + v.name}`; if (actPressed) useVehicle(vi); if (!v.st.found) { v.st.found = true; toast(`Você achou: ${v.name}!`, 3, v.icon); chime(659, 5); } }
     else if (heatHeld && state.heat >= 0) {
@@ -2259,7 +2424,7 @@ function update(dt, t) {
   if (Math.random() < dt * 1.5) emitSteam(MELT.x + 0.75, 4.4, MELT.z + 0.4, fr(-.2, .2), 1.2, fr(-.2, .2), 2.2);
 
   // --- robôs, moedas e peças enterradas ---
-  updateRobots(dt, t); updateDrones(dt, t); updateWorld(dt, t); updateClimate(dt, t); updateWeather(dt); if (WX.k.storm > 0.3 && state.driving < 0) { player.x += WX.wind.x * WX.k.storm * 0.9 * dt; player.z += WX.wind.y * WX.k.storm * 0.9 * dt; } updateBot(dt, t, moving, clearing, heating);
+  updateRobots(dt, t); updateDrones(dt, t); updateWorld(dt, t); updateClimate(dt, t); updateWeather(dt); updateDeposits(dt); updateMeteorites(dt); fabNear = updateFab(dt, t); if (WX.k.storm > 0.3 && state.driving < 0) { player.x += WX.wind.x * WX.k.storm * 0.9 * dt; player.z += WX.wind.y * WX.k.storm * 0.9 * dt; } updateBot(dt, t, moving, clearing, heating);
   robotT -= dt; if (robotT <= 0) { robotT = 4; robotIncome += droneIncome; droneIncome = 0; if (robotIncome >= 1 && (robots.length || drones.length)) { floatText(`+${fmt(robotIncome)}`, camera.position.clone().add(new THREE.Vector3(0, 0.6, 0)).addScaledVector(_dir, 2), '#9fe6ff', 15, 'robot'); robotIncome = 0; bumpCoins(); } }
   treasureT -= dt;
   if (treasureT <= 0) {
@@ -2326,7 +2491,7 @@ const loaded = load();
 (state.balls || []).forEach(([x, z, v]) => makeBall(x, z, v));
 state.zone = 4; state.heaters.forEach(h => heaterMeshes.push(buildHeater(h))); recomputeTemp();
 
-buildFence(); syncRobots(); syncDrones(); initHouses(); fillQuests(); equipTool(state.tool); equipHeat(state.heat); markAll(); updateDay(0);
+buildFence(); syncRobots(); syncDrones(); updateDepositMeshes(); syncBotParts(); initHouses(); fillQuests(); equipTool(state.tool); equipHeat(state.heat); markAll(); updateDay(0);
 VEH.forEach(v => { v.beam.visible = !v.st.fixed; });
 drawBoard();
 $('btnSound').innerHTML = ic(state.muted ? 'mute' : 'sound'); $('btnCam').innerHTML = ic('cam');
@@ -2341,7 +2506,7 @@ $('btnStart').addEventListener('click', () => {
 });
 refreshHUD();
 window.__gameStarted = true;
-window.__game = { intro, endIntro, comm, depthArr: depth, BUILDINGS, houseCells, equipTool, equipHeat, blz, drones, syncDrones, balls, makeBall, BALL_MISSIONS, state, player, TOOLS, HEATS, toggleShop, buyZone, toolAction, heatAction, craft, pct, items, VEH, clearAt, meltAt, useVehicle, exitVehicle, DAY, dispZone, zoneSnowFraction };
+window.__game = { finishCraft, deposits, MODS, holos, tryCraft, modLv, syncBotParts, intro, endIntro, comm, depthArr: depth, BUILDINGS, houseCells, equipTool, equipHeat, blz, drones, syncDrones, balls, makeBall, BALL_MISSIONS, state, player, TOOLS, HEATS, toggleShop, buyZone, toolAction, heatAction, craft, pct, items, VEH, clearAt, meltAt, useVehicle, exitVehicle, DAY, dispZone, zoneSnowFraction };
 loop();
 </script>
 </body>
