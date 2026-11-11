@@ -47,6 +47,7 @@
   #fuelBar{display:none}
   #coldBar{display:none}
   #coldBar .fill{background:linear-gradient(#d8f4ff,#5fb8ff)}
+  #vig{position:fixed;inset:0;pointer-events:none;z-index:2;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(20,8,50,.42) 100%)}
   #frost{position:fixed;inset:0;pointer-events:none;z-index:3;opacity:0;background:radial-gradient(ellipse at center,rgba(200,235,255,0) 35%,rgba(190,230,255,.85) 100%);box-shadow:inset 0 0 80px rgba(255,255,255,.8)}
   #btnPlace{right:calc(150px + var(--safe-r));bottom:calc(112px + var(--safe-b));width:62px;height:62px;display:none;border-color:#ffd166}
   #placeCnt{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;border-radius:11px;background:#ffd166;color:#3b2500;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid #7a4a00}
@@ -214,7 +215,7 @@
     <div id="minRow"></div>
     <div class="pill" id="objective"></div>
   </div>
-  <div id="topRight"><button class="iconbtn" id="btnCam"></button><button class="iconbtn" id="btnSound"></button><button class="iconbtn" id="btnHelp"></button></div>
+  <div id="topRight"><button class="iconbtn" id="btnSound"></button><button class="iconbtn" id="btnHelp"></button></div>
   <div id="cross"></div>
   <div id="combo"></div>
   <div id="blizz"></div>
@@ -224,7 +225,7 @@
   <div id="help"></div>
 </div>
 <div id="flash"></div>
-<div id="frost"></div>
+<div id="frost"></div><div id="vig"></div>
   <div id="comm"><div class="av"></div><div class="cb"><b>MÃE-SOL · Companhia Degelo Interestelar</b><p id="commT"></p></div></div>
   <button id="skipIntro">Pular ▸</button>
 <div id="fx"></div>
@@ -373,6 +374,10 @@ const ICON = {
   lock: sv(`<rect x="13" y="28" width="38" height="29" rx="5" fill="#9aa6b2" ${O}/><path d="M21 28v-8a11 11 0 0 1 22 0v8" fill="none" ${O}/>`),
   wrench: sv(ln('M14 50l22-22', '#cfd8e2', 7) + `<path d="M36 28a12 12 0 1 1 10 6l-4-6 4-6z" fill="#cfd8e2" ${O}/>`),
 };
+const emiIc = (a, b) => sv(`<path d="M6 40h20v-16H6z" fill="#34405a" ${O}/><path d="M26 22l22-12v44L26 42z" fill="${a}" ${O}/><ellipse cx="48" cy="32" rx="6" ry="22" fill="${b}" ${O}/><path d="M10 32h12" stroke="${b}" stroke-width="4" stroke-linecap="round"/>`);
+Object.assign(ICON, { hands: emiIc('#ff8a2a', '#ffe2b8'), wood: emiIc('#8fb3d6', '#7fe9ff'), steel: emiIc('#7be495', '#c8ffd8'), wide: emiIc('#59c3ee', '#bff4ff'),
+  fire: sv(`<path d="M22 58h20l-4-16H26z" fill="#34405a" ${O}/><path d="M32 6l12 18-12 18-12-18z" fill="#ff8a2a" ${O}/><path d="M32 14l6 10-6 10-6-10z" fill="#ffe27a"/><ellipse cx="32" cy="44" rx="16" ry="4" fill="none" stroke="#ffb35a" stroke-width="3"/>`),
+  boiler: sv(`<rect x="12" y="20" width="40" height="34" rx="10" fill="#34405a" ${O}/><path d="M12 30h40M12 42h40" stroke="#ff8a2a" stroke-width="4"/><circle cx="32" cy="14" r="8" fill="#ffd166" ${O}/>`) });
 const ic = n => ICON[n] || ICON.coin;
 document.querySelector('.ico-coin').outerHTML = ic('coin');
 $('btnHelp').innerHTML = ic('help');
@@ -568,7 +573,7 @@ function ol(m, w = 0.035) {
   o.castShadow = false; m.add(o); return m;
 }
 const M = {
-  ground: new THREE.MeshLambertMaterial({ map: TEX.ground, vertexColors: true }),
+  ground: new THREE.MeshToonMaterial({ gradientMap: grad, vertexColors: true }),
   wallOut: toon({ map: TEX.wallOut }), wallBlue: toon({ map: TEX.wallBlue }), wallGreen: toon({ map: TEX.wallGreen }), wallCream: toon({ map: TEX.wallCream }),
   wallIn: toon({ map: TEX.wallIn, emissiveMap: TEX.wallIn, emissive: 0xffd9a8, emissiveIntensity: 0.32 }),
   floor: toon({ map: TEX.floor, emissiveMap: TEX.floor, emissive: 0xffd9a8, emissiveIntensity: 0.28 }),
@@ -713,8 +718,8 @@ fillSnow();
     const road =  BUILDINGS.some(b => rectDist(x, z, b.x, b.z, b.w / 2 + 0.8, b.d / 2 + 0.8) < 0.1);
     if (road) c.copy(C.cobble).multiplyScalar(0.8 + 0.25 * (Math.sin(x * 5.3) * Math.sin(z * 5.1) > 0 ? 1 : 0.4));
     c.lerp(C.mud, smooth(POND.r + 1.5, POND.r, Math.hypot(x - POND.x, z - POND.z)));
-    c.lerp(C.snow, smooth(HALF - 0.3, HALF + 1, Math.max(Math.abs(x), Math.abs(z))));
-    c.multiplyScalar(0.95 + rnd() * 0.08); cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
+    c.lerp(C.snow, smooth(HALF - 0.3, HALF + 1, Math.max(Math.abs(x), Math.abs(z)))); if (Math.max(Math.abs(x), Math.abs(z)) > HALF + 1) c.setRGB(0.97, 0.96, 1.0);
+    if (Math.max(Math.abs(x), Math.abs(z)) < HALF) { const v = Math.sin(x * 1.7 + Math.sin(z * 0.9) * 2) * Math.sin(z * 1.3 + Math.sin(x * 0.7) * 2); if (v > 0.93) c.lerp(new THREE.Color('#7ffff0'), 0.7); } c.multiplyScalar(0.95 + rnd() * 0.08); cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
   }
   g.setAttribute('color', new THREE.BufferAttribute(cols, 3)); g.computeVertexNormals();
   const ground = new THREE.Mesh(g, M.ground); ground.receiveShadow = true; scene.add(ground);
@@ -736,7 +741,7 @@ snowMat.onBeforeCompile = sh => {
     .replace('#include <color_fragment>', `#include <color_fragment>
       float slope = 1.0 - clamp(normalize(vWN).y, 0.0, 1.0);
       float wall = smoothstep(0.12, 0.42, slope);
-      diffuseColor.rgb *= mix(vec3(1.0), vec3(0.66, 0.7, 1.0), wall);
+      diffuseColor.rgb *= mix(vec3(1.0), vec3(0.58, 0.62, 1.0), wall);
       diffuseColor.rgb *= mix(vec3(0.72, 0.84, 0.96), vec3(1.0), smoothstep(0.0, 0.25, vDepth));
       float wob = 0.35 * sin(vWPos.x * 0.31) + 0.35 * cos(vWPos.z * 0.27);
       float ly = vWPos.y * 1.3 + wob, layer = floor(ly), lv = fract(sin(layer * 12.9898) * 43758.5);
@@ -799,6 +804,8 @@ function markAll() { for (let n = 0; n < chunks.length; n++) dirtyChunks.add(n);
 markAll(); flushSnow();
 
 // retira neve: mais devagar em neve dura e muito devagar em gelo
+const haloTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+function halo(parent, x, y, z, size, color) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, color, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })); s.position.set(x, y, z); s.scale.setScalar(size); parent.add(s); return s; }
 const _clr = [], _touched = new Set();
 let lastIceHit = 0, lastHardHit = 0, clearHard = 99;   // clearHard: o quanto de neve dura a ferramenta atual aguenta
 function cellsIn(cx, cz, radius) {
@@ -973,7 +980,8 @@ const ship = group(0, BASE_Y, -1.2); scene.add(ship); ship.userData.thr = [];
     const glow = cyl(0.62, 0.62, 0.1, M.glowCyan, 6.15, 3.0, sz * 1.35, 18); glow.rotation.z = Math.PI / 2; ship.add(glow);
     for (const sx of [-1, 1]) { const leg = ol(cyl(0.12, 0.16, 2.2, M.hullDark, sx * 2.8, 1.1, sz * 1.7, 8), 0.015); leg.rotation.x = sz * 0.25; ship.add(leg, ol(cyl(0.45, 0.5, 0.15, M.hullDark, sx * 2.8, 0.08, sz * 2.0, 14), 0.015));
       const th = mesh(new THREE.ConeGeometry(0.5, 2.4, 12), M.glowOrange, sx * 2.6, -0.4, sz * 1.4, false); th.rotation.x = Math.PI; th.visible = false; ship.add(th); ship.userData.thr.push(th); }
-    const lamp = mesh(new THREE.SphereGeometry(0.16, 10, 8), sz > 0 ? M.glowOrange : M.glowCyan, 2.6, 2.95, sz * 5.3, false); ship.add(lamp); ship.userData['lamp' + sz] = lamp;
+    const lamp = mesh(new THREE.SphereGeometry(0.16, 10, 8), sz > 0 ? M.glowOrange : M.glowCyan, 2.6, 2.95, sz * 5.3, false); ship.add(lamp); ship.userData['lamp' + sz] = lamp; lamp.add(halo(new THREE.Group(), 0, 0, 0, 1.6, sz > 0 ? 0xff8a3a : 0x6fe9ff).parent.children[0]);
+    halo(ship, 6.3, 3.0, sz * 1.35, 3.2, 0x6fe9ff);
   }
   ship.add(ol(box(1.8, 2.0, 0.22, M.hullOr, 4.3, 5.7, 0), 0.03));
   const dishG = group(-0.8, 5.9, 0, ship); dishG.add(cyl(0.06, 0.06, 0.7, M.hullDark, 0, 0, 0, 6)); const dish = ol(mesh(new THREE.SphereGeometry(0.7, 16, 8, 0, TAU, 0, Math.PI / 3), M.hull, 0, 0.35, 0, false), 0.02); dish.rotation.x = Math.PI * 0.75; dishG.add(dish); ship.userData.dish = dishG;
@@ -1055,8 +1063,8 @@ const items = ITEM_SPAWNS.map(([part, x, z], n) => {
   return { part, x, z, k: idxOf(x, z), g, found: false, id: n };
 });
 const VEH = [
-  { id: 'sled', name: 'Motoneve com Lâmina', icon: 'sled', x: -14, z: -32, yaw: 0.6, part: 'plug', kind: 'fuel', maxR: 1.4, r: 1.7, rate: 4, speed: 8.5, burn: 1.3 },
-  { id: 'tractor', name: 'Trator Elétrico', icon: 'tractor', x: 58, z: 20, yaw: -2.2, part: 'battery', kind: 'elec', maxR: 2.6, r: 2.7, rate: 7, speed: 6.5, burn: 0.9 },
+  { id: 'sled', name: 'Esqui-Rover', icon: 'sled', x: -14, z: -32, yaw: 0.6, part: 'plug', kind: 'fuel', maxR: 1.4, r: 1.7, rate: 4, speed: 8.5, burn: 1.3 },
+  { id: 'tractor', name: 'Rover Elétrico', icon: 'tractor', x: 58, z: 20, yaw: -2.2, part: 'battery', kind: 'elec', maxR: 2.6, r: 2.7, rate: 7, speed: 6.5, burn: 0.9 },
 ];
 function buildVehicle(v) {
   const g = new THREE.Group(); scene.add(g);
@@ -1130,6 +1138,28 @@ const UPG = {   // árvore de habilidades em mapa: p = posição (x, y) em casas
   ballValue: { name: 'Bola Valiosa', icon: 'coin', base: 3000, mult: 2.3, max: 10, p: [-0.4, 3.2], req: ['vehSpeed', 1], desc: 'Bolas derretidas pagam mais.', fx: l => `+${l * 20}% por bola` },
 };
 ['power', 'radius', 'reach', 'bag', 'boots', 'radiator', 'magnet'].forEach(k => { UPG[k].mod = true; });
+Object.assign(UPG, {
+  radar: { name: 'Radar de Cristais', icon: 'gelita', base: 120, mult: 2.2, max: 5, p: [-2.3, -0.7], req: ['treasureSense', 1], desc: 'Pulsos de radar mostram minerais escondidos sob a neve perto de você.', fx: l => `pulso a cada ${9 - l} s, ${10 + 4 * l} m` },
+  lucky: { name: 'Garimpeiro', icon: 'ferrite', base: 200, mult: 2.3, max: 5, p: [-2.3, 0.7], req: ['treasureSense', 1], desc: 'Chance de tirar um mineral extra de cada depósito.', fx: l => `${l * 15}% de chance de +1` },
+  refine: { name: 'Refinaria', icon: 'lumen', base: 600, mult: 2.3, max: 5, p: [2.3, 0.8], req: ['melter', 2], desc: 'O Derretedor separa Gelita da neve que você traz.', fx: l => `${l} Gelita a cada ${Math.round(400 / l)} de neve` },
+});
+const RE = (k, o) => Object.assign(UPG[k], o);
+RE('core', { name: 'Contrato PIP-7', desc: 'Ativa a árvore. Cada galho é um jeito diferente de degelar o planeta.', fx: () => 'Contrato ativo' });
+RE('crit', { name: 'Técnica de Coleta', p: [0, -1.2], req: ['core', 1], desc: 'Cada passada do feixe rende mais neve.' });
+RE('goldCombo', { p: [0.9, -2.3], req: ['crit', 3] });
+RE('iceBreak', { p: [-0.9, -2.2], req: ['crit', 1], desc: 'Neve compactada e gelo cedem mais rápido ao feixe.' });
+RE('heatPow', { name: 'Plasma Quente', p: [-1.6, -3.1], req: ['iceBreak', 2], desc: 'O Maçarico derrete gelo mais rápido.' });
+RE('melter', { name: 'Derretedor Quântico', p: [1.25, 0], req: ['core', 1], desc: 'Cada floco derretido rende mais créditos.' });
+RE('carrier', { p: [2.3, -0.7], req: ['melter', 1] });
+RE('carrierCap', { p: [3.4, -1.2] }); RE('carrierSpd', { p: [3.4, -0.2] });
+RE('treasureSense', { name: 'Faro de Peças', p: [-1.25, 0], req: ['core', 1], desc: 'Peças de veículos enterradas mostram um feixe de luz de mais longe.' });
+RE('blizzard', { name: 'Caçador de Nevasca', p: [-3.4, -0.7], req: ['radar', 1] });
+RE('robots', { name: 'Robôs Escavadores', p: [0, 1.25], req: ['core', 1] });
+RE('motor', { name: 'Motor dos Robôs', p: [-1, 2.2], req: ['robots', 1] });
+RE('fuelEff', { name: 'Células de Energia', p: [1.1, 2.0], req: ['robots', 1], desc: 'Rovers gastam menos energia.' });
+RE('vehSpeed', { name: 'Turbo de Rover', p: [2.1, 2.7], req: ['fuelEff', 1], desc: 'Rovers andam mais rápido.' });
+RE('plow', { name: 'Lâmina do Rover', p: [1.1, 3.1], req: ['fuelEff', 1] });
+RE('ballMax', { p: [2.0, 3.8], req: ['plow', 1] }); RE('ballValue', { p: [0.4, 4.0], req: ['plow', 2] });
 UPG.power.name = 'Motor do Braço'; UPG.radius.name = 'Bocal Largo'; UPG.reach.name = 'Extensor'; UPG.bag.name = 'Tanque'; UPG.boots.name = 'Turbinas';
 const FUEL_COST = 300;
 const state = {
@@ -1571,7 +1601,7 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 const TOUCH_BTNS = [
   { id: 'btnAct', down: () => { actHeld = true; actPressed = true; }, up: () => { actHeld = false; } },
   { id: 'btnHeat', down: () => { heatHeld = true; }, up: () => { heatHeld = false; } },
-  { id: 'btnSound', down: () => toggleSound() }, { id: 'btnCam', down: () => toggleCam() }, { id: 'btnPlace', down: () => placeHeater() }, { id: 'btnHelp', down: () => toggleHelp() },
+  { id: 'btnSound', down: () => toggleSound() }, { id: 'btnPlace', down: () => placeHeater() }, { id: 'btnHelp', down: () => toggleHelp() },
 ];
 const btnPointers = new Map(), btnLook = new Map();   // segurar o botão de ação/fogo e arrastar = mirar
 function hitButton(x, y) { let best = null, bd = Infinity; for (const b of TOUCH_BTNS) { const r = $(b.id).getBoundingClientRect(); if (!r.width) continue; const edge = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2)) - r.width / 2; if (edge < 18 && edge < bd) { bd = edge; best = b; } } return best; }
@@ -1597,7 +1627,7 @@ function endTouch(e) {
   if (e.pointerId === joy.id) { joy.id = null; joy.x = joy.y = 0; joyIdle(); } if (e.pointerId === look.id) look.id = null;
 }
 canvas.addEventListener('pointerup', endTouch); canvas.addEventListener('pointercancel', endTouch);
-$('btnSound').addEventListener('click', () => toggleSound()); $('btnCam').addEventListener('click', () => toggleCam()); $('btnPlace').addEventListener('click', () => placeHeater()); $('btnHelp').addEventListener('click', () => toggleHelp());
+$('btnSound').addEventListener('click', () => toggleSound()); $('btnPlace').addEventListener('click', () => placeHeater()); $('btnHelp').addEventListener('click', () => toggleHelp());
 
 /* =====================================================================
    INTERFACE
@@ -1624,7 +1654,7 @@ const dispZone = () => Math.min(100, (1 - zoneFrac) / 0.97 * 100);
 const OBJECTIVES = [
   () => 'Desça da nave e tire a neve rasa em volta', () => 'Leve a neve ao Coletor da nave (o tanque laranja)',
   () => 'Ache cristais na neve e fabrique o Braço Mk1 na Fabricadora (ao lado da nave)', () => 'Limpe uma seção inteira (veja o % na mira)',
-  () => 'Compre uma Fogueira e posicione: onde é quente, a neve não volta', () => 'Cave até a motoneve (feixe vermelho) e ache a Vela de Ignição',
+  () => 'Compre um Farol Térmico na Oficina e posicione: onde é quente, a neve não volta', () => 'Cave até a motoneve (feixe vermelho) e ache a Vela de Ignição',
   () => `Degele o planeta: ${dispPct().toFixed(1)}%`,
 ];
 function advance(step) { if (state.step === step) { state.step++; chime(660); } }
@@ -1846,7 +1876,7 @@ const bot = new THREE.Group(); scene.add(bot); bot.visible = false;
   for (const sx of [-1, 1]) { const ear = ol(cyl(0.08, 0.08, 0.08, M.botAccent, sx * 0.34, 0.05, 0, 14), 0.01); ear.rotation.z = Math.PI / 2; body.add(ear); }
   body.add(cyl(0.012, 0.012, 0.22, M.botDark, 0.0, 0.42, 0.05, 6)); const tipL = mesh(new THREE.SphereGeometry(0.045, 10, 8), M.glowOrange, 0, 0.55, 0.05, false); body.add(tipL); bot.userData.tipL = tipL;
   const ring = mesh(new THREE.TorusGeometry(0.22, 0.05, 8, 28), M.botAccent, 0, -0.33, 0, false); ring.rotation.x = Math.PI / 2; body.add(ring);
-  const jet = mesh(new THREE.CircleGeometry(0.17, 20), M.glowCyan, 0, -0.36, 0, false); jet.rotation.x = Math.PI / 2; body.add(jet); bot.userData.jet = jet;
+  const jet = mesh(new THREE.CircleGeometry(0.17, 20), M.glowCyan, 0, -0.36, 0, false); jet.rotation.x = Math.PI / 2; body.add(jet); bot.userData.jet = jet; halo(body, 0, -0.42, 0, 0.9, 0x6fe9ff);
   for (const sx of [-1, 1]) { const arm = group(sx * 0.26, -0.12, -0.12, body); arm.add(ol(box(0.06, 0.06, 0.24, M.botAccent, 0, 0, -0.1), 0.008), ol(box(0.09, 0.05, 0.06, M.botDark, 0, 0, -0.23), 0.008)); arm.rotation.x = 0.5; bot.userData[sx > 0 ? 'armR' : 'armL'] = arm; }
   const pack = group(0, 0.0, 0.3, body); bot.userData.pack = pack;
   pack.add(ol(box(0.34, 0.36, 0.16, M.botAccent, 0, 0, 0), 0.015), box(0.26, 0.26, 0.02, M.botDark, 0, 0.01, 0.085), box(0.22, 0.22, 0.012, M.glass, 0, 0.01, 0.095, false));
@@ -1857,10 +1887,27 @@ const bot = new THREE.Group(); scene.add(bot); bot.visible = false;
   bot.traverse(o => { if (o.isMesh && o.material !== OUTLINE) o.castShadow = true; });
 }
 let botTool = null, botToolId = '';
-function syncBotTool(id) { if (botToolId === id) return; botToolId = id; if (botTool) bot.userData.hold.remove(botTool); botTool = buildTool(id); botTool.traverse(o => { if (o.isMesh && (o.material === M.knit || o.material === M.wool || o.material === M.jacket)) o.visible = false; }); botTool.scale.setScalar(0.8); botTool.position.set(-0.19, 0.26, 0.44); bot.userData.hold.add(botTool); }
+function buildEmitter(id) {
+  const g = new THREE.Group(), ti = TOOLS.findIndex(t => t.id === id), hi = HEATS.findIndex(t => t.id === id), heat = hi >= 0;
+  const tier = heat ? hi + 1 : Math.max(0, ti), col = heat ? 0xff8a2a : [0xff8a2a, 0x8fb3d6, 0x7be495, 0x59c3ee, 0x59c3ee, 0x6fe9ff, 0xb46bff, 0xff7a4a, 0xff5ab4, 0x6fe9ff, 0xc77dff][tier];
+  const gm = new THREE.MeshBasicMaterial({ color: col, toneMapped: false }), cm = toon({ color: col });
+  g.add(ol(cyl(0.035, 0.045, 0.22, M.botDark, 0, 0, 0.02, 10).rotateX(Math.PI / 2), 0.006));
+  const L = 0.12 + Math.min(tier, 10) * 0.012, R0 = 0.05 + Math.min(tier, 10) * 0.012;
+  const head = ol(mesh(new THREE.CylinderGeometry(0.04, R0, L, 14, 1, true), cm, 0, 0, -0.12 - L / 2, false), 0.006); head.rotation.x = -Math.PI / 2; g.add(head);
+  const lip = mesh(new THREE.TorusGeometry(R0, 0.012 + tier * 0.001, 6, 20), gm, 0, 0, -0.12 - L, false); g.add(lip);
+  for (let i = 0; i < Math.min(3, Math.ceil(tier / 3)); i++) { const r = mesh(new THREE.TorusGeometry(0.05, 0.01, 6, 14), gm, 0, 0, -0.04 - i * 0.04, false); g.add(r); }
+  if (tier >= 6) { const sp = group(0, 0, -0.12 - L, g); for (let i = 0; i < 3; i++) { const fin = box(0.01, R0 * 1.6, 0.03, cm, 0, 0, 0); fin.rotation.z = i * 2.1; sp.add(fin); } g.userData.spin = sp; }
+  const tip = new THREE.Object3D(); tip.position.set(0, 0, -0.14 - L); g.add(tip); g.userData.tip = tip; g.userData.col = col;
+  g.traverse(o => { if (o.isMesh && o.material !== OUTLINE) o.castShadow = true; });
+  return g;
+}
+const beamMat = new THREE.MeshBasicMaterial({ color: 0x7fe9ff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, side: THREE.DoubleSide });
+const suckBeam = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.06, 1, 20, 1, true).translate(0, 0.5, 0).rotateX(Math.PI / 2), beamMat); suckBeam.visible = false; suckBeam.frustumCulled = false; scene.add(suckBeam);
+const _bt = new THREE.Vector3();
+function syncBotTool(id) { if (botToolId === id) return; botToolId = id; if (botTool) bot.userData.hold.remove(botTool); botTool = buildEmitter(id); botTool.scale.setScalar(1.6); bot.userData.hold.add(botTool); }
 let jetT = 0, idleT = 0;
-function updateBot(dt, t, moving, clearing, heating) {
-  const show = camT > 0.05 && state.driving < 0; bot.visible = show; if (!show) return;
+function updateBot(dt, t, moving, clearing, heating, tgt) {
+  const show = camT > 0.05 && state.driving < 0; bot.visible = show; suckBeam.visible = false; if (!show) return;
   const b = bot.userData; bot.position.set(player.x, player.y + Math.sin(t * 2.4) * 0.05, player.z); bot.rotation.y = player.yaw;
   const sy = Math.sin(player.yaw), cy = Math.cos(player.yaw), fwd = -(player.vx * sy + player.vz * cy), side = player.vx * cy - player.vz * sy;
   b.body.rotation.x = damp(b.body.rotation.x, -fwd * 0.06 + (clearing ? 0.25 : 0), 6, dt); b.body.rotation.z = damp(b.body.rotation.z, -side * 0.06, 6, dt);
@@ -1874,13 +1921,16 @@ function updateBot(dt, t, moving, clearing, heating) {
   if ((jetT -= dt) <= 0) { jetT = 0.05; flame(player.x + fr(-.08, .08), bot.position.y - 0.38, player.z + fr(-.08, .08), fr(-.2, .2), -1.2, fr(-.2, .2), 0.06, 0.22, 1); }
   if (b.turbines && moving && Math.random() < 0.6) for (const tg of b.turbines) { tg.getWorldPosition(_tp); flame(_tp.x, _tp.y, _tp.z, Math.sin(player.yaw) * 2.5, 0.2, Math.cos(player.yaw) * 2.5, 0.05, 0.2, 1); }
   if (b.halo) b.halo.rotation.z += dt * 2;
+  if ((clearing || heating) && tgt && botTool) { botTool.userData.tip.getWorldPosition(_bt); const dd = Math.hypot(tgt.x - _bt.x, tgt.y - _bt.y, tgt.z - _bt.z);   // feixe que puxa a neve
+    suckBeam.visible = true; suckBeam.position.copy(_bt); suckBeam.lookAt(tgt.x, tgt.y, tgt.z); suckBeam.scale.set((tgt.r || 1) * 0.85, (tgt.r || 1) * 0.85, dd);
+    beamMat.color.setHex(heating ? 0xff8a3a : botTool.userData.col); beamMat.opacity = 0.16 + Math.sin(t * 30) * 0.05; }
   syncBotTool(heating && state.heat >= 0 ? HEATS[state.heat].id : TOOLS[state.tool].id);
   if (botTool) { if (botTool.userData.spin) botTool.userData.spin.rotation.z += dt * (3 + (clearing ? 25 : 0)); if (botTool.userData.gyro) botTool.userData.gyro.forEach((r, i) => { r.rotation.x += dt * 2 * (i % 2 ? 1 : -1); r.rotation.y += dt * 1.5 * (i + 1); }); }
 }
 /* ---------- aquecedores, temperatura, neve que volta, frio do robô ---------- */
 const HEATERS = [
-  { id: 'fire', name: 'Fogueira', r: 7, t: 14, cost: 150, stars: 0, melt: 0.004, desc: 'Esquenta um círculo pequeno. Onde é quente, a neve não volta.' },
-  { id: 'boiler', name: 'Caldeira a Vapor', r: 12, t: 24, cost: 3000, stars: 10, melt: 0.005, desc: 'Calor forte em área média. Também derrete a neve em volta sozinha.' },
+  { id: 'fire', name: 'Farol Térmico', r: 7, t: 14, cost: 60, stars: 0, melt: 0.004, desc: 'Um cristal de calor flutuante. Onde é quente, a neve não volta.' },
+  { id: 'boiler', name: 'Reator de Calor', r: 12, t: 24, cost: 2000, stars: 8, melt: 0.005, desc: 'Calor forte em área média. Também derrete a neve em volta sozinho.' },
   { id: 'geo', name: 'Torre Geotérmica', r: 20, t: 38, cost: 40000, stars: 40, melt: 0.006, desc: 'Puxa calor do centro do planeta. Aquece uma área enorme.' },
 ];
 HEATS.forEach(h => { h.craft = 'fab'; });
@@ -1897,11 +1947,12 @@ function recomputeTemp() {
 const tempAt = (x, z) => { const k = idxOf(x, z); return k >= 0 ? tempP[patchOf(k)] : TEMP_Z[4]; };
 function buildHeater(h) {
   const g = new THREE.Group(); scene.add(g); g.userData.fl = [];
-  if (h.t === 0) { for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; g.add(ol(mesh(cached('hstone', () => new THREE.DodecahedronGeometry(0.16, 0)), M.rock, Math.cos(a) * 0.5, 0.1, Math.sin(a) * 0.5), 0.015)); }
-    for (let i = 0; i < 3; i++) { const l = ol(cyl(0.07, 0.07, 0.8, M.wood, 0, 0.12, 0, 8), 0.012); l.rotation.set(Math.PI / 2, i * 1.05, 0.25); g.add(l); }
-    for (let i = 0; i < 3; i++) { const f = mesh(new THREE.ConeGeometry(0.18 - i * 0.04, 0.6 - i * 0.12, 7), i ? M.glowYellow : M.glowOrange, (i - 1) * 0.08, 0.38, 0, false); g.add(f); g.userData.fl.push(f); } }
-  else if (h.t === 1) { g.add(ol(cyl(0.6, 0.65, 1.4, M.metal, 0, 0.7, 0, 18), 0.03), ol(cyl(0.12, 0.12, 1.2, M.darkMetal, 0.3, 1.9, 0.2, 10), 0.02), ol(cyl(0.66, 0.66, 0.1, M.copper, 0, 0.3, 0, 18), 0.02), ol(cyl(0.66, 0.66, 0.1, M.copper, 0, 1.15, 0, 18), 0.02));
-    const door = box(0.4, 0.34, 0.06, M.glowOrange, 0, 0.6, -0.62, false); g.add(door); g.userData.fl.push(door); }
+  if (h.t === 0) { g.add(ol(cyl(0.32, 0.45, 0.35, M.hullDark, 0, 0.17, 0, 8), 0.015), ol(cyl(0.08, 0.1, 0.6, M.hullDark, 0, 0.6, 0, 6), 0.01));
+    const cr = mesh(new THREE.OctahedronGeometry(0.28, 0), M.glowOrange, 0, 1.25, 0, false); cr.scale.y = 1.5; g.add(cr); g.userData.fl.push(cr); g.userData.spin = cr;
+    const rg = mesh(new THREE.TorusGeometry(0.42, 0.03, 6, 24), M.glowYellow, 0, 1.25, 0, false); rg.rotation.x = Math.PI / 2; g.add(rg); g.userData.fl.push(rg); halo(g, 0, 1.25, 0, 2.2, 0xff9a3c); }
+  else if (h.t === 1) { g.add(ol(cyl(0.7, 0.8, 1.1, M.hullDark, 0, 0.55, 0, 10), 0.03), ol(cyl(0.45, 0.6, 0.5, M.hull, 0, 1.35, 0, 10), 0.02));
+    for (let i = 0; i < 3; i++) { const r = mesh(new THREE.TorusGeometry(0.76, 0.05, 6, 24), M.glowOrange, 0, 0.3 + i * 0.32, 0, false); r.rotation.x = Math.PI / 2; g.add(r); g.userData.fl.push(r); }
+    const core = mesh(new THREE.SphereGeometry(0.28, 14, 10), M.glowYellow, 0, 1.75, 0, false); g.add(core); g.userData.fl.push(core); halo(g, 0, 1.75, 0, 3, 0xffa040); }
   else { g.add(ol(cyl(0.5, 0.9, 4.2, M.white, 0, 2.1, 0, 16), 0.03), ol(cyl(0.95, 1.0, 0.3, M.darkMetal, 0, 0.15, 0, 16), 0.02));
     for (let i = 0; i < 4; i++) { const r = mesh(new THREE.TorusGeometry(0.62 - i * 0.08, 0.05, 8, 24), M.glowOrange, 0, 0.9 + i * 0.85, 0, false); r.rotation.x = Math.PI / 2; g.add(r); g.userData.fl.push(r); }
     g.add(mesh(new THREE.SphereGeometry(0.35, 14, 10), M.glowYellow, 0, 4.4, 0, false)); }
@@ -1914,7 +1965,7 @@ function placeHeater() {
   const x = player.x - Math.sin(player.yaw) * 1.8, z = player.z - Math.cos(player.yaw) * 1.8;
   if (inDeck(x, z) || houseDist(x, z) < 0.5) { toast('Posicione fora da base.', 2, 'fire'); return; }
   state.heatInv[i]--; const h = { t: i, x, z }; state.heaters.push(h); heaterMeshes.push(buildHeater(h)); recomputeTemp();
-  toast(`${HEATERS[i].name} acesa! A neve não volta onde ela esquenta.`, 3, HEATERS[i].id); comm('heater', 'Calor estável detectado! Onde estiver quente, a neve não volta. É assim que se reacende um planeta.'); chime(660, 6); vibrate([20, 30, 20]); wave(x, surfAt(x, z) + 0.1, z, HEATERS[i].r * 0.7); advance(4); save();
+  toast(`${HEATERS[i].name} ativado! A neve não volta onde ele esquenta.`, 3, HEATERS[i].id); comm('heater', 'Calor estável detectado! Onde estiver quente, a neve não volta. É assim que se reacende um planeta.'); chime(660, 6); vibrate([20, 30, 20]); wave(x, surfAt(x, z) + 0.1, z, HEATERS[i].r * 0.7); advance(4); save();
 }
 const snowRet = { t: 0, next: 140 }; let regrowIdx = 0, heatIncome = 0, heatIncT = 0;
 function updateClimate(dt, t) {
@@ -1938,12 +1989,13 @@ function updateClimate(dt, t) {
   // frio do robô
   const th = inHouse() ? 20 : tempAt(player.x, player.z), tol = -8 - 9 * state.upg.radiator, prev = state.cold;
   if (th < tol) state.cold = Math.max(0, state.cold - (tol - th) * 0.6 * dt); else state.cold = Math.min(100, state.cold + 18 * dt);
-  if (prev >= 30 && state.cold < 30 && (coldWarnT -= 1) <= 0) { coldWarnT = 3; toast('Frio demais! Volte para perto do calor ou melhore o Radiador na árvore.', 4, 'radiator'); comm('cold', 'Seus sensores de calor estão caindo, PIP. Glacira fica mais fria longe da base. Fogueiras ajudam, e o Radiador também.'); }
+  if (prev >= 30 && state.cold < 30 && (coldWarnT -= 1) <= 0) { coldWarnT = 3; toast('Frio demais! Volte para perto do calor ou melhore o Radiador na árvore.', 4, 'radiator'); comm('cold', 'Seus sensores de calor estão caindo, PIP. Glacira fica mais fria longe da nave. Faróis Térmicos ajudam, e o Radiador também.'); }
   if (prev > 0 && state.cold <= 0) toast('Robô congelando: lento até se aquecer.', 3, 'radiator');
   $('frost').style.opacity = String((1 - state.cold / 100) * 0.9);
   const rz = zoneRing(player.x, player.z); if (rz !== lastRegion) { if (lastRegion >= 0) toast(`${REGIONS[rz]} · ${TEMP_Z[rz]} °C`, 3, rz > lastRegion ? 'radiator' : 'snow'); lastRegion = rz; }
   ship.userData.dish.rotation.y += dt * 0.6; ship.userData.lamp1.visible = (t % 1.2) < 0.6; ship.userData['lamp-1'].visible = ((t + 0.6) % 1.2) < 0.6; if (terminal.holo) { terminal.holo.lookAt(camera.position.x, terminal.holo.position.y, camera.position.z); terminal.holo.material.opacity = 0.75 + Math.sin(t * 5) * 0.1; }
   heaterMeshes.forEach((g, i) => { const h = state.heaters[i]; g.position.set(h.x, surfAt(h.x, h.z), h.z); g.userData.fl.forEach((f, n) => { const s = 1 + Math.sin(t * 12 + n * 2) * 0.12; f.scale.set(s, s * (1 + Math.sin(t * 17 + n) * 0.15), s); });
+    if (g.userData.spin) g.userData.spin.rotation.y += dt * 2;
     if (h.t === 1 && Math.random() < dt * 2) emitSteam(h.x + 0.3, g.position.y + 2.6, h.z + 0.2, 0.2, 1.2, 0, 2.5); });
 }
 /* ---------- minerais e cristais escondidos na neve ---------- */
@@ -1951,7 +2003,7 @@ const MINS = { gelita: { name: 'Gelita', col: 0x6fd6ff, css: '#9fe6ff' }, ferrit
 const deposits = [], depMesh = {};
 {
   const add = (x, z, type, n) => { if (inDeck(x, z) || BUILDINGS.some(b => rectDist(x, z, b.x, b.z, b.w / 2 + 0.4, b.d / 2 + 0.4) < 0.1)) return false; deposits.push({ x, z, k: idxOf(x, z), type, n, found: false, rev: false, s: rr(0.85, 1.35), ry: rnd() * TAU }); return true; };
-  for (let i = 0; i < 16; i++) { const a = i / 16 * TAU + rr(-0.2, 0.2), r = rr(9, 19); add(Math.cos(a) * r, 1 + Math.sin(a) * r, i % 3 === 0 ? 'gelita' : i % 3 === 1 ? 'ferrite' : 'gelita', 1 + (i % 2)); }
+  for (let i = 0; i < 34; i++) { const a = i / 34 * TAU + rr(-0.1, 0.1), r = rr(8, 22); add(Math.cos(a) * r, 1 + Math.sin(a) * r, i % 5 === 4 ? 'lumen' : i % 2 ? 'ferrite' : 'gelita', 2 + (i % 2)); }
   for (let n = 0, tries = 0; n < 420 && tries < 6000; tries++) {
     const x = rr(-HALF + 3, HALF - 3), z = rr(-HALF + 3, HALF - 3), zr = zoneRing(x, z), r = rnd();
     const type = zr >= 3 && r < 0.05 ? 'nucleo' : r < [0.04, 0.1, 0.22, 0.32, 0.4][zr] ? 'lumen' : r < 0.55 ? 'gelita' : 'ferrite';
@@ -1973,13 +2025,17 @@ function gainMineral(type, n, x, y, z) { state.min[type] += n; floatText(`+${n} 
 function updateDeposits(dt) {
   depT -= dt; if (depT > 0) return; depT = 0.2; let ch = false; const R2 = magR();
   for (const d of deposits) { if (d.found) continue; const rev = d.k >= 0 && depth[d.k] < 0.22; if (rev !== d.rev) { d.rev = rev; ch = true; if (rev && Math.hypot(player.x - d.x, player.z - d.z) < 14) { tone(1400, 1800, 0.03, 0.15, 'triangle'); } }
-    if (rev && state.driving < 0 && Math.hypot(player.x - d.x, player.z - d.z) < R2 && Math.abs(player.y - groundAt(d.x, d.z)) < 3) { d.found = true; ch = true; gainMineral(d.type, d.n, d.x, groundAt(d.x, d.z), d.z); } }
+    if (rev && state.driving < 0 && Math.hypot(player.x - d.x, player.z - d.z) < R2 && Math.abs(player.y - groundAt(d.x, d.z)) < 3) { d.found = true; ch = true; gainMineral(d.type, d.n + (Math.random() < 0.15 * state.upg.lucky ? 1 : 0), d.x, groundAt(d.x, d.z), d.z); } }
+  if (state.upg.radar && (radarT -= 0.2) <= 0) { radarT = 9 - state.upg.radar; const R3 = 10 + 4 * state.upg.radar; wave(player.x, surfAt(player.x, player.z) + 0.1, player.z, R3 * 0.9); tone(1200, 1500, 0.03, 0.2, 'sine'); let k = 0;
+    for (const d of deposits) { if (d.found || d.rev || k >= pings.length) continue; if (Math.hypot(player.x - d.x, player.z - d.z) < R3) { const pg = pings[k++]; pg.position.set(d.x, surfAt(d.x, d.z) + 0.5, d.z); pg.material.color.setHex(MINS[d.type].col); pg.userData.t = 4; pg.visible = true; } } }
   if (ch) updateDepositMeshes();
   // meteoritos: na chuva de meteoros, fragmentos caem perto do PIP
   if (WX.k.met > 0.5 && (meteorFallT -= 0.2) <= 0) { meteorFallT = fr(12, 20); const a = Math.random() * TAU, r = fr(12, 28); fallingRocks.push({ x: player.x + Math.cos(a) * r, z: player.z + Math.sin(a) * r, y: 80, t: 0, m: null }); comm('metfall', 'Um fragmento de meteoro caiu aqui perto! Eles trazem Núcleo Estelar, o mineral mais raro.'); }
 }
+let radarT = 3; const pings = []; for (let i = 0; i < 14; i++) { const pg = halo(scene, 0, -99, 0, 1.2, 0xffffff); pg.visible = false; pg.userData.t = 0; pings.push(pg); }
 let meteorFallT = 6; const fallingRocks = [], meteorites = [];
 function updateMeteorites(dt) {
+  for (const pg of pings) if (pg.visible) { pg.userData.t -= dt; pg.material.opacity = Math.max(0, Math.min(1, pg.userData.t)) * (0.6 + 0.3 * Math.sin(pg.userData.t * 8)); if (pg.userData.t <= 0) pg.visible = false; }
   for (let i = fallingRocks.length - 1; i >= 0; i--) { const f = fallingRocks[i]; f.y -= dt * 55; const gy = surfAt(f.x, f.z);
     for (let n = 0; n < 3; n++) flame(f.x + fr(-.3, .3), f.y + n * 0.8, f.z + fr(-.3, .3), fr(-.5, .5), 6, fr(-.5, .5), 0.9, 0.5, 0);
     if (f.y <= gy) { fallingRocks.splice(i, 1); thump(0.3, 80); shake = Math.max(shake, 0.12); wave(f.x, gy + 0.1, f.z, 6); for (let n = 0; n < 24; n++) spawn(blocks, f.x, gy + 0.3, f.z, fr(-5, 5), fr(3, 8), fr(-5, 5), fr(0.1, 0.25), 1.4);
@@ -2003,7 +2059,7 @@ const MODS = [
 const modLv = m => m.id === 'arm' ? state.owned.lastIndexOf(true) : m.id === 'torch' ? state.ownedHeat.filter(Boolean).length : state.upg[m.upg] || 0;
 const modMax = m => m.upg ? Math.min(m.max, UPG[m.upg].max) : m.max;
 function modCost(m) {
-  const lv = modLv(m), c = { coins: Math.round(m.base * Math.pow(2.1, lv)) }; c[m.mins[0]] = 2 + lv * 2; c[m.mins[1]] = (c[m.mins[1]] || 0) + 1 + lv;
+  const lv = modLv(m), c = { coins: Math.round(m.base * 0.5 * Math.pow(1.95, lv)) }; c[m.mins[0]] = 1 + lv * 2; if (lv) c[m.mins[1]] = (c[m.mins[1]] || 0) + lv;
   if (lv >= 3) c.lumen = (c.lumen || 0) + lv - 2; if (lv >= 6) c.nucleo = lv - 5; return c;
 }
 const canPay = c => Object.entries(c).every(([k, v]) => (k === 'coins' ? state.coins : state.min[k]) >= v);
@@ -2011,7 +2067,7 @@ const FAB = { x: -6.3, z: 6.8 }, holos = [];
 const fab = group(FAB.x, BASE_Y, FAB.z); scene.add(fab);
 {
   fab.add(ol(cyl(1.3, 1.5, 0.4, M.hullDark, 0, 0.2, 0, 6), 0.03), ol(cyl(0.55, 0.65, 1.6, M.hull, 0, 1.2, 0, 16), 0.03), mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.2, 16, 1, true), M.cockpit, 0, 1.25, 0, false));
-  const core = mesh(new THREE.TorusGeometry(0.5, 0.06, 8, 24), M.glowCyan, 0, 1.3, 0, false); core.rotation.x = Math.PI / 2; fab.add(core); fab.userData.core = core;
+  const core = mesh(new THREE.TorusGeometry(0.5, 0.06, 8, 24), M.glowCyan, 0, 1.3, 0, false); core.rotation.x = Math.PI / 2; fab.add(core); fab.userData.core = core; halo(fab, 0, 1.3, 0, 2.6, 0x6fe9ff);
   fab.userData.arms = [];
   for (const sx of [-1, 1]) { const a = group(sx * 0.9, 0.5, 0, fab); a.add(ol(box(0.16, 1.4, 0.16, M.hullOr, 0, 0.7, 0), 0.015), ol(box(0.5, 0.12, 0.12, M.hullOr, -sx * 0.25, 1.4, 0), 0.012)); fab.userData.arms.push(a); }
   fab.add(mesh(new THREE.PlaneGeometry(1.5, 0.36), new THREE.MeshBasicMaterial({ map: textTexture([['FABRICADORA', 34]], 256, 60, '#3a1d06', '#ffc08a'), toneMapped: false, side: THREE.DoubleSide }), 0, 2.35, 0, false));
@@ -2252,7 +2308,7 @@ function updateBalls(dt) {
    ===================================================================== */
 const clock = new THREE.Clock(), raycaster = new THREE.Raycaster();
 const _dir = new THREE.Vector3(), _hit = new THREE.Vector3();
-let hardTipT = 0, hudT = 0, zoneT = 0, saveT = 0, sellAcc = 0, sellT = 0, crunchT = 0, fullT = 0, treasureT = 0, robotT = 0, zoneDone = -1;
+let refineAcc = 0, hardTipT = 0, hudT = 0, zoneT = 0, saveT = 0, sellAcc = 0, sellT = 0, crunchT = 0, fullT = 0, treasureT = 0, robotT = 0, zoneDone = -1;
 let gainAcc = 0, gainT = 0, shake = 0, buzzT = 0, boardT = 0, puffT = 0, fireT = 0, noFuelT = 0;
 function aimSnow(reach) {
   camera.getWorldDirection(_dir); const o = camera.position;
@@ -2290,7 +2346,7 @@ function snapSnow(x, z, s) {     // se o ponto não tem neve, procura a célula 
 }
 let fabNear = null, camT = 1, camDist = 0, lastRegion = -1, coldWarnT = 0;
 function aimFrom(reach) { const h = aimSnow(reach + camDist); return h && Math.hypot(h.x - player.x, h.z - player.z) <= reach + 0.7 ? h : null; }
-function toggleCam() { state.cam3 = !state.cam3; toast(state.cam3 ? 'Câmera em terceira pessoa' : 'Câmera em primeira pessoa', 1.5, 'cam'); }
+function toggleCam() { return; state.cam3 = !state.cam3; toast(state.cam3 ? 'Câmera em terceira pessoa' : 'Câmera em primeira pessoa', 1.5, 'cam'); }
 function update(dt, t) {
   const drv = state.driving >= 0, V = drv ? VEH[state.driving] : null;
   let ix = joy.x, iz = joy.y;
@@ -2343,7 +2399,7 @@ function update(dt, t) {
   const prevStep = player.stepT; player.stepT += dt * Math.hypot(player.vx, player.vz) * 1.9;
   
   shake = damp(shake, 0, 10, dt);
-  camT = damp(camT, state.cam3 && !inHouse() ? 1 : 0, 7, dt);
+  camT = 1; state.cam3 = true;
   camera.rotation.set(player.pitch, player.yaw, 0);
   if (camT > 0.01) {          // terceira pessoa: câmera atrás e um pouco à direita do robô, sem entrar na neve
     const cp = Math.cos(player.pitch), fwx = -Math.sin(player.yaw) * cp, fwy = Math.sin(player.pitch), fwz = -Math.cos(player.yaw) * cp;
@@ -2415,7 +2471,7 @@ function update(dt, t) {
   const selling = dm < (drv ? 4.5 : 3.0) && bagNow > 0;
   if (selling) {
     const amount = Math.min(bagNow, Math.max(25, cap * 0.9) * dt), c = amount * stat.value();
-    state.bag -= amount; state.coins += c; sellAcc += c; advance(1); comm('sell', 'Isso! O Derretedor transforma neve em créditos da Companhia. Com eles você compra ferramentas no terminal da base.');
+    state.bag -= amount; state.coins += c; sellAcc += c; advance(1); if (state.upg.refine) { refineAcc += amount * state.upg.refine / 400; if (refineAcc >= 1) { refineAcc -= 1; gainMineral('gelita', 1, MELT.x, BASE_Y + 2.5, MELT.z); } } comm('sell', 'Isso! O Derretedor transforma neve em créditos da Companhia. Com eles você compra ferramentas no terminal da base.');
     if (Math.random() < 0.6) spawn(coins3, MELT.x + fr(-0.4, 0.4), 2.9, MELT.z + fr(-0.4, 0.4), fr(-2, 2), fr(4, 7), fr(-2, 2), 1, 1.4);
   }
   sellT -= dt;
@@ -2424,7 +2480,7 @@ function update(dt, t) {
   if (Math.random() < dt * 1.5) emitSteam(MELT.x + 0.75, 4.4, MELT.z + 0.4, fr(-.2, .2), 1.2, fr(-.2, .2), 2.2);
 
   // --- robôs, moedas e peças enterradas ---
-  updateRobots(dt, t); updateDrones(dt, t); updateWorld(dt, t); updateClimate(dt, t); updateWeather(dt); updateDeposits(dt); updateMeteorites(dt); fabNear = updateFab(dt, t); if (WX.k.storm > 0.3 && state.driving < 0) { player.x += WX.wind.x * WX.k.storm * 0.9 * dt; player.z += WX.wind.y * WX.k.storm * 0.9 * dt; } updateBot(dt, t, moving, clearing, heating);
+  updateRobots(dt, t); updateDrones(dt, t); updateWorld(dt, t); updateClimate(dt, t); updateWeather(dt); updateDeposits(dt); updateMeteorites(dt); fabNear = updateFab(dt, t); if (WX.k.storm > 0.3 && state.driving < 0) { player.x += WX.wind.x * WX.k.storm * 0.9 * dt; player.z += WX.wind.y * WX.k.storm * 0.9 * dt; } updateBot(dt, t, moving, clearing, heating, ret);
   robotT -= dt; if (robotT <= 0) { robotT = 4; robotIncome += droneIncome; droneIncome = 0; if (robotIncome >= 1 && (robots.length || drones.length)) { floatText(`+${fmt(robotIncome)}`, camera.position.clone().add(new THREE.Vector3(0, 0.6, 0)).addScaledVector(_dir, 2), '#9fe6ff', 15, 'robot'); robotIncome = 0; bumpCoins(); } }
   treasureT -= dt;
   if (treasureT <= 0) {
@@ -2494,7 +2550,7 @@ state.zone = 4; state.heaters.forEach(h => heaterMeshes.push(buildHeater(h))); r
 buildFence(); syncRobots(); syncDrones(); updateDepositMeshes(); syncBotParts(); initHouses(); fillQuests(); equipTool(state.tool); equipHeat(state.heat); markAll(); updateDay(0);
 VEH.forEach(v => { v.beam.visible = !v.st.fixed; });
 drawBoard();
-$('btnSound').innerHTML = ic(state.muted ? 'mute' : 'sound'); $('btnCam').innerHTML = ic('cam');
+$('btnSound').innerHTML = ic(state.muted ? 'mute' : 'sound');
 $('coins').textContent = fmt(state.coins);
 if (!loaded) { player.x = 6; player.z = 22; player.yaw = Math.PI * 0.05; player.pitch = 0.12; player.y = surfAt(6, 22) + 1; }
 else $('btnStart').textContent = 'CONTINUAR';
