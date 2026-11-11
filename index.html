@@ -1803,7 +1803,7 @@ $('winPrestige').addEventListener('click', () => { const p = state.prestige + 1;
 /* =====================================================================
    SALVAR
    ===================================================================== */
-const SAVE_KEY = 'degelo_v1';
+const SAVE_KEY = 'glacira_v1';
 const enc = (arr, mul) => { const q = new Uint8Array(N * N); for (let k = 0; k < N * N; k++) q[k] = Math.min(255, Math.round(arr[k] * mul)); let s = ''; for (let k = 0; k < q.length; k += 4096) s += String.fromCharCode.apply(null, q.subarray(k, k + 4096)); return btoa(s); };
 function save() {
   state.dep = deposits.map(d => d.found ? 1 : 0).join('');
