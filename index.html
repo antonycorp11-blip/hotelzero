@@ -392,7 +392,7 @@ const ICON = {
   wrench: sv(ln('M14 50l22-22', '#cfd8e2', 7) + `<path d="M36 28a12 12 0 1 1 10 6l-4-6 4-6z" fill="#cfd8e2" ${O}/>`),
 };
 const emiIc = (a, b) => sv(`<path d="M6 40h20v-16H6z" fill="#34405a" ${O}/><path d="M26 22l22-12v44L26 42z" fill="${a}" ${O}/><ellipse cx="48" cy="32" rx="6" ry="22" fill="${b}" ${O}/><path d="M10 32h12" stroke="${b}" stroke-width="4" stroke-linecap="round"/>`);
-Object.assign(ICON, { hands: emiIc('#ff8a2a', '#ffe2b8'), wood: emiIc('#8fb3d6', '#7fe9ff'), steel: emiIc('#7be495', '#c8ffd8'), wide: emiIc('#59c3ee', '#bff4ff'),
+Object.assign(ICON, { lighter: emiIc('#ff8a2a', '#ffe27a'), torch: emiIc('#2a8cff', '#9fe6ff'), flame: emiIc('#ff4a2a', '#ffd166'), hands: emiIc('#ff8a2a', '#ffe2b8'), wood: emiIc('#8fb3d6', '#7fe9ff'), steel: emiIc('#7be495', '#c8ffd8'), wide: emiIc('#59c3ee', '#bff4ff'),
   fire: sv(`<path d="M22 58h20l-4-16H26z" fill="#34405a" ${O}/><path d="M32 6l12 18-12 18-12-18z" fill="#ff8a2a" ${O}/><path d="M32 14l6 10-6 10-6-10z" fill="#ffe27a"/><ellipse cx="32" cy="44" rx="16" ry="4" fill="none" stroke="#ffb35a" stroke-width="3"/>`),
   boiler: sv(`<rect x="12" y="20" width="40" height="34" rx="10" fill="#34405a" ${O}/><path d="M12 30h40M12 42h40" stroke="#ff8a2a" stroke-width="4"/><circle cx="32" cy="14" r="8" fill="#ffd166" ${O}/>`) });
 const ic = n => ICON[n] || ICON.coin;
@@ -640,9 +640,9 @@ const UNITS = 10;
 const ZONES = [20, 36, 54, 72, 89], ZONE_STARS = [0, 15, 50, 120, 220];
 const DEPTH_Z = [1, 1.5, 2.0, 2.6, 3.2], HARD_Z = [1, 1.35, 1.8, 2.4, 3.1];
 const HW = 6, HD = 4.5;
-const MELT = { x: 3.6, z: 3.0 };                    // Conversor de neve acoplado à nave
+const MELT = { x: -6.2, z: 3.6 };                   // Portal Conversor, ao lado esquerdo da nave
 const BASE_Y = 0.25;                                 // plataforma de pouso no chão (a neve é rasa em volta da nave)
-const DECK = { x0: -10, x1: 11.5, z0: -8.5, z1: 11.5 };
+const DECK = { x0: -10, x1: 10, z0: -9.5, z1: 9.5 };   // área da plataforma de pouso (circular, desenhada dentro)
 const SNOW_Z = [6.5, 7.6, 8.8, 10, 11.2];          // altura da superfície de neve por região
 const TEMP_Z = [-4, -12, -22, -30, -40];            // temperatura base de cada região
 const REGIONS = ['Planície do Pouso', 'Campo das Cúpulas', 'Vale dos Cristais', 'Estepe do Vento', 'Coroa Polar'];
@@ -984,32 +984,39 @@ const house = group(0, 0, 0); // (sem cabana: a base agora é a nave)
 const terminal = { meshes: [] }, bench = { meshes: [] }, rackSlots = [], flames = [];
 let fireLight = { intensity: 0 }, boardCanvas = document.createElement('canvas'), boardTex; boardCanvas.width = 512; boardCanvas.height = 300; boardTex = new THREE.CanvasTexture(boardCanvas);
 const TERM = { x: 2.6, z: 6.4 };
-const ship = group(0, BASE_Y, -1.2); scene.add(ship); ship.userData.thr = [];
-{
-  ship.add(ol(mesh(new THREE.CapsuleGeometry(2.3, 6.4, 10, 26).rotateZ(Math.PI / 2), M.hull, 0, 3.5, 0, false), 0.05));
-  for (const x of [-1.8, 2.4]) { const r = mesh(new THREE.TorusGeometry(2.33, 0.13, 8, 34), M.hullOr, x, 3.5, 0, false); r.rotation.y = Math.PI / 2; ship.add(r); }
-  const cp = ol(mesh(new THREE.SphereGeometry(1.45, 22, 14), M.cockpit, -4.0, 4.25, 0, false), 0.03); cp.scale.set(1.3, 0.72, 1); ship.add(cp);
+const ship = group(0, BASE_Y, -1.6); scene.add(ship); ship.userData.thr = [];
+{ // módulo de pouso PIP-7: casco liso, cabine, faixas de luz, motores com brilho, rampa na barriga
+  const lit = c => new THREE.MeshBasicMaterial({ color: c, toneMapped: false });
+  const body = ol(mesh(new THREE.SphereGeometry(1, 36, 22), M.hull, 0, 3.0, 0, false), 0.04); body.scale.set(4.4, 1.55, 2.25); ship.add(body);
+  const belly = mesh(new THREE.SphereGeometry(1, 30, 16, 0, TAU, Math.PI / 2, Math.PI / 2), M.hullDark, 0, 2.95, 0, false); belly.scale.set(4.3, 1.35, 2.15); ship.add(belly);
+  const spine = ol(mesh(new THREE.CapsuleGeometry(0.55, 4.2, 8, 18).rotateZ(Math.PI / 2), M.hullRoof, 0.6, 4.35, 0, false), 0.03); spine.scale.set(1, 0.6, 1.2); ship.add(spine);
+  const cp = ol(mesh(new THREE.SphereGeometry(1.15, 24, 16), M.cockpit, -3.2, 3.55, 0, false), 0.03); cp.scale.set(1.35, 0.72, 1.2); ship.add(cp); halo(ship, -3.6, 3.6, 0, 3, 0x6fe9ff);
   for (const sz of [-1, 1]) {
-    const wing = ol(box(3.4, 0.28, 3.4, M.hull, 1.4, 2.7, sz * 3.4), 0.04); wing.rotation.y = sz * 0.35; ship.add(wing);
-    ship.add(ol(box(1.2, 0.32, 0.6, M.hullOr, 2.4, 2.7, sz * 5.0), 0.02));
-    const eng = ol(cyl(0.85, 0.95, 2.2, M.hullDark, 5.0, 3.0, sz * 1.35, 18), 0.03); eng.rotation.z = Math.PI / 2; ship.add(eng);
-    const glow = cyl(0.62, 0.62, 0.1, M.glowCyan, 6.15, 3.0, sz * 1.35, 18); glow.rotation.z = Math.PI / 2; ship.add(glow);
-    for (const sx of [-1, 1]) { const leg = ol(cyl(0.12, 0.16, 2.2, M.hullDark, sx * 2.8, 1.1, sz * 1.7, 8), 0.015); leg.rotation.x = sz * 0.25; ship.add(leg, ol(cyl(0.45, 0.5, 0.15, M.hullDark, sx * 2.8, 0.08, sz * 2.0, 14), 0.015));
-      const th = mesh(new THREE.ConeGeometry(0.5, 2.4, 12), M.glowOrange, sx * 2.6, -0.4, sz * 1.4, false); th.rotation.x = Math.PI; th.visible = false; ship.add(th); ship.userData.thr.push(th); }
-    const lamp = mesh(new THREE.SphereGeometry(0.16, 10, 8), sz > 0 ? M.glowOrange : M.glowCyan, 2.6, 2.95, sz * 5.3, false); ship.add(lamp); ship.userData['lamp' + sz] = lamp; lamp.add(halo(new THREE.Group(), 0, 0, 0, 1.6, sz > 0 ? 0xff8a3a : 0x6fe9ff).parent.children[0]);
-    halo(ship, 6.3, 3.0, sz * 1.35, 3.2, 0x6fe9ff);
+    const strip = box(6.6, 0.07, 0.05, lit(0x2ad4ff), 0.2, 3.05, sz * 2.24); ship.add(strip);
+    const strip2 = box(4.4, 0.05, 0.05, lit(0xff8a2a), 0.6, 2.55, sz * 2.0); ship.add(strip2);
+    const ws = new THREE.Shape(); ws.moveTo(-1.2, 0); ws.lineTo(2.4, 0); ws.lineTo(3.2, 2.8); ws.lineTo(2.2, 3.0); ws.closePath();
+    const wing = ol(mesh(new THREE.ExtrudeGeometry(ws, { depth: 0.16, bevelEnabled: true, bevelSize: 0.05, bevelThickness: 0.05, bevelSegments: 1 }), M.hull, 0, 2.55, sz * 1.9, false), 0.03);
+    wing.rotation.x = sz * Math.PI / 2; wing.rotation.z = 0; if (sz < 0) { wing.rotation.x = -Math.PI / 2; } ship.add(wing);
+    ship.add(box(0.9, 0.1, 0.35, lit(sz > 0 ? 0xff8a2a : 0x2ad4ff), 2.7, 2.62, sz * 4.75));
+    const nac = group(3.4, 3.15, sz * 2.25, ship);
+    const n1 = ol(cyl(0.62, 0.78, 2.8, M.hullDark, 0, 0, 0, 20), 0.03); n1.rotation.z = Math.PI / 2; nac.add(n1);
+    const n2 = cyl(0.66, 0.66, 0.4, M.hullOr, -1.1, 0, 0, 20); n2.rotation.z = Math.PI / 2; nac.add(n2);
+    const ex = cyl(0.58, 0.58, 0.06, M.glowCyan, 1.42, 0, 0, 20); ex.rotation.z = Math.PI / 2; nac.add(ex); halo(nac, 1.7, 0, 0, 3.4, 0x6fe9ff);
+    const fin = ol(box(1.5, 1.7, 0.14, M.hullOr, 3.0, 4.6, sz * 0.75), 0.02); fin.rotation.set(sz * 0.35, 0, -0.35); ship.add(fin);
+    for (const sx of [-1, 1]) { const lx = sx * 2.4; const leg = ol(cyl(0.11, 0.15, 2.4, M.hullDark, lx, 1.15, sz * 1.65, 8), 0.015); leg.rotation.x = sz * 0.32; ship.add(leg, ol(cyl(0.5, 0.56, 0.14, M.hullDark, lx, 0.07, sz * 2.0, 16), 0.015), mesh(new THREE.TorusGeometry(0.5, 0.03, 6, 20), lit(0x2ad4ff), lx, 0.15, sz * 2.0, false).rotateX(Math.PI / 2));
+      const th = mesh(new THREE.ConeGeometry(0.55, 2.6, 12), M.glowOrange, lx, 1.1, sz * 1.2, false); th.rotation.x = Math.PI; th.visible = false; ship.add(th); ship.userData.thr.push(th); }
+    const lamp = mesh(new THREE.SphereGeometry(0.15, 10, 8), sz > 0 ? M.glowOrange : M.glowCyan, 3.15, 2.62, sz * 5.0, false); ship.add(lamp); ship.userData['lamp' + sz] = lamp; halo(lamp, 0, 0, 0, 1.4, sz > 0 ? 0xff8a3a : 0x6fe9ff);
   }
-  ship.add(ol(box(1.8, 2.0, 0.22, M.hullOr, 4.3, 5.7, 0), 0.03));
-  const dishG = group(-0.8, 5.9, 0, ship); dishG.add(cyl(0.06, 0.06, 0.7, M.hullDark, 0, 0, 0, 6)); const dish = ol(mesh(new THREE.SphereGeometry(0.7, 16, 8, 0, TAU, 0, Math.PI / 3), M.hull, 0, 0.35, 0, false), 0.02); dish.rotation.x = Math.PI * 0.75; dishG.add(dish); ship.userData.dish = dishG;
-  ship.add(box(1.7, 2.0, 0.2, M.hullDark, 0, 2.35, 2.25), ol(box(1.9, 0.14, 0.3, M.hullOr, 0, 3.4, 2.25), 0.01));
-  const ramp = ol(box(1.8, 0.14, 4.0, M.metal, 0, 0.75, 4.1), 0.02); ramp.rotation.x = 0.36; ship.add(ramp);
-  ship.add(mesh(new THREE.PlaneGeometry(1.4, 0.4), new THREE.MeshBasicMaterial({ map: textTexture([['PIP-7 · CDI', 40]], 256, 64, '#1d3a52', '#9fe6ff'), toneMapped: false }), 2.0, 4.8, 2.32, false));
+  const dishG = group(1.4, 4.75, 0, ship); dishG.add(cyl(0.05, 0.05, 0.5, M.hullDark, 0, 0, 0, 6)); const dish = ol(mesh(new THREE.SphereGeometry(0.55, 16, 8, 0, TAU, 0, Math.PI / 3), M.hull, 0, 0.3, 0, false), 0.02); dish.rotation.x = Math.PI * 0.75; dishG.add(dish); ship.userData.dish = dishG;
+  // barriga: escotilha iluminada e rampa até a plataforma (lado +z)
+  ship.add(box(1.8, 0.08, 1.6, lit(0x2ad4ff), 0, 1.62, 1.4));
+  const ramp = ol(box(1.7, 0.12, 4.2, M.metal, 0, 0.88, 3.7), 0.02); ramp.rotation.x = 0.38; ship.add(ramp);
+  for (const sx of [-1, 1]) { const rl = box(0.05, 0.05, 4.2, lit(0x2ad4ff), sx * 0.85, 0.95, 3.7); rl.rotation.x = 0.38; ship.add(rl); }
+  ship.add(mesh(new THREE.PlaneGeometry(1.6, 0.4), new THREE.MeshBasicMaterial({ map: textTexture([['PIP-7 · CDI', 40]], 256, 64, '#0a2a3e', '#9fe6ff'), toneMapped: false }), 0.3, 3.6, 2.26, false));
   ship.traverse(o => { if (o.isMesh && o.material !== OUTLINE) o.castShadow = true; });
-  addWall(-6.4, 6.6, -3.6, 1.2, BASE_Y + 5.5);
-  // terminal holográfico da oficina, ao pé da rampa
-  const ped = ol(cyl(0.35, 0.45, 1.0, M.hullDark, TERM.x, BASE_Y + 0.5, TERM.z, 14), 0.02); scene.add(ped);
-  const holo = mesh(new THREE.PlaneGeometry(1.3, 0.8), new THREE.MeshBasicMaterial({ map: textTexture([['OFICINA', 46], ['toque para abrir', 20]], 256, 150, '#06202e', '#7fe9ff'), toneMapped: false, transparent: true, opacity: 0.88, side: THREE.DoubleSide }), TERM.x, BASE_Y + 1.75, TERM.z, false);
-  terminal.holo = null;   // (sem terminal solto: tudo acontece dentro da nave)
+  addWall(-5.6, 5.4, -3.8, 0.6, BASE_Y + 5.5);
+  terminal.holo = null;
+
 }
 function drawBoard() {
   const g = boardCanvas.getContext('2d'), w = 512, h = 300;
@@ -1023,19 +1030,26 @@ function drawBoard() {
 
 /* ---------- derretedor ---------- */
 const melter = group(MELT.x, BASE_Y, MELT.z); scene.add(melter);
-{ // plataforma de madeira sobre palafitas
-  const w = DECK.x1 - DECK.x0, d = DECK.z1 - DECK.z0, cx = (DECK.x0 + DECK.x1) / 2, cz = (DECK.z0 + DECK.z1) / 2;
-  scene.add(ol(box(w, 0.3, d, M.metal, cx, BASE_Y - 0.16, cz), 0.03), box(w - 1.2, 0.02, 0.3, M.yellow, cx, BASE_Y + 0.01, DECK.z0 + 0.6), box(w - 1.2, 0.02, 0.3, M.yellow, cx, BASE_Y + 0.01, DECK.z1 - 0.6));
-
+{ // plataforma de pouso circular com anéis de luz
+  const pad = ol(cyl(9.2, 9.4, 0.3, toon({ color: 0x2b3650 }), 0, BASE_Y - 0.16, 0, 48), 0.03); scene.add(pad);
+  scene.add(cyl(7.6, 7.6, 0.31, toon({ color: 0x333f5c }), 0, BASE_Y - 0.15, 0, 48));
+  for (const [r, c] of [[9.0, 0x2ad4ff], [7.5, 0xff8a2a], [3.2, 0x2ad4ff]]) { const rg = mesh(new THREE.TorusGeometry(r, 0.05, 6, 64), new THREE.MeshBasicMaterial({ color: c, toneMapped: false }), 0, BASE_Y + 0.02, 0, false); rg.rotation.x = Math.PI / 2; scene.add(rg); }
+  for (let i = 0; i < 12; i++) { const a = i / 12 * TAU, ch = box(0.5, 0.02, 0.18, M.yellow, Math.cos(a) * 8.3, BASE_Y + 0.02, Math.sin(a) * 8.3); ch.rotation.y = -a; scene.add(ch); }
+  for (let i = 0; i < 8; i++) { const a = i / 8 * TAU + 0.2; const lp = mesh(new THREE.SphereGeometry(0.12, 8, 6), i % 2 ? M.glowCyan : M.glowOrange, Math.cos(a) * 9.25, BASE_Y + 0.1, Math.sin(a) * 9.25, false); scene.add(lp); }
 }
 let melterDoor;
-{ // funil do Conversor: a neve entra aqui e vira energia (créditos)
-  const fun = ol(mesh(new THREE.CylinderGeometry(1.0, 0.35, 0.9, 22, 1, true), toon({ color: 0x34405a, side: THREE.DoubleSide }), 0, 1.25, 0, false), 0.03); melter.add(fun);
-  melter.add(ol(cyl(0.38, 0.45, 0.8, M.hullDark, 0, 0.4, 0, 14), 0.02), ol(cyl(0.16, 0.16, 2.6, M.hull, 0, 1.0, -1.2, 10).rotateX(1.0), 0.02));
-  melterDoor = mesh(new THREE.TorusGeometry(1.0, 0.06, 8, 30), M.glowCyan.clone(), 0, 1.7, 0, false); melterDoor.rotation.x = Math.PI / 2; melter.add(melterDoor); halo(melter, 0, 1.4, 0, 2.6, 0x6fe9ff);
-  const sg = mesh(new THREE.PlaneGeometry(1.4, 0.4), new THREE.MeshBasicMaterial({ map: textTexture([['CONVERSOR', 36], ['neve → energia', 22]], 256, 90, '#06202e', '#7fe9ff'), toneMapped: false, side: THREE.DoubleSide }), 0, 2.45, 0, false); melter.add(sg); melter.userData.sign = sg;
-  melter.userData.light = { intensity: 0 };
-  circles.push({ x: MELT.x, z: MELT.z, r: 0.9, y1: BASE_Y + 2 });
+{ // Portal Conversor: o PIP passa perto e a neve é puxada para o vórtice
+  const spiral = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); const gr = g.createRadialGradient(64, 64, 4, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(120,230,255,.7)'); gr.addColorStop(1, 'rgba(40,120,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 5; for (let k = 0; k < 4; k++) { g.beginPath(); for (let t = 0; t < 1; t += 0.02) { const a = k * Math.PI / 2 + t * 5, r = t * 60; g.lineTo(64 + Math.cos(a) * r, 64 + Math.sin(a) * r); } g.stroke(); } return new THREE.CanvasTexture(c); })();
+  melter.add(ol(cyl(0.9, 1.1, 0.4, M.hullDark, 0, 0.2, 0, 6), 0.02));
+  for (const sx of [-1, 1]) { const arm = ol(box(0.22, 2.6, 0.3, M.hull, sx * 1.25, 1.5, 0), 0.02); arm.rotation.z = -sx * 0.12; melter.add(arm, mesh(new THREE.SphereGeometry(0.1, 8, 6), M.glowOrange, sx * 1.15, 2.7, 0.18, false)); }
+  const ring = ol(mesh(new THREE.TorusGeometry(1.15, 0.13, 12, 40), M.hull, 0, 1.8, 0, false), 0.02); melter.add(ring);
+  melterDoor = mesh(new THREE.TorusGeometry(1.15, 0.05, 8, 40), M.glowCyan.clone(), 0, 1.8, 0.1, false); melter.add(melterDoor);
+  const vort = mesh(new THREE.CircleGeometry(1.05, 32), new THREE.MeshBasicMaterial({ map: spiral, transparent: true, opacity: 0.6, color: 0x7fd8ff, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, side: THREE.DoubleSide }), 0, 1.8, 0, false); melter.add(vort); melter.userData.vort = vort;
+  halo(melter, 0, 1.8, 0, 2.2, 0x2a9cff).material.opacity = 0.35;
+  const sg = mesh(new THREE.PlaneGeometry(1.5, 0.36), new THREE.MeshBasicMaterial({ map: textTexture([['CONVERSOR', 36], ['neve → energia', 20]], 256, 80, '#06202e', '#7fe9ff'), toneMapped: false, side: THREE.DoubleSide }), 0, 3.35, 0, false); melter.add(sg); melter.userData.sign = sg;
+  melter.rotation.y = 0.5; melter.userData.light = { intensity: 0 };
+  circles.push({ x: MELT.x, z: MELT.z, r: 0.8, y1: BASE_Y + 0.5 });
 }
 const fence = { posts: null, flags: null };
 function buildFence() {            // sem estacas: as regiões aparecem só no HUD e no aviso ao cruzar a fronteira
@@ -1082,14 +1096,16 @@ const VEH = [
 ];
 function buildVehicle(v) {
   const g = new THREE.Group(); scene.add(g);
-  if (v.id === 'sled') {
-    g.add(ol(box(0.9, 0.45, 2.0, M.red, 0, 0.55, 0), 0.03), ol(box(0.7, 0.25, 0.8, M.darkMetal, 0, 0.9, -0.3), 0.02), ol(box(0.8, 0.5, 0.06, M.glass, 0, 1.05, 0.55), 0.02));
-    for (const sx of [-1, 1]) g.add(ol(box(0.12, 0.08, 2.4, M.darkMetal, sx * 0.55, 0.12, 0.1), 0.015), box(0.08, 0.4, 0.08, M.darkMetal, sx * 0.55, 0.3, 0.6));
-    g.add(ol(box(2.4, 0.6, 0.12, M.yellow, 0, 0.45, 1.5), 0.03), box(0.12, 0.12, 0.6, M.darkMetal, 0, 0.5, 1.2));
-  } else {
-    g.add(ol(box(1.8, 1.0, 2.6, M.yellow, 0, 1.1, -0.2), 0.04), ol(box(1.5, 1.2, 1.3, M.glass, 0, 2.2, -0.6), 0.03), box(1.7, 0.12, 1.5, M.yellow, 0, 2.85, -0.6));
-    for (const [x, z, r] of [[1.0, 0.8, 0.55], [-1.0, 0.8, 0.55], [1.05, -1.1, 0.8], [-1.05, -1.1, 0.8]]) { const w = ol(cyl(r, r, 0.45, M.tire, x, r, z, 18), 0.03); w.rotation.z = Math.PI / 2; g.add(w); }
-    g.add(ol(box(3.4, 0.9, 0.16, M.steel, 0, 0.6, 2.0), 0.03), box(0.2, 0.2, 0.9, M.darkMetal, 0.5, 0.8, 1.5), box(0.2, 0.2, 0.9, M.darkMetal, -0.5, 0.8, 1.5));
+  const pad = (x, z, r) => { g.add(ol(cyl(r, r * 1.1, 0.18, M.hullDark, x, 0.25, z, 16), 0.012), mesh(new THREE.CircleGeometry(r * 0.8, 16), M.glowCyan, x, 0.15, z, false).rotateX(Math.PI / 2)); };
+  if (v.id === 'sled') {      // Esqui-Rover: moto flutuante com lâmina
+    const b = ol(mesh(new THREE.CapsuleGeometry(0.42, 1.4, 6, 14).rotateX(Math.PI / 2), M.hull, 0, 0.62, 0, false), 0.02); b.scale.set(1, 0.7, 1); g.add(b);
+    const cn = ol(mesh(new THREE.SphereGeometry(0.4, 14, 10), M.cockpit, 0, 0.9, 0.25, false), 0.012); cn.scale.set(0.8, 0.55, 1.1); g.add(cn);
+    g.add(box(1.2, 0.05, 0.05, new THREE.MeshBasicMaterial({ color: 0xff8a2a, toneMapped: false }), 0, 0.62, -0.95)); pad(0.45, 0.6, 0.3); pad(-0.45, 0.6, 0.3); pad(0, -0.75, 0.32);
+    g.add(ol(box(2.4, 0.55, 0.14, M.hullOr, 0, 0.42, 1.5), 0.03), box(0.12, 0.12, 0.6, M.hullDark, 0, 0.5, 1.2));
+  } else {                    // Rover Elétrico: tanque flutuante com lâmina larga
+    g.add(ol(box(1.9, 0.9, 2.7, M.hull, 0, 1.0, -0.2), 0.04), ol(mesh(new THREE.SphereGeometry(0.8, 16, 10, 0, TAU, 0, Math.PI / 2), M.cockpit, 0, 1.45, -0.5, false), 0.03), box(2.0, 0.08, 0.06, new THREE.MeshBasicMaterial({ color: 0x2ad4ff, toneMapped: false }), 0, 1.1, 1.17));
+    for (const [x, z] of [[0.95, 0.8], [-0.95, 0.8], [0.95, -1.2], [-0.95, -1.2]]) pad(x, z, 0.45);
+    g.add(ol(box(3.4, 0.9, 0.16, M.hullOr, 0, 0.6, 2.0), 0.03), box(0.2, 0.2, 0.9, M.hullDark, 0.5, 0.8, 1.5), box(0.2, 0.2, 0.9, M.hullDark, -0.5, 0.8, 1.5));
   }
   g.traverse(o => { if (o.isMesh && o.material !== OUTLINE) o.castShadow = true; });
   const beam = mesh(cached('vbeam', () => new THREE.CylinderGeometry(0.6, 0.6, 60, 12, 1, true)), M.beam, 0, 30, 0, false); g.add(beam); v.beam = beam;
@@ -1491,7 +1507,7 @@ function updateBlocks(dt) {
 const STN = 90, stP = new Float32Array(STN * 3), stA = new Float32Array(STN * 3), stT = new Float32Array(STN).fill(1); let stI = 0;
 const stIM = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.07, 0), M.bit, STN); stIM.frustumCulled = false; scene.add(stIM);
 function streamOne() { const i = stI++ % STN; stA[i * 3] = player.x + fr(-.2, .2); stA[i * 3 + 1] = player.y + fr(-.1, .2); stA[i * 3 + 2] = player.z + fr(-.2, .2); stT[i] = 0; }
-function updateStream(dt) { const ex = MELT.x, ey = BASE_Y + 1.6, ez = MELT.z;
+function updateStream(dt) { const ex = MELT.x, ey = BASE_Y + 1.8, ez = MELT.z;
   for (let i = 0; i < STN; i++) { let sc = 0; if (stT[i] < 1) { stT[i] = Math.min(1, stT[i] + dt * 2.2); const u = stT[i], e = u * u * (3 - 2 * u);
       _d.position.set(lerp(stA[i * 3], ex, e) + Math.sin(u * 9 + i) * 0.15 * (1 - u), lerp(stA[i * 3 + 1], ey, e) + Math.sin(u * Math.PI) * 1.4, lerp(stA[i * 3 + 2], ez, e) + Math.cos(u * 9 + i) * 0.15 * (1 - u)); sc = 1.2 - u * 0.6; }
     _d.rotation.set(i, i, 0); _d.scale.setScalar(sc); _d.updateMatrix(); stIM.setMatrixAt(i, _d.matrix); }
@@ -1532,12 +1548,13 @@ function celebrate(x, z, bonus) {
    ROBÔS
    ===================================================================== */
 const robots = []; let robotIncome = 0;
-function buildRobot() {
+function buildRobot() {          // mini-drone escavador, primo do PIP
   const g = new THREE.Group();
-  g.add(ol(cyl(0.3, 0.32, 0.36, M.robot, 0, 0.32, 0, 16), 0.02), ol(ball(0.2, 0.16, 0.2, M.glass, 0, 0.56, 0.08), 0.015), ball(0.06, 0.05, 0.03, M.glowCyan, 0, 0.56, 0.26), ol(box(0.75, 0.24, 0.06, M.steel, 0, 0.16, 0.4), 0.015));
-  g.add(ol(box(0.42, 0.05, 0.3, M.darkMetal, 0, 0.52, -0.16), 0.01));
-  for (const [x, z] of [[0.3, 0.15], [-0.3, 0.15], [0.3, -0.15], [-0.3, -0.15]]) { const w = cyl(0.1, 0.1, 0.08, M.darkMetal, x, 0.1, z, 12); w.rotation.z = Math.PI / 2; g.add(w); }
-  const mound = ball(0.2, 0.16, 0.15, M.bit, 0, 0.6, -0.16); mound.scale.setScalar(0.001); g.add(mound); g.userData.mound = mound;
+  g.add(ol(mesh(new THREE.SphereGeometry(0.24, 16, 12), M.hull, 0, 0.45, 0, false), 0.015), cyl(0.15, 0.15, 0.03, M.botDark, 0, 0.47, 0.21, 16).rotateX(Math.PI / 2));
+  g.add(mesh(new THREE.SphereGeometry(0.05, 8, 6), M.glowOrange, 0, 0.48, 0.235, false));
+  const rg = mesh(new THREE.TorusGeometry(0.17, 0.03, 6, 18), M.hullOr, 0, 0.22, 0, false); rg.rotation.x = Math.PI / 2; g.add(rg, mesh(new THREE.CircleGeometry(0.12, 14), M.glowCyan, 0, 0.2, 0, false).rotateX(Math.PI / 2));
+  const sc = ol(box(0.34, 0.06, 0.16, M.hullDark, 0, 0.3, 0.3), 0.01); sc.rotation.x = 0.5; g.add(sc);
+  const mound = ball(0.17, 0.12, 0.17, M.bit, 0, 0.72, 0); mound.scale.setScalar(0.001); g.add(mound); g.userData.mound = mound;
   return g;
 }
 const drones = []; let droneIncome = 0;
@@ -2259,7 +2276,7 @@ function updateComm(dt) {
 }
 $('comm').addEventListener('click', () => { if (!commCur) return; if (commCur.n < commCur.text.length) commCur.n = commCur.text.length; else commCur.hold = 99; });
 const intro = { on: false, t: 0, pod: null, said: 0 };
-const POD = { x: 0, z: -1.2 };
+const POD = { x: 0, z: -1.6 };
 function buildPod() { const g = ship; g.position.y = 140; g.userData.fl = { set visible(v) { ship.userData.thr.forEach(t => t.visible = v); }, scale: { set() {} } }; return g; }
 function buildPodOld() {
   const g = group(POD.x, 140, POD.z); scene.add(g);
@@ -2517,7 +2534,7 @@ function update(dt, t) {
   const tool = TOOLS[state.tool], cap = stat.cap();
   let clearing = false, heating = false, ret = null, ctx = '';
   if (!drv) {
-    const atShop = Math.hypot(player.x - 0, player.z - 4.8) < 2.2, atBench = false, vi = nearVehicle();
+    const atShop = Math.hypot(player.x - 0, player.z - 4.6) < 2.2, atBench = false, vi = nearVehicle();
     const fh = fabNear;
     if (fh && !fabAnim) { const lv = modLv(fh.md); ctx = lv >= modMax(fh.md) ? `${ic(fh.md.icon)}${fh.md.name}: máximo` : `${ic('fab')}Fabricar ${fh.md.name} Mk${lv + 1}`; if (actPressed) tryCraft(fh); }
     else if (atShop) { ctx = `${ic('fab')}Entrar na nave`; if (actPressed) openBay(); }
@@ -2570,7 +2587,7 @@ function update(dt, t) {
   updateBalls(dt);
   // --- vender ---
   const dm = Math.hypot(player.x - MELT.x, player.z - MELT.z), bagNow = state.bag;
-  const selling = dm < (drv ? 4.5 : 3.0) && bagNow > 0;
+  const selling = dm < (drv ? 4.5 : 3.4) && bagNow > 0;
   if (selling) {
     const amount = Math.min(bagNow, Math.max(25, cap * 0.9) * dt), c = amount * stat.value(); sellKg += amount;
     state.bag -= amount; state.coins += c; sellAcc += c; advance(1); if (state.upg.refine) { refineAcc += amount * state.upg.refine / 400; if (refineAcc >= 1) { refineAcc -= 1; gainMineral('gelita', 1, MELT.x, BASE_Y + 2.5, MELT.z); } } comm('sell', 'Isso! O Conversor transforma neve em energia, que a Companhia paga em créditos. Com créditos e minerais você monta peças novas dentro da nave.');
@@ -2578,7 +2595,7 @@ function update(dt, t) {
   }
   sellT -= dt;
   if (sellT <= 0) { sellT = 0.4; if (sellAcc >= 1) { floatText(sellKg > 0 ? `${fmtKg(sellKg)} → +${fmt(sellAcc)}` : `+${fmt(sellAcc)}`, dm < 4.5 ? new THREE.Vector3(MELT.x, 3.1, MELT.z) : camera.position.clone().addScaledVector(_dir, 1.6).setY(camera.position.y + 0.3), '#ffd166', 22, 'coin'); bumpCoins(); if (selling) chime(880 + Math.random() * 100); else tone(880, 1320, 0.05, 0.18); sellAcc = 0; sellKg = 0; } }
-  melterDoor.material.color.setHSL(0.52, 1, 0.55 + 0.15 * Math.sin(t * (selling ? 18 : 4))); melterDoor.rotation.z += dt * (selling ? 6 : 0.5); melter.userData.sign.lookAt(camera.position.x, melter.userData.sign.getWorldPosition(_tp).y, camera.position.z);
+  melterDoor.material.color.setHSL(0.52, 1, 0.55 + 0.15 * Math.sin(t * (selling ? 18 : 4))); melter.userData.vort.rotation.z -= dt * (selling ? 9 : 1.2); melter.userData.vort.scale.setScalar(selling ? 1.05 + Math.sin(t * 20) * 0.04 : 1); melter.userData.sign.lookAt(camera.position.x, melter.userData.sign.getWorldPosition(_tp).y, camera.position.z);
   if (selling) { for (let n = 0; n < 3; n++) streamOne(); if ((whooshT -= dt) <= 0) { whooshT = 0.28; tone(220 + Math.random() * 80, 700, 0.025, 0.25, 'sawtooth'); } }
 
   // --- robôs, moedas e peças enterradas ---
