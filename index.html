@@ -169,6 +169,19 @@
   .zoomBtns{position:absolute;right:8px;bottom:8px;display:flex;gap:6px}
   .zoomBtns button{width:36px;height:36px;border-radius:10px;font-size:20px;font-weight:900;color:#fff;background:#24476f;border:3px solid var(--ink)}
   .settings{margin-top:10px}
+  #bay{position:fixed;inset:0;z-index:9;display:none;justify-content:space-between;align-items:stretch;padding:calc(8px + var(--safe-t)) calc(8px + var(--safe-r)) calc(8px + var(--safe-b)) calc(8px + var(--safe-l));pointer-events:none}
+  #bay>div{pointer-events:auto}
+  .bayL{width:300px;display:flex;flex-direction:column;border-radius:18px;background:rgba(8,16,34,.86);border:2px solid #2ad4ff;box-shadow:0 0 22px rgba(42,212,255,.35);overflow:hidden}
+  .bayL .bh{padding:8px 12px;border-bottom:2px solid rgba(42,212,255,.4)}.bayL h2{margin:0;font-size:16px;font-weight:900;letter-spacing:.06em;color:#bff4ff;text-transform:uppercase}
+  #bayCoins{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;font-weight:900;font-size:12px;color:#ffd166;align-items:center}#bayCoins span{display:flex;align-items:center;gap:2px;color:#fff}#bayCoins .ic{width:15px;height:15px}
+  #bayList{flex:1;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:6px;touch-action:pan-y}
+  .bcard{display:flex;align-items:center;gap:9px;text-align:left;padding:6px 9px;border-radius:12px;background:rgba(30,50,84,.8);border:2px solid #1f3558;color:#fff;font-family:inherit}
+  .bcard>.ic{width:32px;height:32px;flex-shrink:0}.bcard b{font-size:13px;display:block}.bcard small{font-size:10.5px;color:#9fc4e8}
+  .bcard.sel{border-color:#2ad4ff;background:rgba(20,80,120,.9);box-shadow:0 0 12px rgba(42,212,255,.5)}.bcard.can{border-color:#3fbf7f}.bcard.max{opacity:.6}
+  .cc{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;font-size:11px;font-weight:900}.cc span{display:flex;align-items:center;gap:1px}.cc .ic{width:13px;height:13px}.cc .no{color:#ff8a8a}.cc.big{font-size:14px;gap:10px}.cc.big .ic{width:18px;height:18px}
+  .bayR{width:270px;align-self:flex-end;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:18px;background:rgba(8,16,34,.86);border:2px solid #ff8a2a}
+  #bayInfo h3{margin:0;font-size:16px;display:flex;align-items:center;gap:6px}#bayInfo h3 .ic{width:24px;height:24px}#bayInfo p{margin:4px 0;font-size:12px;color:#bcd6ee}
+  .bayBtns{display:flex;flex-direction:column;gap:6px}.bayBtns .gbtn{width:100%}
   .paper{position:relative;max-width:420px;width:100%;padding:24px 26px 18px;background:linear-gradient(#fbf3dc,#efe0b8);color:#3b2a14;border-radius:6px;transform:rotate(-1.2deg);box-shadow:0 14px 40px rgba(0,0,0,.6),inset 0 0 40px rgba(150,110,50,.25);text-align:center}
   .paper h3{margin:0 0 10px;font:italic 900 17px Georgia,serif;color:#5a3a12}
   .paper p{margin:0 0 16px;font:italic 15px/1.55 Georgia,serif}
@@ -245,6 +258,8 @@
     <div class="page" id="pg-missoes"></div>
   </div>
 </div>
+<div id="bay"><div class="bayL"><div class="bh"><h2>Baia de Montagem</h2><div id="bayCoins"></div></div><div id="bayList"></div></div>
+  <div class="bayR"><div id="bayInfo"></div><div class="bayBtns"><button class="gbtn" id="bayBuild">Construir</button><button class="gbtn gray" id="bayPC">Computador de bordo</button><button class="gbtn gray" id="bayExit">Sair da nave</button></div></div></div>
 <div class="modalWrap" id="note"><div class="paper"><div class="pin"></div><h3 id="noteT"></h3><p id="noteB"></p><button class="gbtn blue" id="noteOk">Guardar no diário</button></div></div>
 <div class="modalWrap" id="win">
   <div class="modal">
@@ -296,6 +311,8 @@ const damp = (a, b, l, dt) => lerp(a, b, 1 - Math.exp(-l * dt));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const easeIO = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const $ = id => document.getElementById(id);
+const KG = 1.5;   // 1 unidade de neve = 1,5 kg
+function fmtKg(u) { const kg = u * KG; if (kg < 1) return Math.round(kg * 1000) + ' g'; if (kg < 1000) return (kg < 10 ? kg.toFixed(1) : Math.round(kg)) + ' kg'; return (kg < 10000 ? (kg / 1000).toFixed(2) : (kg / 1000).toFixed(1)) + ' t'; }
 function fmt(n) { n = Math.floor(n); if (n < 1000) return String(n); const u = ['K', 'M', 'B', 'T']; let i = -1; while (n >= 1000 && i < 3) { n /= 1000; i++; } return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : n.toFixed(0)) + u[i]; }
 const vibrate = ms => { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (_) {} } };
 
@@ -436,19 +453,18 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(700, 32, 16), new THREE.Shad
       // Via Láctea com faixas de poeira
       float band = dot(sd, normalize(vec3(0.3, 0.88, 0.25))), mw = exp(-band * band * 16.0);
       vec2 bp = vec2(atan(sd.z, sd.x) * 3.0, band * 9.0);
-      col += mix(vec3(0.22, 0.16, 0.42), vec3(0.62, 0.5, 0.82), fbm(bp * 0.7)) * mw * (0.35 + 0.7 * fbm(bp * 1.3 + 4.0)) * 0.55;
-      col *= 1.0 - mw * smoothstep(0.52, 0.78, fbm(bp * 2.1 + 9.0)) * 0.65;
+      col += mix(vec3(0.2, 0.18, 0.32), vec3(0.5, 0.46, 0.62), fbm(bp * 0.7)) * mw * (0.3 + 0.7 * fbm(bp * 1.3 + 4.0)) * 0.16;
+      col *= 1.0 - mw * smoothstep(0.52, 0.78, fbm(bp * 2.1 + 9.0)) * 0.5;
       // nebulosas
       vec2 np = vec2(atan(sd.z, sd.x) * 1.6, asin(clamp(sd.y, -1.0, 1.0)) * 2.0);
-      col += vec3(0.7, 0.16, 0.55) * smoothstep(0.56, 0.86, fbm(np * 1.2 + 11.0)) * 0.32 + vec3(0.1, 0.5, 0.65) * smoothstep(0.6, 0.9, fbm(np * 1.5 - 3.0)) * 0.28;
+      col += vec3(0.5, 0.18, 0.45) * smoothstep(0.7, 0.92, fbm(np * 1.2 + 11.0)) * 0.05;
       // estrelas em três camadas
       for (int i = 0; i < 3; i++) { float sc = 80.0 + float(i) * 120.0; vec3 g = floor(sd * sc); float r = h3(g + float(i) * 13.1);
-        if (r > 0.982 - mw * 0.012) { vec3 c = (g + 0.5 + (vec3(h3(g + 1.7), h3(g + 3.1), h3(g + 5.3)) - 0.5) * 0.7) / sc; float dd = length(sd - normalize(c)) * sc;
+        if (r > 0.991 - mw * 0.004) { vec3 c = (g + 0.5 + (vec3(h3(g + 1.7), h3(g + 3.1), h3(g + 5.3)) - 0.5) * 0.7) / sc; float dd = length(sd - normalize(c)) * sc;
           float tw = 0.6 + 0.4 * sin(uTime * (1.3 + r * 4.0) + r * 90.0); vec3 sc2 = mix(vec3(0.7, 0.82, 1.0), vec3(1.0, 0.82, 0.62), h3(g + 9.9));
-          col += sc2 * smoothstep(1.3 - float(i) * 0.3, 0.0, dd) * tw * (1.5 - float(i) * 0.4); } }
+          col += sc2 * smoothstep(1.0 - float(i) * 0.25, 0.0, dd) * tw * (1.3 - float(i) * 0.45); } }
       // galáxias
-      col += galaxy(sd, normalize(vec3(0.72, 0.38, -0.58)), 0.075, 2.3, vec3(0.85, 0.78, 1.0));
-      col += galaxy(sd, normalize(vec3(-0.4, -0.2, 0.89)), 0.045, 1.4, vec3(1.0, 0.75, 0.55));
+      col += galaxy(sd, normalize(vec3(0.72, 0.38, -0.58)), 0.05, 2.3, vec3(0.85, 0.78, 1.0)) * 0.45;
       // planeta gigante com anéis e uma lua verde
       vec3 pd = normalize(vec3(-0.55, 0.36, -0.75)), e1 = normalize(cross(pd, vec3(0.0, 1.0, 0.0))), e2 = cross(e1, pd);
       float pp = dot(sd, pd), pr = acos(clamp(pp, -1.0, 1.0)) / 0.14; vec2 q = vec2(dot(sd, e1), dot(sd, e2));
@@ -624,7 +640,7 @@ const UNITS = 10;
 const ZONES = [20, 36, 54, 72, 89], ZONE_STARS = [0, 15, 50, 120, 220];
 const DEPTH_Z = [1, 1.5, 2.0, 2.6, 3.2], HARD_Z = [1, 1.35, 1.8, 2.4, 3.1];
 const HW = 6, HD = 4.5;
-const MELT = { x: 8.2, z: 8.6 };
+const MELT = { x: 3.6, z: 3.0 };                    // Conversor de neve acoplado à nave
 const BASE_Y = 0.25;                                 // plataforma de pouso no chão (a neve é rasa em volta da nave)
 const DECK = { x0: -10, x1: 11.5, z0: -8.5, z1: 11.5 };
 const SNOW_Z = [6.5, 7.6, 8.8, 10, 11.2];          // altura da superfície de neve por região
@@ -993,7 +1009,7 @@ const ship = group(0, BASE_Y, -1.2); scene.add(ship); ship.userData.thr = [];
   // terminal holográfico da oficina, ao pé da rampa
   const ped = ol(cyl(0.35, 0.45, 1.0, M.hullDark, TERM.x, BASE_Y + 0.5, TERM.z, 14), 0.02); scene.add(ped);
   const holo = mesh(new THREE.PlaneGeometry(1.3, 0.8), new THREE.MeshBasicMaterial({ map: textTexture([['OFICINA', 46], ['toque para abrir', 20]], 256, 150, '#06202e', '#7fe9ff'), toneMapped: false, transparent: true, opacity: 0.88, side: THREE.DoubleSide }), TERM.x, BASE_Y + 1.75, TERM.z, false);
-  scene.add(holo); terminal.meshes.push(ped, holo); terminal.holo = holo; circles.push({ x: TERM.x, z: TERM.z, r: 0.45, y1: BASE_Y + 1.2 });
+  terminal.holo = null;   // (sem terminal solto: tudo acontece dentro da nave)
 }
 function drawBoard() {
   const g = boardCanvas.getContext('2d'), w = 512, h = 300;
@@ -1013,15 +1029,13 @@ const melter = group(MELT.x, BASE_Y, MELT.z); scene.add(melter);
 
 }
 let melterDoor;
-{
-  melter.add(ol(cyl(1.25, 1.35, 0.5, M.brick, 0, 0.25, 0, 20), 0.03), ol(cyl(1.0, 1.05, 1.6, M.copper, 0, 1.3, 0, 22), 0.03), ol(cyl(1.4, 0.95, 0.65, M.metal, 0, 2.42, 0, 22), 0.03));
-  for (const y of [0.7, 1.3, 1.9]) melter.add(cyl(1.07, 1.07, 0.09, M.darkMetal, 0, y, 0, 22));
-  melterDoor = box(0.72, 0.52, 0.1, M.glowOrange.clone(), 0, 0.95, -1.03, false); melter.add(melterDoor);
-  melter.add(ol(cyl(0.17, 0.17, 2.2, M.darkMetal, 0.75, 3.0, 0.4, 10), 0.02));
-  const sg = mesh(new THREE.PlaneGeometry(1.2, 0.52), new THREE.MeshBasicMaterial({ map: textTexture([['DERRETEDOR', 34], ['neve → moedas', 26]], 256, 110, '#22313f', '#9fe6ff'), toneMapped: false }), -1.7, 1.45, -0.6, false);
-  sg.rotation.y = -Math.PI / 2 - 0.6; melter.add(sg, box(0.08, 1.4, 0.08, M.darkWood, -1.72, 0.7, -0.56));
-  melter.userData.light = new THREE.PointLight(0xff8a3a, 5, 8, 1.8); melter.userData.light.position.set(0, 1.0, -1.6); melter.add(melter.userData.light);
-  circles.push({ x: MELT.x, z: MELT.z, r: 1.45, y1: BASE_Y + 3 });
+{ // funil do Conversor: a neve entra aqui e vira energia (créditos)
+  const fun = ol(mesh(new THREE.CylinderGeometry(1.0, 0.35, 0.9, 22, 1, true), toon({ color: 0x34405a, side: THREE.DoubleSide }), 0, 1.25, 0, false), 0.03); melter.add(fun);
+  melter.add(ol(cyl(0.38, 0.45, 0.8, M.hullDark, 0, 0.4, 0, 14), 0.02), ol(cyl(0.16, 0.16, 2.6, M.hull, 0, 1.0, -1.2, 10).rotateX(1.0), 0.02));
+  melterDoor = mesh(new THREE.TorusGeometry(1.0, 0.06, 8, 30), M.glowCyan.clone(), 0, 1.7, 0, false); melterDoor.rotation.x = Math.PI / 2; melter.add(melterDoor); halo(melter, 0, 1.4, 0, 2.6, 0x6fe9ff);
+  const sg = mesh(new THREE.PlaneGeometry(1.4, 0.4), new THREE.MeshBasicMaterial({ map: textTexture([['CONVERSOR', 36], ['neve → energia', 22]], 256, 90, '#06202e', '#7fe9ff'), toneMapped: false, side: THREE.DoubleSide }), 0, 2.45, 0, false); melter.add(sg); melter.userData.sign = sg;
+  melter.userData.light = { intensity: 0 };
+  circles.push({ x: MELT.x, z: MELT.z, r: 0.9, y1: BASE_Y + 2 });
 }
 const fence = { posts: null, flags: null };
 function buildFence() {            // sem estacas: as regiões aparecem só no HUD e no aviso ao cruzar a fronteira
@@ -1037,7 +1051,7 @@ function buildFence() {            // sem estacas: as regiões aparecem só no H
 const treasures = [];
 {
   const coinGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.07, 20);
-  for (let n = 0; n < 110; n++) {
+  for (let n = 0; n < 0; n++) {   // (moedas enterradas removidas: o tesouro agora são os minerais)
     let x, z; do { x = rr(-HALF + 2, HALF - 2); z = rr(-HALF + 2, HALF - 2); } while (houseDist(x, z) < 4 || rectDist(x, z, (DECK.x0 + DECK.x1) / 2, (DECK.z0 + DECK.z1) / 2, (DECK.x1 - DECK.x0) / 2, (DECK.z1 - DECK.z0) / 2) < 2 || BUILDINGS.some(b => rectDist(x, z, b.x, b.z, b.w / 2, b.d / 2) < 1));
     const r = Math.max(Math.abs(x), Math.abs(z)), m = ol(mesh(coinGeo, M.gold, x, groundAt(x, z) + 0.3, z), 0.025); m.rotation.x = Math.PI / 2; m.visible = false; scene.add(m);
     treasures.push({ x, z, k: idxOf(x, z), m, value: Math.round(15 + r * 2.6), found: false });
@@ -1047,12 +1061,12 @@ const treasures = [];
 /* =====================================================================
    PEÇAS ENTERRADAS, VEÍCULOS, FERRAMENTAS, RECEITAS, MELHORIAS
    ===================================================================== */
-const PARTS = { nozzle: 'Bocal', pipe: 'Cano', motor: 'Motor', gear: 'Engrenagem', coil: 'Resistência', tank: 'Tanque', crystal: 'Cristal de Gelo', core: 'Núcleo Polar', plug: 'Vela de Ignição', battery: 'Bateria', fuel: 'Galão de Combustível' };
+const PARTS = { plug: 'Módulo de Ignição', battery: 'Bateria do Rover', fuel: 'Célula de Energia' };
 const ITEM_SPAWNS = [['nozzle', 10, -14], ['pipe', -15, 7], ['fuel', 14, 13],
   ['motor', -30, 14], ['plug', -6, -30], ['gear', 28, -20], ['gear', -22, 24], ['pipe', 24, -30], ['fuel', 26, 30],
   ['coil', 40, -44], ['pipe', -44, -36], ['tank', -40, 42], ['crystal', 46, 12], ['fuel', -22, -48],
   ['battery', 62, -30], ['crystal', -62, 20], ['crystal', 30, -64], ['motor', -64, -58], ['tank', 58, 56], ['fuel', 60, 50],
-  ['core', -80, 76], ['crystal', 84, -80], ['fuel', 80, 80]];
+  ['core', -80, 76], ['crystal', 84, -80], ['fuel', 80, 80]].filter(([p]) => PARTS[p]);
 const PART_COL = { nozzle: M.plastic, pipe: M.steel, motor: M.darkMetal, gear: M.steel, coil: M.copper, tank: M.green, crystal: M.crystal, core: M.glowCyan, plug: M.white, battery: M.blue, fuel: M.red };
 const items = ITEM_SPAWNS.map(([part, x, z], n) => {
   const g = group(x, groundAt(x, z) + 0.35, z); scene.add(g);
@@ -1118,9 +1132,9 @@ const UPG = {   // árvore de habilidades em mapa: p = posição (x, y) em casas
   iceBreak: { name: 'Quebra-gelo', icon: 'iceBreak', base: 900, mult: 2.4, max: 8, p: [-1.7, -3.1], req: ['radius', 2], desc: 'Neve dura e gelo cedem mais rápido.', fx: l => `+${l * 15}% contra gelo` },
   heatPow: { name: 'Chama Viva', icon: 'torch', base: 1500, mult: 2.3, max: 8, p: [-0.5, -3.3], req: ['radius', 3], desc: 'Ferramentas de calor derretem mais.', fx: l => `+${l * 20}% de calor` },
   crit: { name: 'Técnica', icon: 'star', base: 600, mult: 2.2, max: 10, p: [1, -3.2], req: ['reach', 2], desc: 'Cada pazada rende mais neve.', fx: l => `+${l * 8}% de neve por pazada` },
-  bag: { name: 'Mochila', icon: 'bag', base: 20, mult: 2.2, max: 15, p: [1.25, 0], req: ['core', 1], desc: 'Carrega mais neve por viagem.', fx: l => `${fmt(30 * Math.pow(1.6, l))} de capacidade` },
-  melter: { name: 'Derretedor', icon: 'melter', base: 80, mult: 2.4, max: 15, p: [2.3, -0.6], req: ['bag', 1], desc: 'Cada floco derretido vale mais.', fx: l => `+${l * 30}% de moedas` },
-  carrier: { name: 'Drone Carregador', icon: 'drone', base: 1200, mult: 2.0, max: 6, p: [2.3, 0.7], req: ['bag', 2], desc: 'Drones pegam a neve da sua mochila e voam até o Derretedor.', fx: l => `${l} drone${l === 1 ? '' : 's'}` },
+  bag: { name: 'Mochila', icon: 'bag', base: 20, mult: 2.2, max: 15, p: [1.25, 0], req: ['core', 1], desc: 'Carrega mais neve por viagem.', fx: l => `${fmtKg(30 * Math.pow(1.6, l))} de capacidade` },
+  melter: { name: 'Conversor', icon: 'melter', base: 80, mult: 2.4, max: 15, p: [2.3, -0.6], req: ['bag', 1], desc: 'Cada floco derretido vale mais.', fx: l => `+${l * 30}% de moedas` },
+  carrier: { name: 'Drone Carregador', icon: 'drone', base: 1200, mult: 2.0, max: 6, p: [2.3, 0.7], req: ['bag', 2], desc: 'Drones pegam a neve da sua mochila e voam até o Conversor.', fx: l => `${l} drone${l === 1 ? '' : 's'}` },
   carrierCap: { name: 'Caçamba do Drone', icon: 'bag', base: 1500, mult: 2.2, max: 8, p: [3.4, 0.2], req: ['carrier', 1], desc: 'Cada drone carrega mais neve por viagem.', fx: l => `+${l * 50}% de carga` },
   carrierSpd: { name: 'Hélice Turbo', icon: 'rocket', base: 1500, mult: 2.2, max: 6, p: [3.4, 1.3], req: ['carrier', 1], desc: 'Drones voam mais rápido.', fx: l => `+${l * 25}% de velocidade` },
   goldCombo: { name: 'Combo Dourado', icon: 'coin', base: 8000, mult: 1, max: 1, p: [1.9, -4.1], req: ['crit', 3], desc: 'Com combo ×1.5 ou mais, cada floco vale o dobro.', fx: l => l ? 'Ativo' : 'Desligado' },
@@ -1129,7 +1143,7 @@ const UPG = {   // árvore de habilidades em mapa: p = posição (x, y) em casas
   magnet: { name: 'Ímã de Cristais', icon: 'magnet', base: 150, mult: 2.2, max: 6, p: [9, 9], desc: 'Puxa cristais e minerais de mais longe.', fx: l => `${(1.6 + 0.7 * l).toFixed(1)} m de alcance` },
   blizzard: { name: 'Caçador de Nevasca', icon: 'star', base: 2000, mult: 2.2, max: 5, p: [-3.4, -0.8], req: ['treasureSense', 1], desc: 'A nevasca dourada (tudo vale ×3) dura mais.', fx: l => `+${l * 10} s de nevasca` },
   boots: { name: 'Botas', icon: 'boots', base: 30, mult: 2, max: 8, p: [-1.25, 0], req: ['core', 1], desc: 'Anda mais rápido, até na neve funda.', fx: l => `+${l * 10}% de velocidade` },
-  robots: { name: 'Robô Limpa-neve', icon: 'robot', base: 400, mult: 1.75, max: 12, p: [-2.3, 0.6], req: ['boots', 1], desc: 'Robôs cavam sozinhos e levam a neve ao Derretedor (você vê as viagens).', fx: l => `${l} robôs` },
+  robots: { name: 'Robô Limpa-neve', icon: 'robot', base: 400, mult: 1.75, max: 12, p: [-2.3, 0.6], req: ['boots', 1], desc: 'Robôs cavam sozinhos e levam a neve ao Conversor (você vê as viagens).', fx: l => `${l} robôs` },
   motor: { name: 'Motor dos Robôs', icon: 'motorUp', base: 600, mult: 2.5, max: 10, p: [-3.4, 0.6], req: ['robots', 1], desc: 'Robôs cavam mais e carregam mais.', fx: l => `+${l * 50}% de força e carga` },
   fuelEff: { name: 'Motor Eficiente', icon: 'fuelEff', base: 800, mult: 2.2, max: 6, p: [0, 1.15], req: ['core', 1], desc: 'Veículos gastam menos energia.', fx: l => `-${l * 15}% de consumo` },
   vehSpeed: { name: 'Turbo de Veículo', icon: 'sled', base: 1500, mult: 2.2, max: 6, p: [-1, 2.1], req: ['fuelEff', 1], desc: 'Veículos andam mais rápido.', fx: l => `+${l * 10}% de velocidade` },
@@ -1141,19 +1155,24 @@ const UPG = {   // árvore de habilidades em mapa: p = posição (x, y) em casas
 Object.assign(UPG, {
   radar: { name: 'Radar de Cristais', icon: 'gelita', base: 120, mult: 2.2, max: 5, p: [-2.3, -0.7], req: ['treasureSense', 1], desc: 'Pulsos de radar mostram minerais escondidos sob a neve perto de você.', fx: l => `pulso a cada ${9 - l} s, ${10 + 4 * l} m` },
   lucky: { name: 'Garimpeiro', icon: 'ferrite', base: 200, mult: 2.3, max: 5, p: [-2.3, 0.7], req: ['treasureSense', 1], desc: 'Chance de tirar um mineral extra de cada depósito.', fx: l => `${l * 15}% de chance de +1` },
-  refine: { name: 'Refinaria', icon: 'lumen', base: 600, mult: 2.3, max: 5, p: [2.3, 0.8], req: ['melter', 2], desc: 'O Derretedor separa Gelita da neve que você traz.', fx: l => `${l} Gelita a cada ${Math.round(400 / l)} de neve` },
+  refine: { name: 'Refinaria', icon: 'lumen', base: 600, mult: 2.3, max: 5, p: [2.3, 0.8], req: ['melter', 2], desc: 'O Conversor separa Gelita da neve que você traz.', fx: l => `${l} Gelita a cada ${Math.round(400 / l)} de neve` },
 });
 const RE = (k, o) => Object.assign(UPG[k], o);
+Object.assign(UPG, {
+  heatNet: { name: 'Rede Térmica', icon: 'fire', base: 250, mult: 2.3, max: 5, p: [-1.3, -1.3], req: ['core', 1], desc: 'Aquecedores esquentam uma área maior.', fx: l => `+${l * 20}% de raio` },
+  stabilizer: { name: 'Estabilizador de Voo', icon: 'rocket', base: 1500, mult: 1, max: 1, p: [-2.3, -2.0], req: ['heatNet', 1], desc: 'O vento das tempestades não empurra mais o PIP.', fx: l => l ? 'Ativo' : 'Desligado' },
+  scanner: { name: 'Scanner de Cúpulas', icon: 'house', base: 900, mult: 1, max: 1, p: [-3.4, 0.7], req: ['lucky', 1], desc: 'Marca com um feixe as cúpulas Lúmen ainda soterradas.', fx: l => l ? 'Ativo' : 'Desligado' },
+});
 RE('core', { name: 'Contrato PIP-7', desc: 'Ativa a árvore. Cada galho é um jeito diferente de degelar o planeta.', fx: () => 'Contrato ativo' });
 RE('crit', { name: 'Técnica de Coleta', p: [0, -1.2], req: ['core', 1], desc: 'Cada passada do feixe rende mais neve.' });
-RE('goldCombo', { p: [0.9, -2.3], req: ['crit', 3] });
+RE('goldCombo', { p: [0.9, -2.3], req: ['crit', 3] }); RE('iceBreak', { p: [0, -2.5] });
 RE('iceBreak', { p: [-0.9, -2.2], req: ['crit', 1], desc: 'Neve compactada e gelo cedem mais rápido ao feixe.' });
-RE('heatPow', { name: 'Plasma Quente', p: [-1.6, -3.1], req: ['iceBreak', 2], desc: 'O Maçarico derrete gelo mais rápido.' });
-RE('melter', { name: 'Derretedor Quântico', p: [1.25, 0], req: ['core', 1], desc: 'Cada floco derretido rende mais créditos.' });
+RE('heatPow', { name: 'Plasma Quente', p: [0, -3.6], req: ['iceBreak', 2], desc: 'O Maçarico derrete gelo mais rápido.' });
+RE('melter', { name: 'Conversor Quântico', p: [1.25, 0], req: ['core', 1], desc: 'Cada floco derretido rende mais créditos.' });
 RE('carrier', { p: [2.3, -0.7], req: ['melter', 1] });
 RE('carrierCap', { p: [3.4, -1.2] }); RE('carrierSpd', { p: [3.4, -0.2] });
 RE('treasureSense', { name: 'Faro de Peças', p: [-1.25, 0], req: ['core', 1], desc: 'Peças de veículos enterradas mostram um feixe de luz de mais longe.' });
-RE('blizzard', { name: 'Caçador de Nevasca', p: [-3.4, -0.7], req: ['radar', 1] });
+RE('blizzard', { name: 'Coletor de Aurora', icon: 'star', p: [-3.4, -0.7], req: ['radar', 1], desc: 'Durante a aurora, cada floco convertido vale mais.', fx: l => `+${l * 30}% na aurora` });
 RE('robots', { name: 'Robôs Escavadores', p: [0, 1.25], req: ['core', 1] });
 RE('motor', { name: 'Motor dos Robôs', p: [-1, 2.2], req: ['robots', 1] });
 RE('fuelEff', { name: 'Células de Energia', p: [1.1, 2.0], req: ['robots', 1], desc: 'Rovers gastam menos energia.' });
@@ -1163,25 +1182,27 @@ RE('ballMax', { p: [2.0, 3.8], req: ['plow', 1] }); RE('ballValue', { p: [0.4, 4
 UPG.power.name = 'Motor do Braço'; UPG.radius.name = 'Bocal Largo'; UPG.reach.name = 'Extensor'; UPG.bag.name = 'Tanque'; UPG.boots.name = 'Turbinas';
 const FUEL_COST = 300;
 const state = {
-  coins: 0, stars: 0, min: { gelita: 0, ferrite: 0, lumen: 0, nucleo: 0 }, dep: '', heaters: [], heatInv: [0, 0, 0], heatUnl: [true, false, false], cold: 100, cam3: true, bag: 0, ballM: 0, balls: [], notes: 0, houses: '', chests: '', quests: [], cnt: { sec: 0, ice: 0, ball: 0, coin: 0, treasure: 0, chest: 0 }, tool: 0, heat: -1, owned: TOOLS.map((_, i) => i === 0), ownedHeat: HEATS.map(() => false),
+  coins: 0, stars: 0, min: { gelita: 0, ferrite: 0, lumen: 0, nucleo: 0 }, dep: '', heaters: [], heatInv: [0, 0, 0], heatUnl: [true, false, false], cold: 100, cam3: true, bag: 0, ballM: 0, balls: [], notes: 0, houses: '', chests: '', quests: [], cnt: { sec: 0, ice: 0, ball: 0, coin: 0, mineral: 0, chest: 0 }, tool: 0, heat: -1, owned: TOOLS.map((_, i) => i === 0), ownedHeat: HEATS.map(() => false),
   upg: Object.fromEntries(Object.keys(UPG).map(k => [k, 0])), inv: Object.fromEntries(Object.keys(PARTS).map(k => [k, 0])),
   zone: 4, prestige: 0, step: 0, won: false, muted: false, played: 0, sections: 0, driving: -1, iceTip: false,
 };
-const blz = { t: 0, next: 150 };   // nevasca dourada
+const blz = { t: 0, next: 1e12 };   // (nevasca dourada removida: o clima agora é o sistema de tempo)   // nevasca dourada
 const upgCost = id => Math.round(UPG[id].base * Math.pow(UPG[id].mult, state.upg[id]));
 const upgVis = id => !UPG[id].req || upgOpen(UPG[id].req[0]);
 const upgOpen = id => !UPG[id].req || state.upg[UPG[id].req[0]] >= UPG[id].req[1];
 const stat = {
   rate: () => TOOLS[state.tool].rate * (1 + 0.25 * state.upg.power) * (1 + 0.08 * state.upg.crit), radius: () => TOOLS[state.tool].r * (1 + 0.12 * state.upg.radius),
   reach: () => TOOLS[state.tool].reach * (1 + 0.1 * state.upg.reach), cap: () => Math.round(30 * Math.pow(1.6, state.upg.bag)),
-  speed: () => 1 + 0.1 * state.upg.boots, value: () => (1 + 0.3 * state.upg.melter) * Math.pow(1.5, state.prestige) * (blz.t > 0 ? 3 : 1),
+  speed: () => 1 + 0.1 * state.upg.boots, value: () => (1 + 0.3 * state.upg.melter) * Math.pow(1.5, state.prestige) * (blz.t > 0 ? 3 : 1) * (WX.cur === 'aurora' ? 1 + 0.3 * state.upg.blizzard : 1),
 };
 
 /* =====================================================================
    SOM
    ===================================================================== */
 let actx = null, noiseBuf = null;
-function initAudio() { if (actx) { if (actx.state === 'suspended') actx.resume(); return; } try { actx = new (window.AudioContext || window.webkitAudioContext)(); noiseBuf = actx.createBuffer(1, actx.sampleRate * 0.6, actx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; startMusic(); } catch (_) { actx = null; } }
+function initAudio() { if (actx) { if (actx.state === 'suspended') actx.resume(); return; } try { actx = new (window.AudioContext || window.webkitAudioContext)(); noiseBuf = actx.createBuffer(1, actx.sampleRate * 0.6, actx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; startMusic(); suckSnd.s = actx.createBufferSource(); suckSnd.s.buffer = noiseBuf; suckSnd.s.loop = true; suckSnd.f = actx.createBiquadFilter(); suckSnd.f.type = 'bandpass'; suckSnd.f.Q.value = 1.4; suckSnd.g = actx.createGain(); suckSnd.g.gain.value = 0; suckSnd.s.connect(suckSnd.f).connect(suckSnd.g).connect(actx.destination); suckSnd.s.start(); } catch (_) { actx = null; } }
+const suckSnd = {};
+function setSuck(v, f) { if (!suckSnd.g) return; const t = actx.currentTime; suckSnd.g.gain.setTargetAtTime(state.muted ? 0 : v, t, 0.06); suckSnd.f.frequency.setTargetAtTime(f, t, 0.1); }
 // ---------- trilha sonora gerada: caixinha de música + pad + baixo, acordes aconchegantes de inverno ----------
 const music = { on: false, next: 0, step: 0, out: null };
 const CHORDS = [[48, 52, 55, 59], [45, 48, 52, 55], [41, 45, 48, 52], [43, 47, 50, 52], [48, 52, 55, 59], [45, 48, 52, 55], [41, 45, 48, 52], [43, 47, 50, 55]];
@@ -1407,12 +1428,12 @@ function spawn(P, x, y, z, vx, vy, vz, size, life, extra = 0) { const i = P.next
 let absorbed = 0;
 const _cam = new THREE.Vector3();
 function updateBits(dt) {
-  if (camT > 0.5) _cam.set(player.x, player.y - 0.1, player.z); else { _cam.copy(camera.position); _cam.y -= 0.55; } const P = bits, killR = camT > 0.5 ? 0.4 : 1.0;
+  if (camT > 0.5) { if (botTool) botTool.userData.tip.getWorldPosition(_cam); else _cam.set(player.x, player.y - 0.1, player.z); } else { _cam.copy(camera.position); _cam.y -= 0.55; } const P = bits, killR = camT > 0.5 ? 0.4 : 1.0;
   for (let i = 0; i < P.n; i++) {
     if (P.life[i] <= 0) continue; const o = i * 3; P.life[i] -= dt; P.x[i] -= dt;
     if (P.x[i] > 0 || P.x[i] < -50) P.v[o + 1] -= 11 * dt;
     else { const dx = _cam.x - P.p[o], dy = _cam.y - P.p[o + 1], dz = _cam.z - P.p[o + 2], l = Math.hypot(dx, dy, dz) || 1, pull = (30 + (-P.x[i]) * 70) * 0.4;
-      P.v[o] = damp(P.v[o], dx / l * pull, 8, dt); P.v[o + 1] = damp(P.v[o + 1], dy / l * pull, 8, dt); P.v[o + 2] = damp(P.v[o + 2], dz / l * pull, 8, dt); if (l < killR) { P.life[i] = 0; absorbed++; } }
+      P.v[o] = damp(P.v[o], dx / l * pull + dz / l * 4, 8, dt); P.v[o + 1] = damp(P.v[o + 1], dy / l * pull, 8, dt); P.v[o + 2] = damp(P.v[o + 2], dz / l * pull - dx / l * 4, 8, dt); if (l < killR) { P.life[i] = 0; absorbed++; if (Math.random() < 0.15) tone(1500 + Math.random() * 900, 2200, 0.012, 0.05, 'sine'); } }
     P.p[o] += P.v[o] * dt; P.p[o + 1] += P.v[o + 1] * dt; P.p[o + 2] += P.v[o + 2] * dt;
     _d.position.set(P.p[o], P.p[o + 1], P.p[o + 2]); _d.rotation.set(P.life[i] * 5 + i, P.life[i] * 4, 0); _d.scale.setScalar(P.life[i] > 0 ? P.s[i] * Math.min(1, P.life[i] * 3) : 0); _d.updateMatrix(); P.im.setMatrixAt(i, _d.matrix);
   }
@@ -1467,6 +1488,14 @@ function updateBlocks(dt) {
     _d.position.set(P.p[o], P.p[o + 1], P.p[o + 2]); _d.rotation.set(i, P.life[i] * 2 + i, 0); _d.scale.setScalar(P.life[i] > 0 ? P.s[i] * Math.min(1, P.life[i] * 2.5) : 0); _d.updateMatrix(); P.im.setMatrixAt(i, _d.matrix); }
   P.im.instanceMatrix.needsUpdate = true;
 }
+const STN = 90, stP = new Float32Array(STN * 3), stA = new Float32Array(STN * 3), stT = new Float32Array(STN).fill(1); let stI = 0;
+const stIM = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.07, 0), M.bit, STN); stIM.frustumCulled = false; scene.add(stIM);
+function streamOne() { const i = stI++ % STN; stA[i * 3] = player.x + fr(-.2, .2); stA[i * 3 + 1] = player.y + fr(-.1, .2); stA[i * 3 + 2] = player.z + fr(-.2, .2); stT[i] = 0; }
+function updateStream(dt) { const ex = MELT.x, ey = BASE_Y + 1.6, ez = MELT.z;
+  for (let i = 0; i < STN; i++) { let sc = 0; if (stT[i] < 1) { stT[i] = Math.min(1, stT[i] + dt * 2.2); const u = stT[i], e = u * u * (3 - 2 * u);
+      _d.position.set(lerp(stA[i * 3], ex, e) + Math.sin(u * 9 + i) * 0.15 * (1 - u), lerp(stA[i * 3 + 1], ey, e) + Math.sin(u * Math.PI) * 1.4, lerp(stA[i * 3 + 2], ez, e) + Math.cos(u * 9 + i) * 0.15 * (1 - u)); sc = 1.2 - u * 0.6; }
+    _d.rotation.set(i, i, 0); _d.scale.setScalar(sc); _d.updateMatrix(); stIM.setMatrixAt(i, _d.matrix); }
+  stIM.instanceMatrix.needsUpdate = true; }
 const waves = [];
 for (let n = 0; n < 6; n++) { const m = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xaaf0ff, transparent: true, opacity: 0, depthWrite: false, toneMapped: false })); m.visible = false; m.renderOrder = 6; scene.add(m); waves.push({ m, t: 1 }); }
 let waveIdx = 0;
@@ -1652,8 +1681,8 @@ const dispPct = () => Math.min(100, pct() / 0.985);
 let zoneFrac = 1;
 const dispZone = () => Math.min(100, (1 - zoneFrac) / 0.97 * 100);
 const OBJECTIVES = [
-  () => 'Desça da nave e tire a neve rasa em volta', () => 'Leve a neve ao Coletor da nave (o tanque laranja)',
-  () => 'Ache cristais na neve e fabrique o Braço Mk1 na Fabricadora (ao lado da nave)', () => 'Limpe uma seção inteira (veja o % na mira)',
+  () => 'Desça da nave e tire a neve rasa em volta', () => 'Leve a neve ao Conversor da nave (o funil com anel azul)',
+  () => 'Junte cristais e entre na nave (rampa) para montar sua primeira peça', () => 'Limpe uma seção inteira (veja o % na mira)',
   () => 'Compre um Farol Térmico na Oficina e posicione: onde é quente, a neve não volta', () => 'Cave até a motoneve (feixe vermelho) e ache a Vela de Ignição',
   () => `Degele o planeta: ${dispPct().toFixed(1)}%`,
 ];
@@ -1669,13 +1698,13 @@ function refreshHUD() {
   const drv = state.driving >= 0, v = drv ? VEH[state.driving] : null;
   const cap = stat.cap(), bag = state.bag, direct = TOOLS[state.tool].direct;
   if (drv) { const r = curBall ? curBall.r : 0, mr = ballMaxR(v); $('bagBar').querySelector('.fill').style.width = (r / mr * 100) + '%'; $('bagText').innerHTML = ic('ball') + `Bola Ø ${(r * 2).toFixed(1)} / ${(mr * 2).toFixed(1)} m`; $('bagBar').classList.toggle('full', r >= mr * 0.97); }
-  else { $('bagBar').querySelector('.fill').style.width = (bag / cap * 100) + '%'; $('bagText').innerHTML = ic('snow') + (direct ? 'derrete na hora' : `${fmt(bag)} / ${fmt(cap)}`); $('bagBar').classList.toggle('full', !direct && !state.upg.pipe && bag >= cap - 0.01); }
+  else { $('bagBar').querySelector('.fill').style.width = (bag / cap * 100) + '%'; $('bagText').innerHTML = ic('snow') + (direct ? 'converte na hora' : `${fmtKg(bag)} / ${fmtKg(cap)}`); $('bagBar').classList.toggle('full', !direct && !state.upg.pipe && bag >= cap - 0.01); }
   $('fuelBar').style.display = drv ? 'block' : 'none';
   if (drv) { $('fuelBar').querySelector('.fill').style.width = v.st.energy + '%'; $('fuelText').innerHTML = ic(v.kind === 'fuel' ? 'fuel' : 'battery') + `${Math.round(v.st.energy)}%`; }
   const rz = zoneRing(player.x, player.z), tH = inHouse() ? 20 : tempAt(player.x, player.z); $('prog').innerHTML = `${REGIONS[rz]} · ${Math.round(tH)} °C · Planeta ${dispPct().toFixed(1)}%`;
   $('coldBar').style.display = state.cold < 99 ? 'block' : 'none'; $('coldBar').querySelector('.fill').style.width = state.cold + '%'; $('coldText').innerHTML = ic('radiator') + `Calor ${Math.round(state.cold)}%`;
   const hinv = state.heatInv.reduce((a, b) => a + b, 0); $('btnPlace').style.display = hinv > 0 && !drv && !inHouse() ? 'flex' : 'none'; if (hinv) { let ti = 0; for (let n = 2; n >= 0; n--) if (state.heatInv[n]) { ti = n; break; } $('btnPlace').innerHTML = ic(HEATERS[ti].id) + `<span id="placeCnt">${hinv}</span>`; } $('starsPill').innerHTML = ic('star') + state.stars; $('minRow').innerHTML = Object.keys(MINS).filter(k => state.min[k] > 0).map(k => `<span>${ic(k)}${state.min[k]}</span>`).join('');
-  const objHtml = drv && state.ballM < BALL_MISSIONS.length ? ic('ball') + `Missão: bola de ${BALL_MISSIONS[state.ballM][0]} m no Derretedor (+${fmt(BALL_MISSIONS[state.ballM][1])})` : state.step < OBJECTIVES.length ? ic('radius') + OBJECTIVES[state.step]() : ''; if (objHtml !== lastObj) { lastObj = objHtml; objT = 9; $('objective').innerHTML = objHtml; $('objective').classList.remove('fade'); } else if ((objT -= 0.25) <= 0) $('objective').classList.add('fade');
+  const objHtml = drv && state.ballM < BALL_MISSIONS.length ? ic('ball') + `Missão: bola de ${BALL_MISSIONS[state.ballM][0]} m no Conversor (+${fmt(BALL_MISSIONS[state.ballM][1])})` : state.step < OBJECTIVES.length ? ic('radius') + OBJECTIVES[state.step]() : ''; if (objHtml !== lastObj) { lastObj = objHtml; objT = 9; $('objective').innerHTML = objHtml; $('objective').classList.remove('fade'); } else if ((objT -= 0.25) <= 0) $('objective').classList.add('fade');
   $('btnHeat').style.display = state.heat >= 0 && !drv ? 'flex' : 'none';
   if (shopOpen) renderShop();
 }
@@ -1707,7 +1736,7 @@ function renderShop(force) {
   $('shopCoins').innerHTML = ic('coin') + fmt(state.coins);
   const c = state.coins, sk = selKey[tab];
   if (tab === 'loja') {
-    let h = `<div class="slots"><div class="secTitle">${ic('wood')}Ferramentas (fabricadas na Fabricadora, ao lado da nave)</div><div class="srow">`;
+    let h = `<div class="slots"><div class="secTitle">${ic('wood')}Emissores (montados na Baia da nave)</div><div class="srow">`;
     TOOLS.forEach((t, i) => { const own = state.owned[i], rc = RAR[TOOL_TIER[i]][1];
       h += slot('t' + i, t.id, own ? (state.tool === i ? 'Em uso' : 'Sua') : 'Fabricar', `${own ? 'own' : t.craft ? 'lock' : c >= t.cost ? 'can' : 'no'} ${state.tool === i ? 'on' : ''}`, rc); });
     h += `</div><div class="secTitle">${ic('lighter')}Calor (derrete gelo)</div><div class="srow">`;
@@ -1721,20 +1750,20 @@ function renderShop(force) {
     if (sk[0] === 't' || sk[0] === 'h') {
       const heat = sk[0] === 'h', i = +sk.slice(1), t = heat ? HEATS[i] : TOOLS[i], own = heat ? state.ownedHeat[i] : state.owned[i], on = heat ? state.heat === i : state.tool === i, [rn, rc] = RAR[(heat ? HEAT_TIER : TOOL_TIER)[i]];
       const stats = heat ? bar('Área', t.r / 2) + bar('Calor', t.melt / 4) + bar('Alcance', t.reach / 7) : bar('Área', t.r / 5) + bar('Força', t.rate / 10) + bar('Alcance', t.reach / 16) + bar('Dureza', t.hard / 4);
-      const btn = own ? `<button class="gbtn ${on ? 'green' : 'blue'}" data-${heat ? 'heat' : 'tool'}="${i}">${on ? 'Em uso' : 'Equipar'}</button>` : t.craft ? `<button class="gbtn gray">${ic('fab')}Fabrique na Fabricadora</button>` : `<button class="gbtn ${c >= t.cost ? '' : 'gray'}" data-${heat ? 'heat' : 'tool'}="${i}">${ic('coin')}${fmt(t.cost)}</button>`;
+      const btn = own ? `<button class="gbtn ${on ? 'green' : 'blue'}" data-${heat ? 'heat' : 'tool'}="${i}">${on ? 'Em uso' : 'Equipar'}</button>` : t.craft ? `<button class="gbtn gray">${ic('fab')}Monte na Baia da nave</button>` : `<button class="gbtn ${c >= t.cost ? '' : 'gray'}" data-${heat ? 'heat' : 'tool'}="${i}">${ic('coin')}${fmt(t.cost)}</button>`;
       d = detail(t.id, rc, rn, t.name, `<p>${t.desc}</p>${t.direct ? '<span class="tag">vira moeda na hora</span>' : ''}<div class="stats">${stats}</div>`, btn);
     } else if (sk[0] === 'q') {
       const i = +sk.slice(1), H = HEATERS[i], unl = state.heatUnl[i], cost = heaterCost(i);
       d = detail(H.id, '#ffb347', 'Aquecedor', H.name, `<p>${H.desc}</p><div class="fx">Raio: <em>${H.r} m</em> · Calor: <em>+${H.t} °C</em><br>Na mochila: <em>${state.heatInv[i]}</em> · Acesos: <em>${state.heaters.filter(x => x.t === i).length}</em></div><p>Compre, saia da base e toque no botão de fogo amarelo para acender onde quiser.</p>`,
         unl ? `<button class="gbtn ${c >= cost ? '' : 'gray'}" data-hbuy="${i}">${ic('coin')}${fmt(cost)}</button>` : `<button class="gbtn ${state.stars >= H.stars ? '' : 'gray'}" data-unl="${i}">${ic('star')}${H.stars} · Desbloquear</button>`);
-    } else d = detail('fuel', '#ff8a8a', 'Suprimento', 'Galão de Combustível', `<p>Abastece a motoneve (+40%). Você tem <b>${state.inv.fuel}</b>.</p>`, `<button class="gbtn ${c >= FUEL_COST ? '' : 'gray'}" data-buy="fuel">${ic('coin')}${fmt(FUEL_COST)}</button>`);
+    } else d = detail('fuel', '#ff8a8a', 'Suprimento', 'Célula de Energia', `<p>Abastece a motoneve (+40%). Você tem <b>${state.inv.fuel}</b>.</p>`, `<button class="gbtn ${c >= FUEL_COST ? '' : 'gray'}" data-buy="fuel">${ic('coin')}${fmt(FUEL_COST)}</button>`);
     setPage('loja', h + d);
   } else if (tab === 'missoes') {
     let h = `<div class="slots"><div class="secTitle">${ic('star')}Missões do dia (trocam ao completar)</div>`;
     state.quests.forEach(q => { const Q = QUEST_T[q.t], pr = clamp((state.cnt[q.t] - q.b) / q.n, 0, 1);
       h += `<div class="quest">${ic(Q.icon)}<div class="qb"><b>${Q.name(q.n)}</b><div class="stat"><i style="--v:${pr * 100}%"></i></div></div><span class="qr">${ic('star')}${q.r}</span></div>`; });
     h += `<div class="secTitle" style="margin-top:12px">${ic('ball')}Missões de bola de neve (veículos)</div>`;
-    BALL_MISSIONS.forEach(([dd, cc, pp], i) => { h += `<div class="mis ${i < state.ballM ? 'done' : i === state.ballM ? 'cur' : ''}">${ic(i < state.ballM ? 'star' : 'ball')}Bola de ${dd} m no Derretedor${pp ? ' + ' + PARTS[pp].split(' ')[0] : ''}<b>${fmt(cc)} · ${ic('star')}3</b></div>`; });
+    BALL_MISSIONS.forEach(([dd, cc, pp], i) => { h += `<div class="mis ${i < state.ballM ? 'done' : i === state.ballM ? 'cur' : ''}">${ic(i < state.ballM ? 'star' : 'ball')}Bola de ${dd} m no Conversor${pp ? ' + 3 ' + MINS[pp].name : ''}<b>${fmt(cc)} · ${ic('star')}3</b></div>`; });
     const z = state.zone + 1, libs = BUILDINGS.filter(b => b.lib).length;
     h += '</div>' + detail('star', '#ffe27a', 'Estrelas', `${state.stars} estrelas`, `<p>Estrelas desbloqueiam aquecedores melhores. Ganhe limpando seções (+1), libertando casas (+2), abrindo baús (+2), em missões e bolas de neve.</p><div class="fx">Aquecedores acesos: <em>${state.heaters.length}</em><br>Casas libertadas: <em>${libs}/${BUILDINGS.length}</em><br>Diário: <em>${state.notes}/${NOTES.length}</em></div>`);
     setPage('missoes', h);
@@ -1771,10 +1800,10 @@ function renderShop(force) {
     h += `</div><div class="secTitle">${ic('ball')}Missões de bola de neve</div><div class="srow">`;
     h += slot('', 'note', `${state.notes}/${NOTES.length}`, state.notes ? 'own' : 'lock', '#e8c98a') + slot('reset', 'help', 'Opções', '', '#8fb3d6') + '</div></div>';
     let d;
-    if (sk[0] === 'p') { const p = sk.slice(1), uses = RECIPES.filter(r => r.parts[p]).map(r => (r.gives[0] === 'tool' ? TOOLS : HEATS)[r.gives[1]].name);
-      d = detail(p, '#59c3ee', 'Peça', PARTS[p], `<p>Você tem <b>${state.inv[p]}</b>.</p><p>${p === 'fuel' ? 'Abastece a motoneve.' : p === 'plug' ? 'Conserta a motoneve.' : p === 'battery' ? 'Conserta o trator elétrico.' : uses.length ? 'Usada em: ' + uses.join(', ') : ''}</p>`); }
+    if (sk[0] === 'p') { const p = sk.slice(1), uses = [];
+      d = detail(p, '#59c3ee', 'Peça', PARTS[p], `<p>Você tem <b>${state.inv[p]}</b>.</p><p>${p === 'fuel' ? 'Recarrega o Esqui-Rover.' : p === 'plug' ? 'Liga o Esqui-Rover.' : p === 'battery' ? 'Liga o Rover Elétrico.' : uses.length ? 'Usada em: ' + uses.join(', ') : ''}</p>`); }
     else if (sk[0] === 'v') { const v = VEH[+sk.slice(1)];
-      d = detail(v.icon, '#ffb347', 'Veículo', v.name, `<p>${v.st.fixed ? `Funcionando · ${v.kind === 'fuel' ? 'combustível' : 'bateria'} ${Math.round(v.st.energy)}%` : v.st.found ? `Achado! Falta: ${PARTS[v.part]}` : `Enterrado na zona ${zoneRing(v.x, v.z) + 1}. Siga o feixe de luz.`}</p><p>Empurra a neve e forma bolas gigantes. Bola máxima: Ø ${(ballMaxR(v) * 2).toFixed(1)} m. Leve ao Derretedor: quanto maior, mais vale.</p>`); }
+      d = detail(v.icon, '#ffb347', 'Veículo', v.name, `<p>${v.st.fixed ? `Funcionando · ${v.kind === 'fuel' ? 'combustível' : 'bateria'} ${Math.round(v.st.energy)}%` : v.st.found ? `Achado! Falta: ${PARTS[v.part]}` : `Enterrado na zona ${zoneRing(v.x, v.z) + 1}. Siga o feixe de luz.`}</p><p>Empurra a neve e forma bolas gigantes. Bola máxima: Ø ${(ballMaxR(v) * 2).toFixed(1)} m. Leve ao Conversor: quanto maior, mais vale.</p>`); }
     else if (sk === 'reset') d = detail('help', '#8fb3d6', '', 'Opções', `<p>Música e sons: botão no canto superior direito.</p>`, `<button class="gbtn gray" id="btnReset">Apagar progresso</button>`);
     else d = detail('note', '#e8c98a', 'Diário da vila', `${state.notes} de ${NOTES.length} bilhetes`, state.notes ? NOTES.slice(0, state.notes).map(([t, b]) => `<div class="diary"><b>${t}</b><p>${b}</p></div>`).join('') : '<p>Liberte casas soterradas e abra os baús para achar bilhetes dos moradores.</p>');
     setPage('mochila', h + d);
@@ -1806,7 +1835,7 @@ $('pg-arvore').addEventListener('pointerup', tUp); $('pg-arvore').addEventListen
 $('pg-arvore').addEventListener('wheel', e => { e.preventDefault(); tree.s = clamp(tree.s * (e.deltaY < 0 ? 1.1 : 0.9), 0.45, 1.6); applyTree(); }, { passive: false });
 function toolAction(i) { const t = TOOLS[i]; if (state.owned[i]) equipTool(i); else if (!t.craft && state.coins >= t.cost) { state.coins -= t.cost; state.owned[i] = true; equipTool(i); chime(523, 5); toast(`Nova ferramenta: ${t.name}!`, 2.8, t.id); advance(2); comm('tool', 'Ferramenta nova! A Companhia agradece... e desconta do seu salário. Brincadeira. Talvez.'); } }
 function heatAction(i) { const t = HEATS[i]; if (state.ownedHeat[i]) equipHeat(i); else if (!t.craft && state.coins >= t.cost) { state.coins -= t.cost; state.ownedHeat[i] = true; equipHeat(i); chime(523, 5); toast(`${t.name}! Segure o botão de fogo para derreter gelo.`, 3.5, t.id); } }
-function buyUpg(id) { const u = UPG[id]; if (!upgOpen(id) || state.upg[id] >= u.max || state.coins < upgCost(id)) return; state.coins -= upgCost(id); state.upg[id]++; if (id === 'robots') syncRobots(); if (id === 'carrier') syncDrones(); tone(600, 900, 0.07, 0.25, 'triangle'); }
+function buyUpg(id) { const u = UPG[id]; if (!upgOpen(id) || state.upg[id] >= u.max || state.coins < upgCost(id)) return; state.coins -= upgCost(id); state.upg[id]++; if (id === 'robots') syncRobots(); if (id === 'carrier') syncDrones(); if (id === 'heatNet') recomputeTemp(); if (id === 'scanner') syncScanner(); tone(600, 900, 0.07, 0.25, 'triangle'); }
 function buyZone() { const z = state.zone + 1; if (z >= ZONES.length || state.stars < ZONE_STARS[z]) return; state.stars -= ZONE_STARS[z]; state.zone = z; buildFence(); advance(4); chime(392, 6); toast(`Zona ${z + 1} liberada! Neve mais alta e mais dura pela frente.`, 3.5, 'radius'); }
 function craft(id) {
   const r = RECIPES.find(x => x.id === id); if (!r) return;
@@ -1846,7 +1875,7 @@ function load() {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (!d || d.v !== 4) return false;
     if (d.prestigeOnly) { state.prestige = d.prestigeOnly; snowPhase = state.prestige * 1.7; fillSnow(); return false; }
     const keep = { upg: { ...state.upg, ...d.state.upg }, inv: { ...state.inv, ...d.state.inv } };
-    Object.assign(state, d.state, keep); state.driving = -1; if (Object.values(state.upg).some(v => v > 0)) state.upg.core = 1; delete state.upg.pipe; state.zone = 4; if (d.state.stars === undefined) state.stars = state.sections; state.cnt = { ...{ sec: 0, ice: 0, ball: 0, coin: 0, treasure: 0, chest: 0 }, ...(d.state.cnt || {}) };
+    Object.assign(state, d.state, keep); state.driving = -1; if (Object.values(state.upg).some(v => v > 0)) state.upg.core = 1; delete state.upg.pipe; state.zone = 4; if (d.state.stars === undefined) state.stars = state.sections; state.cnt = { ...{ sec: 0, ice: 0, ball: 0, coin: 0, mineral: 0, chest: 0 }, ...(d.state.cnt || {}) };
     snowPhase = state.prestige * 1.7; fillSnow();
     const s = atob(d.snow), si = atob(d.ice); totalVol = 0;
     for (let k = 0; k < N * N; k++) { depth[k] = s.charCodeAt(k) / 60; iceA[k] = si.charCodeAt(k) / 255; totalVol += depth[k] * CELL_A; }
@@ -1864,8 +1893,8 @@ addEventListener('pagehide', save);
 
 /* ---------- o robô ---------- */
 M.botBody = toon({ color: 0xf1e2c2 }); M.botAccent = toon({ color: 0xff8a2a }); M.botDark = toon({ color: 0x2d3440 });
-const bot = new THREE.Group(); scene.add(bot); bot.visible = false;
-{
+function makeBotModel() {
+  const bot = new THREE.Group();
   const body = group(0, 0, 0, bot); bot.userData.body = body;
   body.add(ol(mesh(new THREE.SphereGeometry(0.34, 26, 18), M.botBody, 0, 0, 0, false), 0.025));
   const band = mesh(new THREE.TorusGeometry(0.345, 0.045, 8, 36), M.botAccent, 0, -0.04, 0, false); band.rotation.x = Math.PI / 2; body.add(band);
@@ -1885,7 +1914,9 @@ const bot = new THREE.Group(); scene.add(bot); bot.visible = false;
   pack.add(mesh(new THREE.SphereGeometry(0.03, 8, 6), M.glowCyan, -0.12, 0.15, 0.085, false), mesh(new THREE.SphereGeometry(0.03, 8, 6), M.glowOrange, 0.12, 0.15, 0.085, false));
   bot.userData.hold = group(0.22, -0.2, -0.28, body); bot.scale.setScalar(0.85);
   bot.traverse(o => { if (o.isMesh && o.material !== OUTLINE) o.castShadow = true; });
+  return bot;
 }
+const bot = makeBotModel(); scene.add(bot); bot.visible = false;
 let botTool = null, botToolId = '';
 function buildEmitter(id) {
   const g = new THREE.Group(), ti = TOOLS.findIndex(t => t.id === id), hi = HEATS.findIndex(t => t.id === id), heat = hi >= 0;
@@ -1907,6 +1938,7 @@ const _bt = new THREE.Vector3();
 function syncBotTool(id) { if (botToolId === id) return; botToolId = id; if (botTool) bot.userData.hold.remove(botTool); botTool = buildEmitter(id); botTool.scale.setScalar(1.6); bot.userData.hold.add(botTool); }
 let jetT = 0, idleT = 0;
 function updateBot(dt, t, moving, clearing, heating, tgt) {
+  animParts(bot, dt, t);
   const show = camT > 0.05 && state.driving < 0; bot.visible = show; suckBeam.visible = false; if (!show) return;
   const b = bot.userData; bot.position.set(player.x, player.y + Math.sin(t * 2.4) * 0.05, player.z); bot.rotation.y = player.yaw;
   const sy = Math.sin(player.yaw), cy = Math.cos(player.yaw), fwd = -(player.vx * sy + player.vz * cy), side = player.vx * cy - player.vz * sy;
@@ -1920,7 +1952,6 @@ function updateBot(dt, t, moving, clearing, heating, tgt) {
   idleT = moving || clearing || heating ? 0 : idleT + dt; b.body.rotation.y = damp(b.body.rotation.y, idleT > 2.5 ? Math.PI + Math.sin(t * 0.8) * 0.3 : 0, 4, dt); b.tipL.scale.setScalar(0.8 + 0.4 * Math.abs(Math.sin(t * 3)));
   if ((jetT -= dt) <= 0) { jetT = 0.05; flame(player.x + fr(-.08, .08), bot.position.y - 0.38, player.z + fr(-.08, .08), fr(-.2, .2), -1.2, fr(-.2, .2), 0.06, 0.22, 1); }
   if (b.turbines && moving && Math.random() < 0.6) for (const tg of b.turbines) { tg.getWorldPosition(_tp); flame(_tp.x, _tp.y, _tp.z, Math.sin(player.yaw) * 2.5, 0.2, Math.cos(player.yaw) * 2.5, 0.05, 0.2, 1); }
-  if (b.halo) b.halo.rotation.z += dt * 2;
   if ((clearing || heating) && tgt && botTool) { botTool.userData.tip.getWorldPosition(_bt); const dd = Math.hypot(tgt.x - _bt.x, tgt.y - _bt.y, tgt.z - _bt.z);   // feixe que puxa a neve
     suckBeam.visible = true; suckBeam.position.copy(_bt); suckBeam.lookAt(tgt.x, tgt.y, tgt.z); suckBeam.scale.set((tgt.r || 1) * 0.85, (tgt.r || 1) * 0.85, dd);
     beamMat.color.setHex(heating ? 0xff8a3a : botTool.userData.col); beamMat.opacity = 0.16 + Math.sin(t * 30) * 0.05; }
@@ -1940,7 +1971,7 @@ function recomputeTemp() {
   for (let pj = 0; pj < NP; pj++) for (let pi = 0; pi < NP; pi++) {
     const x = gx(Math.min(N - 1, pi * PS + PS / 2)), z = gx(Math.min(N - 1, pj * PS + PS / 2)); let t = TEMP_Z[zoneRing(x, z)], m = 0;
     if (rectDist(x, z, (DECK.x0 + DECK.x1) / 2, (DECK.z0 + DECK.z1) / 2, (DECK.x1 - DECK.x0) / 2, (DECK.z1 - DECK.z0) / 2) < 3) t += 14;
-    for (const h of state.heaters) { const H = HEATERS[h.t], d = Math.hypot(x - h.x, z - h.z); if (d < H.r) { t += H.t * (1 - (d / H.r) ** 2); m = Math.max(m, H.melt); } }
+    for (const h of state.heaters) { const H = HEATERS[h.t], hr = H.r * (1 + 0.2 * state.upg.heatNet), d = Math.hypot(x - h.x, z - h.z); if (d < hr) { t += H.t * (1 - (d / hr) ** 2); m = Math.max(m, H.melt); } }
     tempP[pj * NP + pi] = t; meltP[pj * NP + pi] = t >= 0 ? m : 0;
   }
 }
@@ -2020,8 +2051,8 @@ function updateDepositMeshes() {
 }
 const magR = () => 1.7 + 0.7 * state.upg.magnet;
 let depT = 0;
-function gainMineral(type, n, x, y, z) { state.min[type] += n; floatText(`+${n} ${MINS[type].name}`, new THREE.Vector3(x, y + 0.8, z), MINS[type].css, 20, type); for (let i = 0; i < 10; i++) spawn(stars, x, y + 0.3, z, fr(-2, 2), fr(2, 5), fr(-2, 2), fr(0.05, 0.09), 0.9); chime(1046 + Math.random() * 200, 4); vibrate(15);
-  comm('min1', `Isso é ${MINS[type].name}! Minerais e cristais servem para fabricar peças novas para você na Fabricadora, ao lado da nave.`); }
+function gainMineral(type, n, x, y, z) { state.min[type] += n; state.cnt.mineral += n; floatText(`+${n} ${MINS[type].name}`, new THREE.Vector3(x, y + 0.8, z), MINS[type].css, 20, type); for (let i = 0; i < 10; i++) spawn(stars, x, y + 0.3, z, fr(-2, 2), fr(2, 5), fr(-2, 2), fr(0.05, 0.09), 0.9); chime(1046 + Math.random() * 200, 4); vibrate(15);
+  comm('min1', `Isso é ${MINS[type].name}! Minerais e cristais servem para montar peças novas em você, na Baia de Montagem dentro da nave.`); }
 function updateDeposits(dt) {
   depT -= dt; if (depT > 0) return; depT = 0.2; let ch = false; const R2 = magR();
   for (const d of deposits) { if (d.found) continue; const rev = d.k >= 0 && depth[d.k] < 0.22; if (rev !== d.rev) { d.rev = rev; ch = true; if (rev && Math.hypot(player.x - d.x, player.z - d.z) < 14) { tone(1400, 1800, 0.03, 0.15, 'triangle'); } }
@@ -2064,7 +2095,7 @@ function modCost(m) {
 }
 const canPay = c => Object.entries(c).every(([k, v]) => (k === 'coins' ? state.coins : state.min[k]) >= v);
 const FAB = { x: -6.3, z: 6.8 }, holos = [];
-const fab = group(FAB.x, BASE_Y, FAB.z); scene.add(fab);
+const fab = group(FAB.x, BASE_Y, FAB.z); fab.visible = false;   // (fabricadora do chão aposentada: a montagem agora é dentro da nave)
 {
   fab.add(ol(cyl(1.3, 1.5, 0.4, M.hullDark, 0, 0.2, 0, 6), 0.03), ol(cyl(0.55, 0.65, 1.6, M.hull, 0, 1.2, 0, 16), 0.03), mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.2, 16, 1, true), M.cockpit, 0, 1.25, 0, false));
   const core = mesh(new THREE.TorusGeometry(0.5, 0.06, 8, 24), M.glowCyan, 0, 1.3, 0, false); core.rotation.x = Math.PI / 2; fab.add(core); fab.userData.core = core; halo(fab, 0, 1.3, 0, 2.6, 0x6fe9ff);
@@ -2072,7 +2103,6 @@ const fab = group(FAB.x, BASE_Y, FAB.z); scene.add(fab);
   for (const sx of [-1, 1]) { const a = group(sx * 0.9, 0.5, 0, fab); a.add(ol(box(0.16, 1.4, 0.16, M.hullOr, 0, 0.7, 0), 0.015), ol(box(0.5, 0.12, 0.12, M.hullOr, -sx * 0.25, 1.4, 0), 0.012)); fab.userData.arms.push(a); }
   fab.add(mesh(new THREE.PlaneGeometry(1.5, 0.36), new THREE.MeshBasicMaterial({ map: textTexture([['FABRICADORA', 34]], 256, 60, '#3a1d06', '#ffc08a'), toneMapped: false, side: THREE.DoubleSide }), 0, 2.35, 0, false));
   fab.traverse(o => { if (o.isMesh && o.material !== OUTLINE) o.castShadow = true; });
-  addWall(FAB.x - 1.2, FAB.x + 1.2, FAB.z - 1.2, FAB.z + 1.2, BASE_Y + 2.4);
   const holoMat = c => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
   const shape = id => { const g = new THREE.Group(); const m = holoMat(0x7fe9ff);
     if (id === 'arm') g.add(new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.6), m), new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.04, 0.26), m).translateZ(-0.36));
@@ -2089,7 +2119,7 @@ const fab = group(FAB.x, BASE_Y, FAB.z); scene.add(fab);
     const base = mesh(new THREE.CircleGeometry(0.45, 20), holoMat(0x7fe9ff), x, BASE_Y + 0.02, z, false); base.rotation.x = -Math.PI / 2; scene.add(base);
     const sh = shape(md.id); sh.position.set(x, BASE_Y + 1.1, z); scene.add(sh);
     const lab = document.createElement('div'); lab.className = 'hlab'; $('fx').appendChild(lab);
-    holos.push({ md, x, z, base, sh, lab }); });
+    base.visible = sh.visible = false; lab.remove(); holos.push({ md, x, z, base, sh, lab }); });
 }
 let fabAnim = null, lastFabBest = null;
 function tryCraft(h) {
@@ -2125,27 +2155,98 @@ function updateFab(dt, t) {
   if (!best) { let bd2 = 4.5; for (const h of holos) { const d = Math.hypot(player.x - h.x, player.z - h.z); if (d < bd2) { bd2 = d; lastFabBest = h; } } if (bd2 >= 4.5) lastFabBest = null; } else lastFabBest = best;
   return best;
 }
-// peças visíveis no PIP conforme os módulos
+// peças visíveis no PIP conforme os módulos: cada nível muda o robô de um jeito que dá para ver de longe
 const ACCENTS = [0xff8a2a, 0x2ad4ff, 0xb46bff, 0xffd34d];
-function syncBotParts() {
-  const b = bot.userData; if (!b.mods) b.mods = group(0, 0, 0, b.body); const g = b.mods; while (g.children.length) g.remove(g.children[0]);
-  if (b.holdMods) b.hold.remove(b.holdMods); b.holdMods = group(0, 0, 0, b.hold); if (b.armMods) b.armR.remove(b.armMods); b.armMods = group(0, 0, 0, b.armR);
-  const L = id => modLv(MODS.find(m => m.id === id)); b.turbines = []; b.halo = null;
-  const tk = L('tank'); b.pack.scale.setScalar(1 + 0.06 * tk);
-  if (tk >= 3) for (const sx of [-1, 1]) g.add(ol(cyl(0.06, 0.06, 0.3, M.botAccent, sx * 0.24, 0.0, 0.38, 10), 0.01), mesh(new THREE.SphereGeometry(0.03, 6, 5), M.glowCyan, sx * 0.24, 0.17, 0.38, false));
-  if (tk >= 7) g.add(ol(mesh(new THREE.CapsuleGeometry(0.09, 0.2, 4, 10), M.cockpit, 0, 0.3, 0.42, false), 0.01));
+function syncBotParts(mdl = bot, ov = null) {
+  const b = mdl.userData;
+  for (const k of ['mods', 'holdMods', 'armMods', 'lMods']) { if (b[k]) b[k].parent.remove(b[k]); }
+  b.mods = group(0, 0, 0, b.body); b.holdMods = group(0, 0, 0, b.hold); b.armMods = group(0, 0, 0, b.armR); b.lMods = group(0, 0, 0, b.armL);
+  const g = b.mods, L = id => ov && ov[id] !== undefined ? ov[id] : modLv(MODS.find(m => m.id === id)); b.turbines = []; b.halo = b.halo2 = b.dish = null; b.sats = [];
+  const tot = MODS.reduce((a, m) => a + L(m.id), 0);
+  // tanque: mochila cresce, depois cilindros de neve, depois uma cúpula de vidro cheia de neve
+  const tk = L('tank'); b.pack.scale.setScalar(1 + 0.09 * Math.min(tk, 5));
+  if (tk >= 3) for (const sx of [-1, 1]) { g.add(ol(mesh(new THREE.CapsuleGeometry(0.08 + 0.007 * tk, 0.28, 4, 12), M.hull, sx * 0.23, 0.04, 0.42, false), 0.012), mesh(new THREE.CapsuleGeometry(0.06 + 0.007 * tk, 0.22, 4, 10), M.cockpit, sx * 0.23, 0.04, 0.5, false)); }
+  if (tk >= 7) g.add(ol(mesh(new THREE.SphereGeometry(0.24, 16, 12), M.cockpit, 0, 0.36, 0.4, false), 0.012), mesh(new THREE.SphereGeometry(0.18, 12, 10), M.bit, 0, 0.32, 0.4, false));
+  // turbinas: jatos laterais que crescem, aletas, e um motor-anel traseiro
   const tb = L('turbo');
-  if (tb >= 1) for (const sx of [-1, 1]) { const tg = group(sx * (0.42 + 0.01 * tb), -0.08, 0.1, g); const r = 0.08 + 0.012 * tb; const c = ol(cyl(r, r * 1.25, 0.32, M.hullDark, 0, 0, 0, 14), 0.01); c.rotation.x = Math.PI / 2; tg.add(c); const gl = cyl(r * 0.8, r * 0.8, 0.02, M.glowCyan, 0, 0, 0.17, 14); gl.rotation.x = Math.PI / 2; tg.add(gl); tg.add(box(0.1, 0.04, 0.12, M.botAccent, -sx * 0.08, 0, 0)); b.turbines.push(tg); }
-  if (tb >= 4) { const tg = group(0, -0.2, 0.42, g); const c = ol(cyl(0.13, 0.17, 0.3, M.hullDark, 0, 0, 0, 16), 0.01); c.rotation.x = Math.PI / 2; tg.add(c, mesh(new THREE.TorusGeometry(0.15, 0.025, 6, 18), M.glowOrange, 0, 0, 0.16, false)); b.turbines.push(tg); }
-  const nz = L('nozzle'); if (nz >= 1) { const dsh = ol(mesh(new THREE.ConeGeometry(0.08 + 0.03 * nz, 0.16, 16, 1, true), M.botAccent, 0, 0, -0.05, false), 0.008); dsh.rotation.x = -Math.PI / 2; b.holdMods.add(dsh); }
-  const mo = L('motor'); for (let i = 0; i < Math.min(5, Math.ceil(mo / 2)); i++) { const c = mesh(new THREE.TorusGeometry(0.05, 0.015, 6, 14), M.glowOrange, 0, 0, -0.06 - i * 0.045, false); b.armMods.add(c); }
-  const an = L('antenna'); if (an >= 1) { g.add(cyl(0.01, 0.01, 0.12 * an, M.botDark, 0, 0.57 + 0.06 * an, 0.05, 6), mesh(new THREE.SphereGeometry(0.04, 8, 6), M.glowCyan, 0, 0.6 + 0.12 * an, 0.05, false)); if (an >= 4) { const ds = ol(mesh(new THREE.SphereGeometry(0.12, 10, 6, 0, TAU, 0, Math.PI / 3), M.hull, 0.16, 0.48, 0.12, false), 0.008); ds.rotation.z = -0.8; g.add(ds); } }
-  const ra = L('radiator'); for (let i = 0; i < ra; i++) g.add(ol(box(0.022, 0.12, 0.16, M.hullDark, -0.1 + i * 0.045, 0.33, 0.18), 0.005));
-  const mg = L('magnet'); if (mg >= 1) { const h = mesh(new THREE.TorusGeometry(0.46 + 0.02 * mg, 0.012 + 0.003 * mg, 6, 36), M.glowCyan, 0, 0, 0, false); h.rotation.x = Math.PI / 2; g.add(h); b.halo = h; }
-  if (state.ownedHeat.some(Boolean)) b.armL.add(b.torchM || (b.torchM = ol(mesh(new THREE.ConeGeometry(0.035, 0.12, 8), M.hullOr, 0, 0, -0.32, false), 0.006)));
-  const tot = MODS.reduce((a, m) => a + modLv(m), 0); M.botAccent.color.setHex(ACCENTS[Math.min(3, Math.floor(tot / 14))]);
+  if (tb >= 1) for (const sx of [-1, 1]) { const r = 0.08 + 0.013 * Math.min(tb, 6), tg = group(sx * (0.44 + r), -0.04, 0.1, g);
+    const c = ol(cyl(r, r * 1.3, 0.34 + 0.025 * tb, M.hullDark, 0, 0, 0, 16), 0.012); c.rotation.x = Math.PI / 2; tg.add(c);
+    const gl = cyl(r * 0.85, r * 0.85, 0.02, M.glowCyan, 0, 0, 0.22 + 0.02 * tb, 16); gl.rotation.x = Math.PI / 2; tg.add(gl); halo(tg, 0, 0, 0.3 + 0.02 * tb, 0.5 + r * 3, 0x6fe9ff);
+    tg.add(ol(box(0.18, 0.05, 0.22, M.botAccent, -sx * (r + 0.05), 0, 0), 0.008)); if (tb >= 3) tg.add(ol(box(0.035, 0.26, 0.24, M.botAccent, 0, r + 0.1, 0.05), 0.006)); b.turbines.push(tg); }
+  if (tb >= 5) { const tg = group(0, -0.12, 0.5, g); tg.add(ol(mesh(new THREE.TorusGeometry(0.22, 0.07, 10, 24), M.hullDark, 0, 0, 0, false), 0.012), mesh(new THREE.CircleGeometry(0.18, 20), M.glowOrange, 0, 0, 0.03, false)); halo(tg, 0, 0, 0.12, 1.2, 0xff9a3c); b.turbines.push(tg); }
+  // motor: braço mais grosso, anéis acesos, ombreira e um núcleo no peito
+  const mo = L('motor'); b.armR.scale.setScalar(1 + 0.08 * Math.min(mo, 6));
+  for (let i = 0; i < Math.min(4, Math.ceil(mo / 2)); i++) b.armMods.add(mesh(new THREE.TorusGeometry(0.065, 0.02, 6, 14), M.glowOrange, 0, 0, -0.06 - i * 0.05, false));
+  if (mo >= 3) b.armMods.add(ol(mesh(new THREE.SphereGeometry(0.12, 12, 8, 0, TAU, 0, Math.PI / 2), M.botAccent, 0, 0.03, 0, false), 0.01));
+  if (mo >= 6) { g.add(mesh(new THREE.SphereGeometry(0.075, 12, 10), M.glowOrange, 0, -0.1, -0.33, false)); halo(g, 0, -0.1, -0.37, 0.55, 0xff8a2a); }
+  // bocal: prato largo em volta do emissor
+  const nz = L('nozzle'); if (nz >= 1) { const R0 = 0.13 + 0.04 * Math.min(nz, 8); const ds = ol(mesh(new THREE.CylinderGeometry(R0, 0.06, 0.1, 22, 1, true), M.botAccent, 0, 0, -0.33, false), 0.008); ds.rotation.x = -Math.PI / 2; b.holdMods.add(ds, mesh(new THREE.TorusGeometry(R0, 0.016, 6, 26), M.glowCyan, 0, 0, -0.38, false)); }
+  // extensor: antenas altas e um radar giratório
+  const an = L('antenna');
+  if (an >= 1) g.add(cyl(0.012, 0.012, 0.18 * an, M.botDark, -0.13, 0.42 + 0.09 * an, 0.02, 6), mesh(new THREE.SphereGeometry(0.045, 8, 6), M.glowCyan, -0.13, 0.42 + 0.18 * an, 0.02, false));
+  if (an >= 3) g.add(cyl(0.012, 0.012, 0.15 * an, M.botDark, 0.15, 0.4 + 0.075 * an, 0.02, 6), mesh(new THREE.SphereGeometry(0.04, 8, 6), M.glowOrange, 0.15, 0.4 + 0.15 * an, 0.02, false));
+  if (an >= 5) { const dg = group(0, 0.36, 0.14, g); const ds = ol(mesh(new THREE.SphereGeometry(0.2, 14, 6, 0, TAU, 0, Math.PI / 3), M.hull, 0, 0.14, 0, false), 0.01); ds.rotation.x = -0.6; dg.add(cyl(0.02, 0.02, 0.14, M.botDark, 0, 0.07, 0, 6), ds); b.dish = dg; }
+  // radiador: crista de aletas (laranja quando forte)
+  const ra = L('radiator'); for (let i = 0; i < ra; i++) g.add(ol(box(0.03, 0.14 + 0.025 * i, 0.22, ra >= 4 ? M.hullOr : M.hullDark, 0, 0.34 + 0.012 * i, 0.22 - i * 0.07), 0.005));
+  // ímã: anéis de energia e cristais orbitando
+  const mg = L('magnet');
+  if (mg >= 1) { const h = mesh(new THREE.TorusGeometry(0.52 + 0.03 * mg, 0.015 + 0.004 * mg, 6, 40), M.glowCyan, 0, 0, 0, false); h.rotation.x = Math.PI / 2; g.add(h); b.halo = h; }
+  if (mg >= 3) { const h2 = mesh(new THREE.TorusGeometry(0.58 + 0.03 * mg, 0.013, 6, 40), M.glowYellow, 0, 0, 0, false); h2.rotation.set(Math.PI / 2 + 0.7, 0, 0.4); g.add(h2); b.halo2 = h2; }
+  if (mg >= 5) for (let i = 0; i < 3; i++) { const sat = mesh(new THREE.OctahedronGeometry(0.06, 0), M.glowCyan, 0, 0, 0, false); g.add(sat); b.sats.push(sat); }
+  // maçarico no braço esquerdo
+  const to = L('torch'); if (to >= 1) { b.lMods.add(ol(cyl(0.05 + 0.01 * to, 0.035, 0.18, M.hullOr, 0, 0, -0.38, 10).rotateX(Math.PI / 2), 0.008), mesh(new THREE.SphereGeometry(0.03, 8, 6), M.glowOrange, 0, 0, -0.48, false)); }
+  // armadura e visor conforme o total de peças
+  if (tot >= 10) for (const sx of [-1, 1]) g.add(ol(box(0.05, 0.3, 0.36, M.botAccent, sx * 0.35, -0.04, 0), 0.01));
+  if (tot >= 25) g.add(mesh(new THREE.TorusGeometry(0.25, 0.022, 6, 30), M.gold, 0, 0.05, -0.3, false));
+  mdl.scale.setScalar(0.85 + 0.01 * Math.min(tot, 30));
+  if (mdl === bot) M.botAccent.color.setHex(ACCENTS[Math.min(3, Math.floor(tot / 12))]);
+  if (mdl !== bot) { if (b.emit) b.hold.remove(b.emit); b.emit = buildEmitter(TOOLS[Math.max(0, Math.min(10, L('arm')))].id); b.emit.scale.setScalar(1.6); b.hold.add(b.emit); }
 }
-/* ---------- casas que voltam à vida, baús, diário da vila ---------- */
+function animParts(mdl, dt, t) { const b = mdl.userData; if (b.halo) b.halo.rotation.z += dt * 2; if (b.halo2) b.halo2.rotation.z -= dt * 1.4; if (b.dish) b.dish.rotation.y += dt * 2.5;
+  (b.sats || []).forEach((sv, i) => { const a = t * 2 + i * 2.1; sv.position.set(Math.cos(a) * 0.62, Math.sin(a * 1.3) * 0.15, Math.sin(a) * 0.62); sv.rotation.y += dt * 4; }); }
+/* ---------- a nave por dentro: Baia de Montagem com prévia do PIP ---------- */
+const bayScene = new THREE.Scene(); bayScene.background = new THREE.Color(0x0a1222);
+const bayCam = new THREE.PerspectiveCamera(36, 1, 0.05, 60);
+bayScene.add(new THREE.HemisphereLight(0x9fc4ff, 0x2a1c40, 1.1)); { const kl = new THREE.DirectionalLight(0xffffff, 2.2); kl.position.set(2, 4, 3); bayScene.add(kl); const rl = new THREE.DirectionalLight(0x6fe9ff, 1.2); rl.position.set(-3, 1.5, -2); bayScene.add(rl); const ol2 = new THREE.DirectionalLight(0xff8a3a, 0.8); ol2.position.set(3, 0.5, -3); bayScene.add(ol2); }
+const bay = { open: false, sel: 'arm', anim: 0, arms: [] };
+{
+  const room = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 6, 20, 1, true), toon({ color: 0x1c2a44, side: THREE.BackSide })); room.position.y = 2.5; bayScene.add(room);
+  for (let i = 0; i < 20; i++) { const a = i / 20 * TAU; const st = new THREE.Mesh(new THREE.BoxGeometry(0.08, 4, 0.08), new THREE.MeshBasicMaterial({ color: i % 2 ? 0x2ad4ff : 0x223355, toneMapped: false })); st.position.set(Math.cos(a) * 5.9, 2.2, Math.sin(a) * 5.9); bayScene.add(st); }
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(6, 32), toon({ color: 0x24324e })); floor.rotation.x = -Math.PI / 2; bayScene.add(floor);
+  bayScene.add(ol(cyl(0.9, 1.0, 0.25, M.hullDark, 0, 0.12, 0, 24), 0.02));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.04, 8, 40), M.glowCyan); ring.rotation.x = Math.PI / 2; ring.position.y = 0.26; bayScene.add(ring); bay.ring = ring;
+  for (const sx of [-1, 1]) { const ag = group(sx * 1.7, 0, -0.4, bayScene); ag.add(ol(cyl(0.18, 0.22, 0.3, M.hullDark, 0, 0.15, 0, 12), 0.015), ol(box(0.12, 1.6, 0.12, M.hullOr, 0, 1.0, 0), 0.012)); const fore = group(0, 1.75, 0, ag); fore.add(ol(box(0.1, 0.1, 0.8, M.hullOr, 0, 0, 0.35), 0.01), mesh(new THREE.SphereGeometry(0.06, 8, 6), M.glowCyan, 0, 0, 0.78, false)); fore.rotation.y = -sx * 0.9; ag.userData.fore = fore; bay.arms.push(ag); }
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.0), new THREE.MeshBasicMaterial({ map: textTexture([['BAIA DE MONTAGEM', 40], ['PIP-7 · Companhia Degelo Interestelar', 18]], 512, 180, '#06202e', '#7fe9ff'), toneMapped: false })); scr.position.set(0, 3.0, -5.6); bayScene.add(scr);
+}
+const preview = makeBotModel(); preview.position.set(0, 0.95, 0); bayScene.add(preview);
+function bayOv() { const m = MODS.find(x => x.id === bay.sel), lv = modLv(m); return lv >= modMax(m) ? null : { [m.id]: lv + 1 }; }
+function openBay() { bay.open = true; shopOpen = true; joy.id = null; joy.x = joy.y = 0; joyIdle(); look.id = null; actHeld = heatHeld = false; releaseButtons(); for (const k in keys) keys[k] = false; setSuck(0, 500); $('bay').style.display = 'flex'; $('hud').style.visibility = 'hidden'; $('touchUI').style.visibility = 'hidden'; $('comm').style.visibility = 'hidden'; syncBotParts(preview, bayOv()); renderBay(); tone(500, 800, 0.05, 0.3, 'triangle'); }
+function closeBay() { bay.open = false; shopOpen = false; $('bay').style.display = 'none'; $('hud').style.visibility = ''; $('touchUI').style.visibility = ''; $('comm').style.visibility = ''; player.x = 0; player.z = 5.8; player.yaw = Math.PI; save(); }
+const costChips = c => Object.entries(c).map(([k, v]) => `<span class="${(k === 'coins' ? state.coins : state.min[k]) >= v ? '' : 'no'}">${ic(k === 'coins' ? 'coin' : k)}${k === 'coins' ? fmt(v) : v}</span>`).join('');
+function nextFx(m, lv) { if (m.id === 'arm') return TOOLS[Math.min(10, lv)] ? TOOLS[Math.min(10, lv)].name : ''; if (m.id === 'torch') return HEATS[Math.min(2, lv - 1)] ? HEATS[Math.min(2, lv - 1)].name : ''; return UPG[m.upg].fx(lv); }
+function renderBay() {
+  let h = '';
+  for (const m of MODS) { const lv = modLv(m), max = lv >= modMax(m), c = max ? null : modCost(m), ok = c && canPay(c);
+    h += `<button class="bcard ${bay.sel === m.id ? 'sel' : ''} ${ok ? 'can' : ''} ${max ? 'max' : ''}" data-mod="${m.id}">${ic(m.icon)}<div><b>${m.name}</b><small>${max ? 'Nível máximo' : `Mk${lv} → Mk${lv + 1}`}</small><div class="cc">${c ? costChips(c) : ''}</div></div></button>`; }
+  $('bayList').innerHTML = h;
+  const m = MODS.find(x => x.id === bay.sel), lv = modLv(m), max = lv >= modMax(m), c = max ? null : modCost(m);
+  $('bayInfo').innerHTML = `<h3>${ic(m.icon)} ${m.name}</h3><p>${m.desc}</p><div class="fx">${lv ? `Agora: ${nextFx(m, lv)}<br>` : ''}${max ? 'Já está no máximo.' : `Com a peça: <em>${nextFx(m, lv + 1)}</em>`}</div>${c ? `<div class="cc big">${costChips(c)}</div>` : ''}`;
+  $('bayBuild').className = 'gbtn ' + (c && canPay(c) && !bay.anim ? '' : 'gray'); $('bayBuild').innerHTML = max ? 'Máximo' : `${ic('fab')} Construir`;
+  $('bayCoins').innerHTML = ic('coin') + fmt(state.coins) + Object.keys(MINS).map(k => `<span>${ic(k)}${state.min[k]}</span>`).join('');
+}
+$('bayList').addEventListener('click', e => { const b = e.target.closest('[data-mod]'); if (!b || bay.anim) return; bay.sel = b.dataset.mod; syncBotParts(preview, bayOv()); renderBay(); tone(700, 900, 0.03, 0.08, 'triangle'); });
+$('bayBuild').addEventListener('click', () => { if (bay.anim) return; const m = MODS.find(x => x.id === bay.sel); if (modLv(m) >= modMax(m)) return; const c = modCost(m); if (!canPay(c)) { tone(220, 160, 0.06, 0.2, 'square'); vibrate([20, 30, 20]); return; }
+  for (const [k, v] of Object.entries(c)) { if (k === 'coins') state.coins -= v; else state.min[k] -= v; } bay.anim = 1.6; bay.building = m; renderBay(); tone(300, 600, 0.05, 1.2, 'sawtooth'); });
+$('bayExit').addEventListener('click', () => closeBay());
+$('bayPC').addEventListener('click', () => { closeBay(); toggleShop(true, 'missoes'); });
+function updateBay(dt, t) {
+  preview.rotation.y += dt * (bay.anim ? 4 : 0.6); preview.position.y = 0.95 + Math.sin(t * 2.4) * 0.05; animParts(preview, dt, t); bay.ring.material.color.setHSL(0.52, 1, 0.5 + 0.2 * Math.sin(t * (bay.anim ? 20 : 3)));
+  bay.arms.forEach((a, i) => { a.userData.fore.rotation.y = (i ? 0.9 : -0.9) + (bay.anim ? Math.sin(t * 16 + i * 2) * 0.6 : Math.sin(t + i) * 0.1); a.userData.fore.rotation.x = bay.anim ? Math.sin(t * 11 + i) * 0.4 : 0; });
+  if (bay.anim) { bay.anim -= dt; if (Math.random() < 0.5) tone(1800 + Math.random() * 1500, 2600, 0.015, 0.04, 'square');
+    if (bay.anim <= 0) { bay.anim = 0; finishCraft({ md: bay.building }); syncBotParts(preview, bayOv()); renderBay(); const f = $('flash'); f.style.transition = 'none'; f.style.opacity = 0.8; requestAnimationFrame(() => { f.style.transition = 'opacity .6s'; f.style.opacity = 0; }); } }
+  const a = t * 0.15; bayCam.position.set(Math.sin(a) * 0.3, 1.5, 2.6); bayCam.lookAt(0, 1.0, 0); bayCam.aspect = innerWidth / innerHeight; bayCam.updateProjectionMatrix();
+}
+/* ---------- casas que voltam à vida/* ---------- casas que voltam à vida, baús, diário da vila ---------- */
 // ---------- MÃE-SOL fala com você (fila de mensagens com efeito de digitação) ----------
 const commQ = []; let commCur = null;
 function comm(id, text) { state.comms = state.comms || {}; if (id && state.comms[id]) return; if (id) state.comms[id] = 1; commQ.push(text); }
@@ -2217,6 +2318,8 @@ const NOTES = [
 ];
 const houseCells = [], chestMeshes = [];
 const doorOf = b => { const R = b.type === 'house' || b.type === 'church' ? Math.min(b.w, b.d) / 2 : b.rot ? b.w / 2 : b.d / 2; return b.rot ? [b.x + R + 1.7, b.z] : [b.x, b.z + R + 1.7]; };
+const scanBeams = [];
+function syncScanner() { if (!state.upg.scanner) return; BUILDINGS.forEach((b, i) => { if (scanBeams[i] || b.lib) return; const m = mesh(cached('sbeam', () => new THREE.CylinderGeometry(0.5, 0.5, 40, 10, 1, true)), M.beamBlue, b.x, groundAt(b.x, b.z) + 20, b.z, false); scene.add(m); scanBeams[i] = m; }); }
 function initHouses() {
   BUILDINGS.forEach((b, i) => {
     const cells = []; let tot = 0; const [i0, i1, j0, j1] = cellsIn(b.x, b.z, Math.max(b.w, b.d) / 2 + 4);
@@ -2239,21 +2342,20 @@ function updateWorld(dt, t) {
   houseT -= dt;
   if (houseT <= 0) { houseT = 1.2;
     BUILDINGS.forEach((b, i) => { if (b.lib || zoneRing(b.x, b.z) > state.zone) return; const hc = houseCells[i]; if (!hc || hc.tot < 2) return; let cur = 0; for (const k of hc.cells) cur += depth[k];
-      if (cur <= hc.tot * 0.12) { b.lib = true; state.stars += 2; state.cnt.chest++; makeChest(i); toast('Casa libertada da neve! +2 estrelas. Um baú apareceu na porta.', 4, 'house'); comm('dome', 'Uma cúpula Lúmen inteira! Veja o baú na porta. Eles deixavam registros: eu traduzo para você.'); chime(784, 6); vibrate([20, 40, 20]); wave(b.x, groundAt(b.x, b.z) + 0.1, b.z, 12); for (let n = 0; n < 24; n++) spawn(stars, b.x + fr(-3, 3), groundAt(b.x, b.z) + 1, b.z + fr(-3, 3), fr(-2, 2), fr(3, 7), fr(-2, 2), fr(0.06, 0.12), 1.2); } });
+      if (cur <= hc.tot * 0.12) { b.lib = true; if (scanBeams[i]) { scene.remove(scanBeams[i]); scanBeams[i] = null; } state.stars += 2; state.cnt.chest++; makeChest(i); toast('Casa libertada da neve! +2 estrelas. Um baú apareceu na porta.', 4, 'house'); comm('dome', 'Uma cúpula Lúmen inteira! Veja o baú na porta. Eles deixavam registros: eu traduzo para você.'); chime(784, 6); vibrate([20, 40, 20]); wave(b.x, groundAt(b.x, b.z) + 0.1, b.z, 12); for (let n = 0; n < 24; n++) spawn(stars, b.x + fr(-3, 3), groundAt(b.x, b.z) + 1, b.z + fr(-3, 3), fr(-2, 2), fr(3, 7), fr(-2, 2), fr(0.06, 0.12), 1.2); } });
     state.houses = BUILDINGS.map(b => b.lib ? 1 : 0).join('');
   }
   smokeT -= dt; if (smokeT <= 0) { smokeT = 0.25; BUILDINGS.forEach(b => { if (b.lib && b.chim && Math.hypot(b.x - player.x, b.z - player.z) < 70) emitSteam(b.chim[0] + fr(-.1, .1), b.chim[1], b.chim[2] + fr(-.1, .1), fr(-.1, .1) + 0.25, 1.1, fr(-.1, .1), 3.5); }); }
   chestMeshes.forEach((g, i) => { if (!g) return; g.children[1].rotation.x = -0.15 - Math.abs(Math.sin(t * 3)) * 0.12;
     if (state.driving < 0 && Math.hypot(player.x - g.position.x, player.z - g.position.z) < 1.9) { const b = BUILDINGS[i]; b.opened = true; scene.remove(g); chestMeshes[i] = null; state.chests = BUILDINGS.map(x => x.opened ? 1 : 0).join('');
       const zr = zoneRing(b.x, b.z), c = Math.round(120 * Math.pow(zr + 1, 2.6)); state.coins += c; state.stars += 2; let part = '';
-      if (Math.random() < 0.5) { part = ['gear', 'pipe', 'motor', 'coil', 'tank', 'crystal', 'fuel'][(Math.random() * 7) | 0]; state.inv[part]++; }
+      part = ['gelita', 'ferrite', 'lumen', zr >= 2 ? 'nucleo' : 'lumen'][(Math.random() * 4) | 0]; gainMineral(part, 2 + zr, g.position.x, g.position.y, g.position.z);
       for (let n = 0; n < 20; n++) spawn(coins3, g.position.x, g.position.y + 0.6, g.position.z, fr(-2, 2), fr(4, 8), fr(-2, 2), 1, 1.4);
       chime(988, 7); vibrate([30, 30, 60]); floatText(`+${fmt(c)} · +2`, g.position.clone().setY(g.position.y + 1.4), '#ffd166', 24, 'chest');
-      if (part) toast(`Baú: ${PARTS[part]}!`, 3, part);
       if (state.notes < NOTES.length) { const [nt, nb] = NOTES[state.notes++]; showNote(nt, nb); } } });
   // nevasca dourada: de tempos em tempos tudo vale ×3
   if (blz.t > 0) { blz.t -= dt; $('blizz').innerHTML = `${ic('star')} NEVASCA DOURADA ×3 · ${Math.ceil(blz.t)}s`; if (blz.t <= 0) { $('blizz').style.display = 'none'; fall.material.color.set(0xffffff); fall.material.size = 0.11; toast('A nevasca dourada passou.', 2.5, 'snow'); } }
-  else if ((blz.next -= dt) <= 0) { blz.t = 60 + 10 * state.upg.blizzard; blz.next = fr(240, 360); $('blizz').style.display = 'block'; fall.material.color.set(0xffd34d); fall.material.size = 0.16; toast('NEVASCA DOURADA! Tudo que chegar ao Derretedor vale ×3!', 4, 'star'); chime(660, 7); vibrate([40, 40, 40]); }
+  else if ((blz.next -= dt) <= 0) { blz.t = 60 + 10 * state.upg.blizzard; blz.next = fr(240, 360); $('blizz').style.display = 'block'; fall.material.color.set(0xffd34d); fall.material.size = 0.16; toast('NEVASCA DOURADA! Tudo que chegar ao Conversor vale ×3!', 4, 'star'); chime(660, 7); vibrate([40, 40, 40]); }
   // contador de moedas ganhas (para as missões) e missões
   if (coinTrack !== null && state.coins > coinTrack) state.cnt.coin += state.coins - coinTrack; coinTrack = state.coins;
   checkQuests();
@@ -2263,7 +2365,7 @@ const QUEST_T = {
   ice: { name: n => `Derreta ${n} blocos de gelo`, icon: 'lighter', make: z => 40 + z * 30, ok: () => state.zone >= 1 && state.heat >= 0 },
   ball: { name: n => `Derreta ${n} bolas de neve`, icon: 'ball', make: () => 2, ok: () => vstate.some(v => v.fixed) },
   coin: { name: n => `Ganhe ${fmt(n)} moedas`, icon: 'coin', make: z => Math.round(600 * Math.pow(z + 1, 2.6) / 50) * 50 },
-  treasure: { name: n => `Ache ${n} moedas enterradas`, icon: 'coin', make: z => 3 + z },
+  mineral: { name: n => `Colete ${n} minerais`, icon: 'gelita', make: z => 6 + z * 4 },
   chest: { name: n => `Liberte ${n} casa${n > 1 ? 's' : ''} da neve`, icon: 'house', make: () => 1, ok: () => BUILDINGS.some(b => !b.lib && zoneRing(b.x, b.z) <= state.zone) },
 };
 function newQuest() { const ks = Object.keys(QUEST_T).filter(k => (!QUEST_T[k].ok || QUEST_T[k].ok()) && !state.quests.some(q => q.t === k)); const t = ks[(Math.random() * ks.length) | 0] || 'coin'; return { t, n: QUEST_T[t].make(state.zone), b: state.cnt[t], r: 2 + state.zone }; }
@@ -2275,7 +2377,7 @@ M.snowBall = toon({ map: TEX.snow, color: 0xf4fbff });
 const ballR = vol => Math.cbrt(vol * COMPACT * 0.2387);
 const ballMaxR = V => V.maxR * (1 + 0.2 * state.upg.ballMax);
 const ballMult = r => (1 + 0.6 * r) * (1 + 0.2 * state.upg.ballValue);
-const BALL_MISSIONS = [[1, 300], [1.5, 1500, 'gear'], [2, 5000, 'fuel'], [2.5, 15000, 'crystal'], [3, 40000, 'coil'], [3.5, 90000, 'crystal'], [4, 200000, 'core'], [5, 600000]];
+const BALL_MISSIONS = [[1, 300, 'gelita'], [1.5, 1500, 'ferrite'], [2, 5000, 'lumen'], [2.5, 15000, 'lumen'], [3, 40000, 'nucleo'], [3.5, 90000, 'lumen'], [4, 200000, 'nucleo'], [5, 600000, 'nucleo']];
 let curBall = null, ballFullT = 0;
 const _ax = new THREE.Vector3(), _q = new THREE.Quaternion();
 function makeBall(x, z, vol) { const m = ol(mesh(BALL_GEO, M.snowBall), 0.025); scene.add(m); const b = { x, z, vol, m, r: 0, att: false, melt: false, peak: 0, v0: 0 }; balls.push(b); placeBall(b); return b; }
@@ -2283,8 +2385,8 @@ function placeBall(b) { b.r = Math.max(0.15, ballR(b.vol)); b.m.scale.setScalar(
 function rollBall(b, nx, nz) { const mv = Math.hypot(nx - b.x, nz - b.z); if (mv > 1e-4) { _ax.set(nz - b.z, 0, b.x - nx).normalize(); _q.setFromAxisAngle(_ax, mv / b.r); b.m.quaternion.premultiply(_q); } b.x = nx; b.z = nz; }
 function ballMission(r) {
   while (state.ballM < BALL_MISSIONS.length && r * 2 >= BALL_MISSIONS[state.ballM][0] - 0.01) {
-    const [d, c, part] = BALL_MISSIONS[state.ballM++]; state.coins += c; state.stars += 3; if (part) state.inv[part]++;
-    toast(`Missão cumprida: bola de ${d} m! +${fmt(c)}, +3 estrelas${part ? ' e ' + PARTS[part] : ''}`, 4, 'ball'); chime(784, 6); vibrate([30, 40, 60]);
+    const [d, c, part] = BALL_MISSIONS[state.ballM++]; state.coins += c; state.stars += 3; if (part) state.min[part] += 3;
+    toast(`Missão cumprida: bola de ${d} m! +${fmt(c)}, +3 estrelas${part ? ' e 3 ' + MINS[part].name : ''}`, 4, 'ball'); chime(784, 6); vibrate([30, 40, 60]);
   }
 }
 function updateBalls(dt) {
@@ -2308,7 +2410,7 @@ function updateBalls(dt) {
    ===================================================================== */
 const clock = new THREE.Clock(), raycaster = new THREE.Raycaster();
 const _dir = new THREE.Vector3(), _hit = new THREE.Vector3();
-let refineAcc = 0, hardTipT = 0, hudT = 0, zoneT = 0, saveT = 0, sellAcc = 0, sellT = 0, crunchT = 0, fullT = 0, treasureT = 0, robotT = 0, zoneDone = -1;
+let sellKg = 0, whooshT = 0, refineAcc = 0, hardTipT = 0, hudT = 0, zoneT = 0, saveT = 0, sellAcc = 0, sellT = 0, crunchT = 0, fullT = 0, treasureT = 0, robotT = 0, zoneDone = -1;
 let gainAcc = 0, gainT = 0, shake = 0, buzzT = 0, boardT = 0, puffT = 0, fireT = 0, noFuelT = 0;
 function aimSnow(reach) {
   camera.getWorldDirection(_dir); const o = camera.position;
@@ -2327,7 +2429,7 @@ function useVehicle(i) {
     else toast(`${v.name}: falta ${PARTS[v.part]}. Procure na neve por perto.`, 3.5, v.part);
     return;
   }
-  if (v.kind === 'fuel') while (st.energy < 60 && state.inv.fuel > 0) { state.inv.fuel--; st.energy = Math.min(100, st.energy + 40); toast('Abastecido com um galão!', 2, 'fuel'); }
+  if (v.kind === 'fuel') while (st.energy < 60 && state.inv.fuel > 0) { state.inv.fuel--; st.energy = Math.min(100, st.energy + 40); toast('Recarregado com uma Célula de Energia!', 2, 'fuel'); }
   if (st.energy <= 0) { toast(v.kind === 'fuel' ? 'Sem combustível. Compre galões na loja ou ache na neve.' : 'Bateria vazia. Estacione perto da cabana para recarregar.', 3.5, v.kind === 'fuel' ? 'fuel' : 'battery'); return; }
   state.driving = i; player.x = st.x; player.z = st.z; player.yaw = st.yaw + Math.PI; player.pitch = -0.3; tone(220, 440, 0.08, 0.4, 'sawtooth');
 }
@@ -2381,7 +2483,7 @@ function update(dt, t) {
         curBall.vol += vol;
         for (let n = 0; n < 2; n++) spawn(bits, cx + fr(-1, 1), surfAt(cx, cz) + 0.4, cz + fr(-1, 1), rx * fr(-3, 3), fr(2, 4), rz * fr(-3, 3), fr(0.05, 0.1), 1.2, -99);
         crunchT -= dt; if (crunchT <= 0) { crunchT = 0.09; crunch(0.08, 700 - Math.min(400, curBall.r * 150)); } shake = Math.max(shake, 0.02);
-      } else if (curBall && left <= 0.5) { ballFullT -= dt; if (ballFullT <= 0) { ballFullT = 6; toast('Bola no tamanho máximo! Empurre até o Derretedor.', 3, 'ball'); } }
+      } else if (curBall && left <= 0.5) { ballFullT -= dt; if (ballFullT <= 0) { ballFullT = 6; toast('Bola no tamanho máximo! Empurre até o Conversor.', 3, 'ball'); } }
     }
     if (curBall) placeBall(curBall);
     st.x = player.x; st.z = player.z; st.yaw = player.yaw - Math.PI;
@@ -2415,10 +2517,10 @@ function update(dt, t) {
   const tool = TOOLS[state.tool], cap = stat.cap();
   let clearing = false, heating = false, ret = null, ctx = '';
   if (!drv) {
-    const atShop = Math.hypot(player.x - TERM.x, player.z - TERM.z) < 2.6, atBench = false, vi = nearVehicle();
+    const atShop = Math.hypot(player.x - 0, player.z - 4.8) < 2.2, atBench = false, vi = nearVehicle();
     const fh = fabNear;
     if (fh && !fabAnim) { const lv = modLv(fh.md); ctx = lv >= modMax(fh.md) ? `${ic(fh.md.icon)}${fh.md.name}: máximo` : `${ic('fab')}Fabricar ${fh.md.name} Mk${lv + 1}`; if (actPressed) tryCraft(fh); }
-    else if (atShop) { ctx = `${ic('shop')}Abrir oficina`; if (actPressed) toggleShop(true, 'loja'); }
+    else if (atShop) { ctx = `${ic('fab')}Entrar na nave`; if (actPressed) openBay(); }
     else if (atBench) { ctx = `${ic('bench')}Abrir bancada`; if (actPressed) toggleShop(true, 'bancada'); }
     else if (vi >= 0) { const v = VEH[vi]; ctx = `${ic(v.st.fixed ? 'enter' : 'wrench')}${v.st.fixed ? 'Dirigir ' + v.name : 'Consertar ' + v.name}`; if (actPressed) useVehicle(vi); if (!v.st.found) { v.st.found = true; toast(`Você achou: ${v.name}!`, 3, v.icon); chime(659, 5); } }
     else if (heatHeld && state.heat >= 0) {
@@ -2443,7 +2545,7 @@ function update(dt, t) {
           shake = Math.max(shake, tool.direct ? 0.025 : 0.01);
           crunchT -= dt; if (crunchT <= 0) { const pitch = 1 + combo.lvl * 0.12; crunchT = tool.id === 'hands' ? 0.14 : tool.r < 1.5 ? 0.22 : 0.07; crunch(tool.r < 1.5 ? 0.14 : 0.07, (tool.r < 1.5 ? 1050 : 1900) * pitch); if (tool.id === 'hands') thump(0.07, 130); }
           buzzT -= dt; if (buzzT <= 0) { buzzT = 0.16; vibrate(6); }
-        } else if (full && hasSnow) { fullT -= dt; if (fullT <= 0) { fullT = 3; toast('Mochila cheia! Leve ao Derretedor.', 2.8, 'bag'); tone(300, 220, 0.05, 0.2, 'square'); } }
+        } else if (full && hasSnow) { fullT -= dt; if (fullT <= 0) { fullT = 3; toast('Mochila cheia! Leve ao Conversor.', 2.8, 'bag'); tone(300, 220, 0.05, 0.2, 'square'); } }
         if (performance.now() - lastIceHit < 300 && !tool.melt && !state.iceTip) { state.iceTip = true; toast(state.heat >= 0 ? 'Gelo duro! Segure o botão de fogo para derreter.' : 'Gelo duro! Compre um Isqueiro na loja para derreter.', 4.5, 'lighter'); }
       }
     }
@@ -2461,7 +2563,7 @@ function update(dt, t) {
   const lv = Math.floor(combo.v);
   if (lv !== combo.lvl) { if (lv > combo.lvl) { const c = $('combo'); c.classList.remove('lv'); void c.offsetWidth; c.classList.add('lv'); tone(500 + lv * 120, 700 + lv * 160, 0.05, 0.18, 'triangle'); } combo.lvl = lv; $('combo').textContent = `COMBO ×${comboMult().toFixed(1)}`; }
   $('combo').classList.toggle('on', combo.lvl > 0);
-  gainT -= dt; if (gainT <= 0) { gainT = 0.35; if (gainAcc >= 1) floatText(`+${fmt(gainAcc)}`, ret ? new THREE.Vector3(ret.x, ret.y + 0.5, ret.z) : camera.position.clone().addScaledVector(_dir, 3), '#e8f8ff', 18, 'snow'); gainAcc = 0; }
+  gainT -= dt; if (gainT <= 0) { gainT = 0.35; if (gainAcc >= 0.05) floatText(`+${fmtKg(gainAcc)}`, ret ? new THREE.Vector3(ret.x, ret.y + 0.5, ret.z) : camera.position.clone().addScaledVector(_dir, 3), '#e8f8ff', 18, 'snow'); gainAcc = 0; }
   if (absorbed > 0) { absorbed = 0; const b = $('bagBar'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
   if (patchBonus > 0) { patchBonus = 0; advance(3); }
 
@@ -2470,17 +2572,17 @@ function update(dt, t) {
   const dm = Math.hypot(player.x - MELT.x, player.z - MELT.z), bagNow = state.bag;
   const selling = dm < (drv ? 4.5 : 3.0) && bagNow > 0;
   if (selling) {
-    const amount = Math.min(bagNow, Math.max(25, cap * 0.9) * dt), c = amount * stat.value();
-    state.bag -= amount; state.coins += c; sellAcc += c; advance(1); if (state.upg.refine) { refineAcc += amount * state.upg.refine / 400; if (refineAcc >= 1) { refineAcc -= 1; gainMineral('gelita', 1, MELT.x, BASE_Y + 2.5, MELT.z); } } comm('sell', 'Isso! O Derretedor transforma neve em créditos da Companhia. Com eles você compra ferramentas no terminal da base.');
+    const amount = Math.min(bagNow, Math.max(25, cap * 0.9) * dt), c = amount * stat.value(); sellKg += amount;
+    state.bag -= amount; state.coins += c; sellAcc += c; advance(1); if (state.upg.refine) { refineAcc += amount * state.upg.refine / 400; if (refineAcc >= 1) { refineAcc -= 1; gainMineral('gelita', 1, MELT.x, BASE_Y + 2.5, MELT.z); } } comm('sell', 'Isso! O Conversor transforma neve em energia, que a Companhia paga em créditos. Com créditos e minerais você monta peças novas dentro da nave.');
     if (Math.random() < 0.6) spawn(coins3, MELT.x + fr(-0.4, 0.4), 2.9, MELT.z + fr(-0.4, 0.4), fr(-2, 2), fr(4, 7), fr(-2, 2), 1, 1.4);
   }
   sellT -= dt;
-  if (sellT <= 0) { sellT = 0.4; if (sellAcc >= 1) { floatText(`+${fmt(sellAcc)}`, dm < 4.5 ? new THREE.Vector3(MELT.x, 3.1, MELT.z) : camera.position.clone().addScaledVector(_dir, 1.6).setY(camera.position.y + 0.3), '#ffd166', 22, 'coin'); bumpCoins(); if (selling) chime(880 + Math.random() * 100); else tone(880, 1320, 0.05, 0.18); sellAcc = 0; } }
-  melterDoor.material.color.setHSL(0.07, 1, 0.5 + 0.12 * Math.sin(t * 6) + (selling ? 0.12 : 0)); melter.userData.light.intensity = (selling ? 8 : 4) + Math.sin(t * 7) * 0.6;
-  if (Math.random() < dt * 1.5) emitSteam(MELT.x + 0.75, 4.4, MELT.z + 0.4, fr(-.2, .2), 1.2, fr(-.2, .2), 2.2);
+  if (sellT <= 0) { sellT = 0.4; if (sellAcc >= 1) { floatText(sellKg > 0 ? `${fmtKg(sellKg)} → +${fmt(sellAcc)}` : `+${fmt(sellAcc)}`, dm < 4.5 ? new THREE.Vector3(MELT.x, 3.1, MELT.z) : camera.position.clone().addScaledVector(_dir, 1.6).setY(camera.position.y + 0.3), '#ffd166', 22, 'coin'); bumpCoins(); if (selling) chime(880 + Math.random() * 100); else tone(880, 1320, 0.05, 0.18); sellAcc = 0; sellKg = 0; } }
+  melterDoor.material.color.setHSL(0.52, 1, 0.55 + 0.15 * Math.sin(t * (selling ? 18 : 4))); melterDoor.rotation.z += dt * (selling ? 6 : 0.5); melter.userData.sign.lookAt(camera.position.x, melter.userData.sign.getWorldPosition(_tp).y, camera.position.z);
+  if (selling) { for (let n = 0; n < 3; n++) streamOne(); if ((whooshT -= dt) <= 0) { whooshT = 0.28; tone(220 + Math.random() * 80, 700, 0.025, 0.25, 'sawtooth'); } }
 
   // --- robôs, moedas e peças enterradas ---
-  updateRobots(dt, t); updateDrones(dt, t); updateWorld(dt, t); updateClimate(dt, t); updateWeather(dt); updateDeposits(dt); updateMeteorites(dt); fabNear = updateFab(dt, t); if (WX.k.storm > 0.3 && state.driving < 0) { player.x += WX.wind.x * WX.k.storm * 0.9 * dt; player.z += WX.wind.y * WX.k.storm * 0.9 * dt; } updateBot(dt, t, moving, clearing, heating, ret);
+  updateRobots(dt, t); updateDrones(dt, t); updateWorld(dt, t); updateClimate(dt, t); updateWeather(dt); updateDeposits(dt); updateMeteorites(dt); fabNear = null; if (WX.k.storm > 0.3 && state.driving < 0 && !state.upg.stabilizer) { player.x += WX.wind.x * WX.k.storm * 0.9 * dt; player.z += WX.wind.y * WX.k.storm * 0.9 * dt; } updateBot(dt, t, moving, clearing, heating, ret); setSuck(clearing ? 0.09 : heating ? 0.05 : 0, heating ? 300 : 600 + TOOLS[state.tool].rate * 120 + Math.sin(t * 9) * 80);
   robotT -= dt; if (robotT <= 0) { robotT = 4; robotIncome += droneIncome; droneIncome = 0; if (robotIncome >= 1 && (robots.length || drones.length)) { floatText(`+${fmt(robotIncome)}`, camera.position.clone().add(new THREE.Vector3(0, 0.6, 0)).addScaledVector(_dir, 2), '#9fe6ff', 15, 'robot'); robotIncome = 0; bumpCoins(); } }
   treasureT -= dt;
   if (treasureT <= 0) {
@@ -2530,13 +2632,14 @@ function loop() {
   if (!paused) { update(dt, clock.elapsedTime); updateDay(dt); }
   else if (!intro.on) { if (!started) camera.position.set(player.x, player.y + 1.62, player.z); camera.rotation.set(player.pitch, player.yaw, 0); if (!started) { player.yaw += dt * 0.05; updateDay(dt * 4); } }
   skyU.uTime.value = clock.elapsedTime; if (snowMat.userData.sh) { snowMat.userData.sh.uniforms.uNight.value = DAY.night; snowMat.userData.sh.uniforms.uGold.value = damp(snowMat.userData.sh.uniforms.uGold.value, blz.t > 0 ? 1 : 0, 2, dt); }
-  updateBits(dt); updateSimple(puffs, dt, -0.2, 'puff'); updateSimple(stars, dt, 6, 'star'); updateSimple(coins3, dt, 12, 'coin'); updateFlames(dt); updateBlocks(dt); updateMeteors(dt);
+  updateBits(dt); updateSimple(puffs, dt, -0.2, 'puff'); updateSimple(stars, dt, 6, 'star'); updateSimple(coins3, dt, 12, 'coin'); updateFlames(dt); updateBlocks(dt); updateMeteors(dt); updateStream(dt);
   updateWaves(dt); updateSteam(dt); updateSnowfall(dt, clock.elapsedTime); updateFloats(dt); tickCoins(dt); flushSnow();
   sky.position.copy(camera.position);
   sun.position.set(player.x, 0, player.z).addScaledVector(DAY.lightDir, 80); sun.target.position.set(player.x, 0, player.z);
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').style.display = 'none'; }
   if (helpT > 0) { helpT -= dt; if (helpT <= 0) $('help').classList.add('hide'); }
   autoQuality(dt);
+  if (bay.open) { updateBay(dt, clock.elapsedTime); renderer.autoClear = true; renderer.render(bayScene, bayCam); return; }
   renderer.autoClear = true; renderer.render(scene, camera);
   if (vm.visible && !intro.on) { vmCam.aspect = camera.aspect; vmCam.updateProjectionMatrix(); vmHemi.color.copy(hemi.color); vmHemi.groundColor.copy(hemi.groundColor); vmHemi.intensity = hemi.intensity; vmSun.color.copy(sun.color); vmSun.intensity = sun.intensity * 0.8 + 0.3;
     renderer.autoClear = false; renderer.clearDepth(); renderer.render(vmScene, vmCam); renderer.autoClear = true; }
@@ -2547,7 +2650,7 @@ const loaded = load();
 (state.balls || []).forEach(([x, z, v]) => makeBall(x, z, v));
 state.zone = 4; state.heaters.forEach(h => heaterMeshes.push(buildHeater(h))); recomputeTemp();
 
-buildFence(); syncRobots(); syncDrones(); updateDepositMeshes(); syncBotParts(); initHouses(); fillQuests(); equipTool(state.tool); equipHeat(state.heat); markAll(); updateDay(0);
+buildFence(); syncRobots(); syncDrones(); updateDepositMeshes(); syncBotParts(); syncScanner(); initHouses(); fillQuests(); equipTool(state.tool); equipHeat(state.heat); markAll(); updateDay(0);
 VEH.forEach(v => { v.beam.visible = !v.st.fixed; });
 drawBoard();
 $('btnSound').innerHTML = ic(state.muted ? 'mute' : 'sound');
@@ -2562,7 +2665,7 @@ $('btnStart').addEventListener('click', () => {
 });
 refreshHUD();
 window.__gameStarted = true;
-window.__game = { finishCraft, deposits, MODS, holos, tryCraft, modLv, syncBotParts, intro, endIntro, comm, depthArr: depth, BUILDINGS, houseCells, equipTool, equipHeat, blz, drones, syncDrones, balls, makeBall, BALL_MISSIONS, state, player, TOOLS, HEATS, toggleShop, buyZone, toolAction, heatAction, craft, pct, items, VEH, clearAt, meltAt, useVehicle, exitVehicle, DAY, dispZone, zoneSnowFraction };
+window.__game = { openBay, closeBay, bay, preview, finishCraft, deposits, MODS, holos, tryCraft, modLv, syncBotParts, intro, endIntro, comm, depthArr: depth, BUILDINGS, houseCells, equipTool, equipHeat, blz, drones, syncDrones, balls, makeBall, BALL_MISSIONS, state, player, TOOLS, HEATS, toggleShop, buyZone, toolAction, heatAction, craft, pct, items, VEH, clearAt, meltAt, useVehicle, exitVehicle, DAY, dispZone, zoneSnowFraction };
 loop();
 </script>
 </body>
