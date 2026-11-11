@@ -52,7 +52,8 @@
   #placeCnt{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;border-radius:11px;background:#ffd166;color:#3b2500;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid #7a4a00}
   #fuelBar .fill{background:linear-gradient(#fff2b0,#ffb627)}
   @keyframes pulse{to{filter:brightness(1.35)}}
-  #prog{font-size:11px;padding:2px 8px;border:0;background:rgba(10,26,46,.45)}
+  #prog{display:none !important;font-size:11px;padding:2px 8px;border:0;background:rgba(10,26,46,.45)}
+  #objective.fade{opacity:0;transition:opacity 1s}
   #objective{font-size:11px;font-weight:800;color:#e8f6ff;background:rgba(10,26,46,.4);border:0;border-left:3px solid var(--ice);border-radius:6px;padding:2px 7px;line-height:1.3;max-width:230px}
   #objective .ic{width:14px;height:14px;flex-shrink:0}
   #objective:empty{display:none}
@@ -379,7 +380,7 @@ document.body.prepend(renderer.domElement);
 const canvas = renderer.domElement;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xcfe6fb);
-scene.fog = new THREE.Fog(0xcfe6fb, 70, 300);
+scene.fog = new THREE.Fog(0x5fb2ff, 110, 520);
 const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 900);
 camera.rotation.order = 'YXZ';
 scene.add(camera);
@@ -387,80 +388,129 @@ const DPR_STEPS = IS_TOUCH ? [2, 1.75, 1.5, 1.25, 1] : [2, 1.5, 1.25, 1];
 let dprIdx = IS_TOUCH ? 1 : 0;
 function resize() { renderer.setPixelRatio(Math.min(devicePixelRatio || 1, DPR_STEPS[dprIdx])); renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.fov = clamp(2 * Math.atan(Math.tan(44 * Math.PI / 180) / camera.aspect) * 180 / Math.PI, 50, 70); camera.updateProjectionMatrix(); if (window.flMat) flMat.uniforms.uScale.value = renderer.getPixelRatio() * innerHeight / (2 * Math.tan(camera.fov * Math.PI / 360)); }
 addEventListener('resize', resize); resize();
-const hemi = new THREE.HemisphereLight(0xc4e2ff, 0xffffff, 1.0); scene.add(hemi);
+const hemi = new THREE.HemisphereLight(0x9fb4ff, 0xffffff, 1.0); scene.add(hemi);
+const rim = new THREE.DirectionalLight(0x8fb8ff, 0.6); scene.add(rim);
 const sun = new THREE.DirectionalLight(0xfff0d6, 2.4);
 sun.castShadow = true; sun.shadow.mapSize.set(IS_TOUCH ? 1024 : 2048, IS_TOUCH ? 1024 : 2048);
 Object.assign(sun.shadow.camera, { left: -26, right: 26, top: 26, bottom: -26, near: 1, far: 180 });
 sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.05;
 scene.add(sun, sun.target);
-const skyU = { uTop: { value: new THREE.Color() }, uHor: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uMoon: { value: new THREE.Vector3() }, uNight: { value: 0 }, uSunCol: { value: new THREE.Color() }, uTime: { value: 0 } };
+const skyU = { uAtm: { value: new THREE.Color(0x6fb8ff) }, uRot: { value: 0 }, uAur: { value: 0 }, uStorm: { value: 0 }, uTop: { value: new THREE.Color() }, uHor: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uMoon: { value: new THREE.Vector3() }, uNight: { value: 0 }, uSunCol: { value: new THREE.Color() }, uTime: { value: 0 } };
 const sky = new THREE.Mesh(new THREE.SphereGeometry(700, 32, 16), new THREE.ShaderMaterial({
   side: THREE.BackSide, depthWrite: false, fog: false, uniforms: skyU,
   vertexShader: `varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: `
-    uniform vec3 uTop, uHor, uSun, uMoon, uSunCol; uniform float uNight, uTime; varying vec3 vDir;
+    uniform vec3 uTop, uHor, uSun, uMoon, uSunCol, uAtm; uniform float uNight, uTime, uRot, uAur, uStorm; varying vec3 vDir;
     float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float h3(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
     float n2(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
       return mix(mix(h2(i), h2(i + vec2(1, 0)), f.x), mix(h2(i + vec2(0, 1)), h2(i + vec2(1, 1)), f.x), f.y); }
+    float fbm(vec2 p){ float a = 0.0, w = 0.5; for (int i = 0; i < 5; i++) { a += w * n2(p); p *= 2.03; w *= 0.5; } return a; }
+    vec3 rotY(vec3 d, float a){ float c = cos(a), s = sin(a); return vec3(c * d.x + s * d.z, d.y, -s * d.x + c * d.z); }
+    vec3 rotX(vec3 d, float a){ float c = cos(a), s = sin(a); return vec3(d.x, c * d.y - s * d.z, s * d.y + c * d.z); }
+    vec3 galaxy(vec3 sd, vec3 gd, float size, float tilt, vec3 tint){
+      vec3 e1 = normalize(cross(gd, vec3(0.0, 1.0, 0.0))), e2 = cross(e1, gd); if (dot(sd, gd) < 0.0) return vec3(0.0);
+      vec2 q = vec2(dot(sd, e1), dot(sd, e2)) / size; q.y *= tilt; float r = length(q), a = atan(q.y, q.x);
+      float arms = 0.5 + 0.5 * cos(2.0 * a - 5.0 * log(r + 0.06));
+      return tint * (exp(-r * r * 1.4) * (0.35 + 0.9 * arms * exp(-r * 0.9)) + exp(-r * r * 24.0) * 1.6) * 0.45;
+    }
     void main(){
       vec3 d = normalize(vDir); float h = d.y;
-      float toSun = pow(max(dot(normalize(d.xz + 1e-4), normalize(uSun.xz + 1e-4)), 0.0), 3.0);
-      vec3 hor = mix(uHor, uSunCol, toSun * 0.45 * (1.0 - smoothstep(0.0, 0.6, uSun.y)) * (1.0 - uNight));
-      vec3 col = h > 0.0 ? mix(hor, uTop, pow(h, 0.5)) : hor;
-      if (h > 0.02) {
-        vec2 uv = d.xz / (h + 0.15) * 1.6 + vec2(uTime * 0.004, 0.0);
-        float c = n2(uv) * 0.6 + n2(uv * 2.3 + 7.0) * 0.4;
-        float cl = smoothstep(0.55, 0.6, c) * smoothstep(0.02, 0.2, h);
-        vec3 cc = mix(vec3(1.0), uSunCol * 0.9 + 0.2, (1.0 - smoothstep(0.0, 0.5, uSun.y)) * 0.6);
-        col = mix(col, mix(cc, vec3(0.25, 0.3, 0.45), uNight), cl * 0.9);
-      }
-      float s = max(dot(d, uSun), 0.0);
-      col += uSunCol * (smoothstep(0.9992, 0.9995, s) * 2.5 + pow(s, 26.0) * 0.4) * (1.0 - uNight * 0.9);
-      float m = max(dot(d, uMoon), 0.0);
-      col += vec3(0.9, 0.95, 1.0) * (smoothstep(0.9993, 0.9996, m) * 1.6 + pow(m, 60.0) * 0.15) * uNight;
-      if (uNight > 0.02 && h > 0.0) { vec3 g = floor(d * 230.0); float st = step(0.9965, h2(g.xy + g.z * 7.1));
-        col += vec3(st) * uNight * smoothstep(0.0, 0.25, h) * (0.6 + 0.4 * sin(uTime * 2.0 + g.x)); }
-      // aurora
-      if (h > 0.04) { float wv = sin(d.x * 5.0 + d.z * 2.0 + uTime * 0.12 + n2(d.xz * 2.5 + uTime * 0.03) * 5.0);
-        float band = smoothstep(0.7, 1.0, wv) * smoothstep(0.06, 0.3, h) * (1.0 - smoothstep(0.45, 0.8, h));
-        col += mix(vec3(0.15, 1.0, 0.65), vec3(0.75, 0.3, 1.0), n2(d.xz * 1.7 + 3.0)) * band * (0.18 + 0.7 * uNight); }
-      // planeta gigante com anéis e uma segunda lua
+      vec3 sd = rotX(rotY(d, uRot), 0.42);
+      vec3 col = vec3(0.004, 0.005, 0.014);
+      // Via Láctea com faixas de poeira
+      float band = dot(sd, normalize(vec3(0.3, 0.88, 0.25))), mw = exp(-band * band * 16.0);
+      vec2 bp = vec2(atan(sd.z, sd.x) * 3.0, band * 9.0);
+      col += mix(vec3(0.22, 0.16, 0.42), vec3(0.62, 0.5, 0.82), fbm(bp * 0.7)) * mw * (0.35 + 0.7 * fbm(bp * 1.3 + 4.0)) * 0.55;
+      col *= 1.0 - mw * smoothstep(0.52, 0.78, fbm(bp * 2.1 + 9.0)) * 0.65;
+      // nebulosas
+      vec2 np = vec2(atan(sd.z, sd.x) * 1.6, asin(clamp(sd.y, -1.0, 1.0)) * 2.0);
+      col += vec3(0.7, 0.16, 0.55) * smoothstep(0.56, 0.86, fbm(np * 1.2 + 11.0)) * 0.32 + vec3(0.1, 0.5, 0.65) * smoothstep(0.6, 0.9, fbm(np * 1.5 - 3.0)) * 0.28;
+      // estrelas em três camadas
+      for (int i = 0; i < 3; i++) { float sc = 80.0 + float(i) * 120.0; vec3 g = floor(sd * sc); float r = h3(g + float(i) * 13.1);
+        if (r > 0.982 - mw * 0.012) { vec3 c = (g + 0.5 + (vec3(h3(g + 1.7), h3(g + 3.1), h3(g + 5.3)) - 0.5) * 0.7) / sc; float dd = length(sd - normalize(c)) * sc;
+          float tw = 0.6 + 0.4 * sin(uTime * (1.3 + r * 4.0) + r * 90.0); vec3 sc2 = mix(vec3(0.7, 0.82, 1.0), vec3(1.0, 0.82, 0.62), h3(g + 9.9));
+          col += sc2 * smoothstep(1.3 - float(i) * 0.3, 0.0, dd) * tw * (1.5 - float(i) * 0.4); } }
+      // galáxias
+      col += galaxy(sd, normalize(vec3(0.72, 0.38, -0.58)), 0.075, 2.3, vec3(0.85, 0.78, 1.0));
+      col += galaxy(sd, normalize(vec3(-0.4, -0.2, 0.89)), 0.045, 1.4, vec3(1.0, 0.75, 0.55));
+      // planeta gigante com anéis e uma lua verde
       vec3 pd = normalize(vec3(-0.55, 0.36, -0.75)), e1 = normalize(cross(pd, vec3(0.0, 1.0, 0.0))), e2 = cross(e1, pd);
-      float pp = dot(d, pd), pr = acos(clamp(pp, -1.0, 1.0)) / 0.13; vec2 q = vec2(dot(d, e1), dot(d, e2));
+      float pp = dot(sd, pd), pr = acos(clamp(pp, -1.0, 1.0)) / 0.14; vec2 q = vec2(dot(sd, e1), dot(sd, e2));
       vec2 rq = vec2(q.x * cos(0.35) - q.y * sin(0.35), q.x * sin(0.35) + q.y * cos(0.35)); float rr = length(vec2(rq.x, rq.y / 0.28));
-      float ring = smoothstep(0.17, 0.175, rr) * (1.0 - smoothstep(0.25, 0.26, rr)) * step(0.0, pp) * (0.55 + 0.45 * sin(rr * 260.0));
-      vec3 pc = mix(vec3(0.98, 0.72, 0.62), vec3(0.62, 0.52, 0.95), 0.5 + 0.5 * sin(dot(d, e2) * 90.0 + n2(q * 40.0) * 2.0));
-      float disc = 1.0 - smoothstep(0.96, 1.0, pr); float lit = 0.55 + 0.45 * clamp(dot(normalize(d - pd * 0.9), uSun) + 0.5, 0.0, 1.0);
-      if (rq.y > 0.0) col = mix(col, vec3(0.95, 0.85, 1.0), ring * 0.8);
-      col = mix(col, pc * lit * (0.75 + 0.25 * (1.0 - pr * pr)), disc);
-      if (rq.y <= 0.0) col = mix(col, vec3(0.95, 0.85, 1.0), ring * 0.8 * (1.0 - disc * 0.0));
-      float m2 = max(dot(d, normalize(vec3(0.62, 0.5, 0.35))), 0.0); col = mix(col, vec3(0.7, 1.0, 0.95), smoothstep(0.99955, 0.9997, m2));
+      float ring = smoothstep(0.18, 0.186, rr) * (1.0 - smoothstep(0.27, 0.28, rr)) * step(0.0, pp) * (0.5 + 0.5 * sin(rr * 260.0));
+      vec3 pc = mix(vec3(1.0, 0.68, 0.55), vec3(0.55, 0.45, 0.95), 0.5 + 0.5 * sin(dot(sd, e2) * 90.0 + n2(q * 40.0) * 2.0));
+      float disc = 1.0 - smoothstep(0.96, 1.0, pr), lit = 0.25 + 0.75 * clamp(dot(normalize(sd - pd * 0.85), normalize(vec3(0.8, 0.4, 0.2))) + 0.6, 0.0, 1.0);
+      if (rq.y > 0.0) col = mix(col, vec3(0.95, 0.85, 1.0), ring * 0.75);
+      col = mix(col, pc * lit, disc); if (rq.y <= 0.0) col = mix(col, vec3(0.95, 0.85, 1.0), ring * 0.75);
+      float m2 = max(dot(sd, normalize(vec3(0.62, 0.5, 0.35))), 0.0); col = mix(col, vec3(0.6, 1.0, 0.85), smoothstep(0.99955, 0.9997, m2));
+      // sol branco e forte (sem atmosfera para espalhar)
+      float s = max(dot(d, uSun), 0.0); col += uSunCol * (smoothstep(0.9993, 0.9996, s) * 3.0 + pow(s, 180.0) * 0.7 + pow(s, 10.0) * 0.05);
+      // aurora
+      if (h > 0.04 && uAur > 0.01) { float wv = sin(d.x * 5.0 + d.z * 2.0 + uTime * 0.15 + n2(d.xz * 2.5 + uTime * 0.04) * 5.0);
+        float bnd = smoothstep(0.65, 1.0, wv) * smoothstep(0.05, 0.3, h) * (1.0 - smoothstep(0.5, 0.85, h));
+        col += mix(vec3(0.15, 1.0, 0.6), vec3(0.8, 0.3, 1.0), n2(d.xz * 1.7 + 3.0 + uTime * 0.02)) * bnd * uAur * 1.1; }
+      // atmosfera fininha: só um brilho colado no horizonte
+      float atm = exp(-max(h, 0.0) * 16.0); col = mix(col, uAtm, atm * 0.8);
+      if (h < 0.0) col = uAtm * 0.55;
+      col = mix(col, uAtm * 0.9 + vec3(0.08), uStorm * 0.88);
       gl_FragColor = vec4(col, 1.0);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`,
+
 }));
 sky.frustumCulled = false; scene.add(sky);
 const DAY = { t: 0.3, len: 600, night: 0, sunDir: new THREE.Vector3(), lightDir: new THREE.Vector3(), count: 1 };
 const SC = { dayTop: new THREE.Color(0x2fb3c8), dayHor: new THREE.Color(0xeedcff), setTop: new THREE.Color(0x5a3c9a), setHor: new THREE.Color(0xff9ec2),
   nTop: new THREE.Color(0x0b0623), nHor: new THREE.Color(0x2c1a55), warm: new THREE.Color(0xffa07a), noon: new THREE.Color(0xfff4e6), moon: new THREE.Color(0xb7a8ff),
-  hDay: new THREE.Color(0xdde4ff), hNight: new THREE.Color(0x4f3d94) };
+  hDay: new THREE.Color(0xa9c0ff), hNight: new THREE.Color(0x3b3480) };
 const _c1 = new THREE.Color(), _c2 = new THREE.Color();
+const WX = { cur: 'clear', t: 70, k: { fall: 0, storm: 0, aur: 0, met: 0 }, wind: new THREE.Vector2(1, 0.3).normalize() };
+const WEATHER = { clear: { fall: 0, storm: 0, aur: 0, met: 0, dur: [80, 140], w: 3 }, snow: { fall: 1, storm: 0, aur: 0, met: 0, dur: [45, 75], w: 2.2 },
+  storm: { fall: 1, storm: 1, aur: 0, met: 0, dur: [30, 50], w: 1 }, aurora: { fall: 0, storm: 0, aur: 1, met: 0, dur: [60, 90], w: 1.4 }, meteors: { fall: 0, storm: 0, aur: 0, met: 1, dur: [45, 70], w: 1.4 } };
+const WX_SAY = { snow: 'Começou a nevar. Onde estiver frio, uma camadinha volta. Aquecedores protegem.', storm: 'Tempestade de neve! A visibilidade vai despencar. Fique perto da nave se precisar.',
+  aurora: 'Olha para cima, PIP. Aurora de Glacira. A Companhia não paga extra por isso, mas é lindo.', meteors: 'Chuva de meteoros! Fique de olho: alguns fragmentos caem por aqui.' };
+function updateWeather(dt) {
+  if ((WX.t -= dt) <= 0) {
+    const opts = Object.keys(WEATHER).filter(k => k !== WX.cur); let tot = opts.reduce((a, k) => a + WEATHER[k].w, 0), r = Math.random() * tot, nx = opts[0];
+    for (const k of opts) { r -= WEATHER[k].w; if (r <= 0) { nx = k; break; } }
+    WX.cur = nx; const W = WEATHER[nx]; WX.t = fr(W.dur[0], W.dur[1]); WX.wind.set(Math.random() - 0.5, Math.random() - 0.5).normalize();
+    if (WX_SAY[nx]) { if (state.comms && state.comms['wx_' + nx]) toast({ snow: 'Nevando', storm: 'Tempestade de neve!', aurora: 'Aurora no céu', meteors: 'Chuva de meteoros!' }[nx], 2.5, 'snow'); else comm('wx_' + nx, WX_SAY[nx]); }
+  }
+  const W = WEATHER[WX.cur]; for (const k of ['fall', 'storm', 'aur', 'met']) WX.k[k] = damp(WX.k[k], W[k], 0.5, dt);
+}
+// meteoros: riscos de luz atravessando o céu
+const meteors = [];
+for (let i = 0; i < 6; i++) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3)); g.setAttribute('color', new THREE.BufferAttribute(new Float32Array([1, 1, 1, 0, 0, 0]), 3));
+  const l = new THREE.Line(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); l.frustumCulled = false; l.visible = false; scene.add(l); meteors.push({ l, t: 1, p: new THREE.Vector3(), v: new THREE.Vector3() }); }
+let meteorT = 3;
+function updateMeteors(dt) {
+  meteorT -= dt; const rate = 0.12 + WX.k.met * 2.6 + DAY.night * 0.15;
+  if (meteorT <= 0) { meteorT = fr(0.3, 1.6) / rate; const m = meteors.find(x => x.t >= 1); if (m) { const a = Math.random() * TAU, el = fr(0.35, 0.85);
+      m.p.set(Math.cos(a) * Math.cos(el), Math.sin(el), Math.sin(a) * Math.cos(el)).multiplyScalar(420); const tg = new THREE.Vector3(Math.random() - 0.5, -fr(0.2, 0.6), Math.random() - 0.5).normalize();
+      m.v.copy(tg).multiplyScalar(fr(260, 420)); m.t = 0; m.len = fr(0.06, 0.14); m.l.visible = true; } }
+  for (const m of meteors) { if (m.t >= 1) continue; m.t += dt / 0.9; const pa = m.l.geometry.attributes.position.array, head = m.p.clone().addScaledVector(m.v, m.t * 0.9), tail = head.clone().addScaledVector(m.v, -m.len * 2.2);
+    head.add(camera.position); tail.add(camera.position); pa[0] = head.x; pa[1] = head.y; pa[2] = head.z; pa[3] = tail.x; pa[4] = tail.y; pa[5] = tail.z; m.l.geometry.attributes.position.needsUpdate = true;
+    const f = Math.sin(Math.min(1, m.t) * Math.PI); const c = m.l.geometry.attributes.color.array; c[0] = f; c[1] = f * 0.95; c[2] = f * 1.1; m.l.geometry.attributes.color.needsUpdate = true; if (m.t >= 1) m.l.visible = false; }
+}
+const ATM = { day: new THREE.Color(0x5fb2ff), dusk: new THREE.Color(0xff8a5c), night: new THREE.Color(0x141236) };
 function updateDay(dt) {
   DAY.t += dt / DAY.len; if (DAY.t >= 1) { DAY.t -= 1; DAY.count++; }
   const a = DAY.t * TAU, elev = -Math.cos(a);
   DAY.sunDir.set(Math.sin(a) * 0.7, elev, 0.45).normalize();
-  const dayF = smooth(-0.15, 0.3, elev), dusk = Math.max(0, 1 - Math.abs(elev) / 0.35);
+  const dayF = smooth(-0.15, 0.3, elev), dusk = Math.max(0, 1 - Math.abs(elev) / 0.3);
   DAY.night = 1 - dayF;
-  _c1.copy(SC.nTop).lerp(SC.dayTop, dayF).lerp(SC.setTop, dusk * 0.45);
-  _c2.copy(SC.nHor).lerp(SC.dayHor, dayF).lerp(SC.setHor, dusk * 0.6);
-  skyU.uTop.value.copy(_c1); skyU.uHor.value.copy(_c2); skyU.uSun.value.copy(DAY.sunDir);
+  _c2.copy(ATM.night).lerp(ATM.day, dayF).lerp(ATM.dusk, dusk * 0.7).lerp(_c1.setRGB(0.55, 0.6, 0.7), WX.k.storm * 0.8);
+  skyU.uAtm.value.copy(_c2); skyU.uSun.value.copy(DAY.sunDir); skyU.uRot.value = a; skyU.uStorm.value = WX.k.storm; skyU.uAur.value = WX.k.aur * (0.35 + 0.65 * DAY.night);
   skyU.uMoon.value.set(-DAY.sunDir.x, -DAY.sunDir.y, 0.45).normalize(); skyU.uNight.value = DAY.night;
-  skyU.uSunCol.value.copy(SC.warm).lerp(SC.noon, smooth(0, 0.5, elev));
-  scene.fog.color.copy(_c2); scene.background.copy(_c2);
-  if (elev > -0.05) { DAY.lightDir.copy(DAY.sunDir); sun.color.copy(skyU.uSunCol.value); sun.intensity = 2.5 * smooth(-0.05, 0.25, elev); }
-  else { DAY.lightDir.copy(skyU.uMoon.value); sun.color.copy(SC.moon); sun.intensity = 0.7 * smooth(-0.05, -0.3, elev); }
-  hemi.intensity = 0.5 + 0.5 * dayF; hemi.color.copy(SC.hNight).lerp(SC.hDay, dayF);
+  skyU.uSunCol.value.copy(SC.warm).lerp(SC.noon, smooth(0, 0.4, elev));
+  scene.fog.color.copy(_c2).multiplyScalar(0.8); scene.background.copy(_c2);
+  scene.fog.near = lerp(110, 8, WX.k.storm); scene.fog.far = lerp(520, 60, WX.k.storm);
+  if (elev > -0.05) { DAY.lightDir.copy(DAY.sunDir); sun.color.copy(skyU.uSunCol.value); sun.intensity = 3.0 * smooth(-0.05, 0.25, elev) * (1 - 0.6 * WX.k.storm); }
+  else { DAY.lightDir.copy(skyU.uMoon.value); sun.color.copy(SC.moon); sun.intensity = 0.8 * smooth(-0.05, -0.3, elev); }
+  rim.position.copy(DAY.lightDir).multiplyScalar(-1).setY(0.4); rim.intensity = 0.55 + 0.35 * DAY.night;
+  hemi.intensity = 0.38 + 0.32 * dayF + 0.3 * WX.k.storm;  hemi.intensity = 0.5 + 0.5 * dayF; hemi.color.copy(SC.hNight).lerp(SC.hDay, dayF);
   M.glassWarm.emissiveIntensity = 0.8 + 2.2 * DAY.night;
   M.lampHead.color.setScalar(0.7 + 0.5 * DAY.night);
 }
@@ -514,7 +564,7 @@ const M = {
   floor: toon({ map: TEX.floor, emissiveMap: TEX.floor, emissive: 0xffd9a8, emissiveIntensity: 0.28 }),
   roof: toon({ map: TEX.roof }), roofRed: toon({ color: 0xa8443a }), roofGreen: toon({ color: 0x3f6a4a }), stone: toon({ map: TEX.stone }), rug: toon({ map: TEX.rug }),
   snowCap: toon({ color: 0xffffff }), pine: toon({ color: 0x6a3fb0, emissive: 0x1a0a40, emissiveIntensity: 0.4 }), pine2: toon({ color: 0x8f5ad6, emissive: 0x220f50, emissiveIntensity: 0.4 }), bark: toon({ color: 0x24394a }),
-  rock: toon({ color: 0x8a93a0 }), deadGrass: toon({ color: 0xb59a52 }),
+  rock: toon({ color: 0x5a5f80 }), deadGrass: toon({ color: 0x7cffd8, emissive: 0x23b894, emissiveIntensity: 0.9 }),
   metal: toon({ color: 0x6d7782 }), darkMetal: toon({ color: 0x343c47 }), steel: toon({ color: 0xcfd8e2 }), copper: toon({ color: 0xd98a46 }), brick: toon({ color: 0x9c4a36 }),
   wood: toon({ color: 0xb07a45 }), darkWood: toon({ color: 0x6b4428 }), lightWood: toon({ color: 0xd9a86a }), white: toon({ color: 0xf4f1e8 }),
   blanket: toon({ color: 0x3b78c2 }), pillow: toon({ color: 0xf6f2e8 }), sofa: toon({ color: 0x8d3b4a }), green: toon({ color: 0x4f9c5a }),
@@ -532,7 +582,7 @@ const M = {
   blue: toon({ color: 0x4fb3ff }), purple: toon({ color: 0x8a5cff }), red: toon({ color: 0xe8463e }),
   bit: toon({ color: 0xffffff }), puff: new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false }),
   star: new THREE.MeshBasicMaterial({ color: 0xbff4ff, toneMapped: false }),
-  beam: new THREE.MeshBasicMaterial({ color: 0xff7a3a, transparent: true, opacity: 0.32, depthWrite: false, toneMapped: false, side: THREE.DoubleSide }),
+  beam: new THREE.MeshBasicMaterial({ color: 0xff7a3a, transparent: true, opacity: 0.16, depthWrite: false, toneMapped: false, side: THREE.DoubleSide }),
   beamBlue: new THREE.MeshBasicMaterial({ color: 0x7fd8ff, transparent: true, opacity: 0.35, depthWrite: false, toneMapped: false, side: THREE.DoubleSide }),
 };
 const geoCache = new Map();
@@ -560,8 +610,8 @@ const ZONES = [20, 36, 54, 72, 89], ZONE_STARS = [0, 15, 50, 120, 220];
 const DEPTH_Z = [1, 1.5, 2.0, 2.6, 3.2], HARD_Z = [1, 1.35, 1.8, 2.4, 3.1];
 const HW = 6, HD = 4.5;
 const MELT = { x: 8.2, z: 8.6 };
-const BASE_Y = 6.5;                                  // a base do robô fica em uma plataforma no topo da neve
-const DECK = { x0: -HW - 1.6, x1: MELT.x + 2.4, z0: -HD - 1.6, z1: MELT.z + 2.4 };
+const BASE_Y = 0.25;                                 // plataforma de pouso no chão (a neve é rasa em volta da nave)
+const DECK = { x0: -10, x1: 11.5, z0: -8.5, z1: 11.5 };
 const SNOW_Z = [6.5, 7.6, 8.8, 10, 11.2];          // altura da superfície de neve por região
 const TEMP_Z = [-4, -12, -22, -30, -40];            // temperatura base de cada região
 const REGIONS = ['Planície do Pouso', 'Campo das Cúpulas', 'Vale dos Cristais', 'Estepe do Vento', 'Coroa Polar'];
@@ -589,7 +639,7 @@ function groundAt(x, z) {
   h = lerp(h, 0, smooth(16, 9, Math.hypot(x, z - 2)));
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 + 3 && Math.abs(z - b.z) < b.d / 2 + 3) h = lerp(h, 0, smooth(b.w / 2 + 3, b.w / 2, Math.max(Math.abs(x - b.x) * (b.w / b.w), Math.abs(z - b.z) * (b.w / b.d))));
   const e = Math.max(Math.abs(x), Math.abs(z)) - HALF;
-  if (e > 0) h += smooth(0, 6, e) * (SNOW_Z[4] + 0.2) + Math.max(0, e - 40) * 0.08;   // fora do mapa: campo de neve na altura da superfície
+  if (e > 0) h += smooth(0, 10, e) * (16 + 7 * Math.sin(x * 0.05) * Math.cos(z * 0.045)) + Math.max(0, e - 30) * 0.25;   // fora do mapa: paredões de neve gigantes
   return h;
 }
 const rectDist = (x, z, cx, cz, hw, hd) => Math.hypot(Math.max(Math.abs(x - cx) - hw, 0), Math.max(Math.abs(z - cz) - hd, 0));
@@ -605,17 +655,19 @@ function roofAt(b, x, z) {                          // altura do teto (a neve n�
   const r = Math.min(b.w, b.d) / 2, across = b.w > b.d ? Math.abs(lz) : Math.abs(lx); return g0 + 0.8 + Math.sqrt(Math.max(0, r * r - across * across));
 }
 function baseAt(x, z) { if (inDeck(x, z)) return BASE_Y; let h = groundAt(x, z); for (const b of BUILDINGS) { if (Math.abs(x - b.x) > 7 || Math.abs(z - b.z) > 7) continue; const r = roofAt(b, x, z); if (r > h) h = r; } return h; }
-function snowline(x, z) {
-  const zf = zoneF(x, z), zi = Math.floor(zf), zt = zf - zi, p = snowPhase;
-  let sl = lerp(SNOW_Z[clamp(zi, 0, 4)], SNOW_Z[clamp(zi + 1, 0, 4)], zt) + 0.45 * Math.sin(x * 0.07 + p) * Math.cos(z * 0.06 - p) + 0.22 * Math.sin(x * 0.19 - z * 0.15) + 0.7 * Math.max(0, Math.sin(x * 0.035 + z * 0.03 + 2 + p));
+function snowline(x, z) {           // fina perto da nave, dunas no meio, montanhas gigantes nas bordas
+  const p = snowPhase, d = Math.hypot(x, z - 1);
+  const near = 0.55 + 0.25 * Math.sin(x * 0.21 + p) * Math.cos(z * 0.19) + 0.15 * Math.sin(x * 0.5 - z * 0.4);
+  const rise = smooth(16, 80, d), dunes = 2.4 * rise + 1.6 * rise * Math.max(0, Math.sin(x * 0.06 + z * 0.045 + 1 + p));
+  const ridge = 1 - Math.abs(Math.sin(x * 0.03 + 0.7 + p) * Math.cos(z * 0.033 - 0.4)), mtn = Math.pow(smooth(0.5, 1.0, ridge), 1.6) * 17 * smooth(32, 82, d);
   const dd = rectDist(x, z, (DECK.x0 + DECK.x1) / 2, (DECK.z0 + DECK.z1) / 2, (DECK.x1 - DECK.x0) / 2, (DECK.z1 - DECK.z0) / 2);
-  return lerp(BASE_Y, sl, smooth(0, 12, dd));
+  return groundAt(x, z) + (near + dunes + mtn) * smooth(0, 5, dd);
 }
-function initialDepth(x, z, base) { return clamp(snowline(x, z) - base, 0, 14); }
+function initialDepth(x, z, base) { return clamp(snowline(x, z) - base, 0, 24); }
 function initialIce(x, z, d) {
   const zi = zoneRing(x, z); if (zi === 0 || d < 0.25) return 0;
   const n = Math.sin(x * 0.13 + 2 + snowPhase) * Math.cos(z * 0.11 - 1) + 0.5 * Math.sin(x * 0.31 - z * 0.27);
-  return n > [9, 0.85, 0.6, 0.38, 0.15][zi] && d < 9 ? 1 : 0;
+  return n > [9, 0.85, 0.6, 0.38, 0.15][zi] && d < 4 ? 1 : 0;
 }
 const depth = new Float32Array(N * N), init = new Float32Array(N * N), gH = new Float32Array(N * N), iceA = new Float32Array(N * N), hard = new Float32Array(N * N);
 const gx = i => -HALF + i * CELL;
@@ -643,12 +695,12 @@ fillSnow();
   const S = 460, seg = IS_TOUCH ? 200 : 240;
   const g = new THREE.PlaneGeometry(S, S, seg, seg); g.rotateX(-Math.PI / 2);
   const p = g.attributes.position, cols = new Float32Array(p.count * 3);
-  const C = { grass: new THREE.Color('#7ea24a'), grass2: new THREE.Color('#9bb55a'), dirt: new THREE.Color('#8a6a45'), cobble: new THREE.Color('#9a958e'), mud: new THREE.Color('#5c4f3b'), snow: new THREE.Color('#ffffff') };
+  const C = { grass: new THREE.Color('#2fb39b'), grass2: new THREE.Color('#1c7f8f'), dirt: new THREE.Color('#7a52c8'), cobble: new THREE.Color('#5d6b86'), mud: new THREE.Color('#3b2f5a'), snow: new THREE.Color('#ffffff') };
   const c = new THREE.Color();
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), z = p.getZ(i); p.setY(i, groundAt(x, z) - 0.02);
     c.copy(C.grass).lerp(C.grass2, 0.5 + 0.5 * Math.sin(x * 0.11 + z * 0.07)).lerp(C.dirt, Math.max(0, Math.sin(x * 0.21 + z * 0.17) * Math.cos(x * 0.05)) * 0.6);
-    const road = (z > 2 && Math.abs(x - ROAD_X) < ROAD_W) || (Math.hypot(x, z - 2) < 11 && houseDist(x, z) > 0.3) || BUILDINGS.some(b => rectDist(x, z, b.x, b.z, b.w / 2 + 0.8, b.d / 2 + 0.8) < 0.1);
+    const road =  BUILDINGS.some(b => rectDist(x, z, b.x, b.z, b.w / 2 + 0.8, b.d / 2 + 0.8) < 0.1);
     if (road) c.copy(C.cobble).multiplyScalar(0.8 + 0.25 * (Math.sin(x * 5.3) * Math.sin(z * 5.1) > 0 ? 1 : 0.4));
     c.lerp(C.mud, smooth(POND.r + 1.5, POND.r, Math.hypot(x - POND.x, z - POND.z)));
     c.lerp(C.snow, smooth(HALF - 0.3, HALF + 1, Math.max(Math.abs(x), Math.abs(z))));
@@ -891,98 +943,39 @@ OUTSIDE.forEach(([x, z, type, rot]) => { const sz = { house: [7, 6], barn: [10, 
   grass.frustumCulled = false; scene.add(grass);
 }
 
-/* ---------- estrada, cercas, postes, carro, bancos, bonecos de neve ---------- */
-{
-  const dummy = new THREE.Object3D(), posts = [], rails = [];
-  for (let z = 12; z < HALF - 2; z += 3) for (const sx of [-1, 1]) { posts.push([ROAD_X + sx * 2.6, z]); if (z + 3 < HALF - 2) rails.push([ROAD_X + sx * 2.6, z + 1.5]); }
-  const pIM = new THREE.InstancedMesh(boxGeo(0.16, 1.3, 0.16), M.darkWood, posts.length);
-  posts.forEach(([x, z], n) => { dummy.position.set(x, groundAt(x, z) + 0.6, z); dummy.updateMatrix(); pIM.setMatrixAt(n, dummy.matrix); });
-  const rIM = new THREE.InstancedMesh(boxGeo(0.07, 0.12, 3.0), M.wood, rails.length * 2);
-  rails.forEach(([x, z], n) => { const y = groundAt(x, z); dummy.position.set(x, y + 0.45, z); dummy.updateMatrix(); rIM.setMatrixAt(n * 2, dummy.matrix); dummy.position.set(x, y + 0.95, z); dummy.updateMatrix(); rIM.setMatrixAt(n * 2 + 1, dummy.matrix); });
-  for (const im of [pIM, rIM]) { im.castShadow = true; im.frustumCulled = false; scene.add(im); }
-  for (let z = 18, s = 1; z < HALF - 4; z += 14, s = -s) {
-    const x = ROAD_X + s * 3.3, y = groundAt(x, z);
-    scene.add(ol(cyl(0.07, 0.09, 3.4, M.darkMetal, x, y + 1.7, z, 8), 0.02), box(0.5, 0.06, 0.06, M.darkMetal, x - s * 0.22, y + 3.35, z), ol(box(0.26, 0.3, 0.26, M.lampHead, x - s * 0.45, y + 3.15, z, false), 0.02));
-    circles.push({ x, z, r: 0.2, y1: y + 3.4 });
-  }
-  const g = group(ROAD_X + 0.3, groundAt(0, 40), 40); g.rotation.y = 0.12; scene.add(g);
-  g.add(ol(box(1.8, 0.65, 4.0, M.carRed, 0, 0.6, 0)), ol(box(1.6, 0.55, 2.0, M.carRed, 0, 1.2, -0.2)), box(1.62, 0.42, 0.05, M.glass, 0, 1.2, 0.81));
-  for (const [x, z] of [[0.9, 1.3], [-0.9, 1.3], [0.9, -1.3], [-0.9, -1.3]]) { const w = ol(cyl(0.34, 0.34, 0.25, M.tire, x, 0.34, z, 16), 0.02); w.rotation.z = Math.PI / 2; g.add(w); }
-  circles.push({ x: 0.3, z: 39, r: 1.0, y1: 1.6 }, { x: 0.3, z: 41, r: 1.0, y1: 1.6 });
-  for (const [x, z, ry] of [[-9, 10, 0.4], [10.5, 2, -0.8], [-14, -8, 0.2]]) {
-    const s = group(x, groundAt(x, z), z); s.rotation.y = ry; scene.add(s);
-    s.add(ol(ball(0.55, 0.5, 0.55, M.snowCap, 0, 0.45, 0), 0.02), ol(ball(0.4, 0.38, 0.4, M.snowCap, 0, 1.15, 0), 0.02), ol(ball(0.28, 0.27, 0.28, M.snowCap, 0, 1.68, 0), 0.02));
-    const nose = mesh(new THREE.ConeGeometry(0.05, 0.25, 8), M.carrot, 0, 1.68, 0.36); nose.rotation.x = Math.PI / 2; s.add(nose);
-    s.add(ball(0.035, 0.035, 0.035, M.coal, 0.1, 1.76, 0.24), ball(0.035, 0.035, 0.035, M.coal, -0.1, 1.76, 0.24), cyl(0.3, 0.3, 0.1, M.scarf, 0, 1.45, 0, 16), ol(cyl(0.17, 0.2, 0.3, M.coal, 0, 2.0, 0, 14), 0.015));
-    circles.push({ x, z, r: 0.55, y1: groundAt(x, z) + 2.2 });
-  }
-}
+/* (sem estrada, cercas, postes ou bonecos: nada terrestre em Glacira) */
 
 /* ---------- cabana: loja, bancada, lareira, quadro de progresso legível ---------- */
-M.hull = toon({ color: 0xe8eef6 }); M.hullIn = toon({ color: 0xcdd8e8 }); M.hullRoof = toon({ color: 0x3fa7b8 });
-const house = group(0, BASE_Y, 0); scene.add(house);
-const terminal = { meshes: [] }, bench = { meshes: [] };
-const rackSlots = [];
-let fireLight, boardCanvas, boardTex;
-const flames = [];
+M.hull = toon({ color: 0xeef2f8 }); M.hullIn = toon({ color: 0xcdd8e8 }); M.hullRoof = toon({ color: 0x3fa7b8 }); M.hullDark = toon({ color: 0x34405a }); M.hullOr = toon({ color: 0xff7a2a }); M.cockpit = toon({ color: 0x9fe9ff, emissive: 0x1f7f9a, emissiveIntensity: 0.9 });
+const house = group(0, 0, 0); // (sem cabana: a base agora é a nave)
+const terminal = { meshes: [] }, bench = { meshes: [] }, rackSlots = [], flames = [];
+let fireLight = { intensity: 0 }, boardCanvas = document.createElement('canvas'), boardTex; boardCanvas.width = 512; boardCanvas.height = 300; boardTex = new THREE.CanvasTexture(boardCanvas);
+const TERM = { x: 2.6, z: 6.4 };
+const ship = group(0, BASE_Y, -1.2); scene.add(ship); ship.userData.thr = [];
 {
-  const H = 3.6, fx = HW + 0.06, fz = HD + 0.06;
-  house.add(box(HW * 2 + 0.4, 0.12, HD * 2 + 0.4, M.floor, 0, -0.06, 0));
-  const rug = mesh(new THREE.PlaneGeometry(3.4, 2.4), M.rug, 3.2, 0.006, 0.2); rug.rotation.x = -Math.PI / 2; house.add(rug);
-  const W = (w, d, x, z, h = H, y = h / 2) => house.add(ol(box(w, h, d, M.hull, x, y, z), 0.03));
-  const I = (w, d, x, z, h = H, y = h / 2) => house.add(box(w, h, d, M.hullIn, x, y, z));
-  W(HW * 2 + 0.4, 0.12, 0, -fz); I(HW * 2 + 0.1, 0.06, 0, -fz + 0.09);
-  W(0.12, HD * 2 + 0.4, -fx, 0); I(0.06, HD * 2 + 0.1, -fx + 0.09, 0);
-  W(0.12, HD * 2 + 0.4, fx, 0); I(0.06, HD * 2 + 0.1, fx - 0.09, 0);
-  W(HW - 1 + 0.2, 0.12, -(HW + 1) / 2 - 0.05, fz); I(HW - 1, 0.06, -(HW + 1) / 2, fz - 0.09);
-  W(HW - 1 + 0.2, 0.12, (HW + 1) / 2 + 0.05, fz); I(HW - 1, 0.06, (HW + 1) / 2, fz - 0.09);
-  W(2.0, 0.12, 0, fz, H - 2.5, 2.5 + (H - 2.5) / 2); I(2.0, 0.06, 0, fz - 0.09, H - 2.5, 2.5 + (H - 2.5) / 2);
-  house.add(ol(box(0.16, 2.5, 0.16, M.steel, -1.0, 1.25, fz + 0.04), 0.02), ol(box(0.16, 2.5, 0.16, M.steel, 1.0, 1.25, fz + 0.04), 0.02), ol(box(2.3, 0.16, 0.18, M.steel, 0, 2.5, fz + 0.04), 0.02));
-  const T3 = BASE_Y + 3.6; addWall(-HW - 0.2, HW + 0.2, -HD - 0.2, -HD + 0.1, T3); addWall(-HW - 0.2, -HW + 0.1, -HD - 0.2, HD + 0.2, T3); addWall(HW - 0.1, HW + 0.2, -HD - 0.2, HD + 0.2, T3);
-  addWall(-HW - 0.2, -1.0, HD - 0.1, HD + 0.2, T3); addWall(1.0, HW + 0.2, HD - 0.1, HD + 0.2, T3);
-  const win = (x, z, rotY) => { const g = group(x, 1.8, z, house); g.rotation.y = rotY; g.add(box(1.5, 1.1, 0.3, M.glassWarm, 0, 0, 0, false), ol(box(1.66, 0.12, 0.36, M.steel, 0, 0.6, 0), 0.02), ol(box(1.66, 0.12, 0.36, M.steel, 0, -0.6, 0), 0.02), box(0.08, 1.1, 0.34, M.steel, 0, 0, 0), box(1.7, 0.1, 0.42, M.snowCap, 0, 0.72, 0.04)); };
-  win(-fx, 2.2, Math.PI / 2); win(fx, -2.4, Math.PI / 2); win(fx, 2.4, Math.PI / 2); win(-3.6, fz, 0); win(3.6, fz, 0); win(4.3, -fz, 0);
-  const a = 0.52, half = HD + 0.9, len = half / Math.cos(a), rise = half * Math.tan(a);
-  for (const sd of [1, -1]) { const r = ol(box(HW * 2 + 1.4, 0.2, len + 0.2, M.hullRoof, 0, H + rise / 2, sd * half / 2), 0.03); r.rotation.x = a * sd; house.add(r); const s = box(HW * 2 + 1.5, 0.32, len + 0.1, M.snowCap, 0, H + rise / 2 + 0.24, sd * half / 2); s.rotation.x = a * sd; house.add(s); }
-  const tri = new THREE.Shape(); tri.moveTo(-HD - 0.2, 0); tri.lineTo(HD + 0.2, 0); tri.lineTo(0, rise * 0.93); tri.closePath();
-  const gable = new THREE.ExtrudeGeometry(tri, { depth: 0.12, bevelEnabled: false });
-  for (const sx of [-1, 1]) { const gm = mesh(gable, M.hull, (fx + 0.06) * sx, H, 0); gm.rotation.y = sx > 0 ? -Math.PI / 2 : Math.PI / 2; house.add(gm); }
-  house.add(box(HW * 2, 0.08, HD * 2, M.hullIn, 0, H - 0.04, 0));
-  for (let x = -HW + 1; x < HW; x += 2) house.add(box(0.18, 0.22, HD * 2, M.darkWood, x, H - 0.15, 0));
-  house.add(ol(box(0.9, 3.2, 0.9, M.stone, 4.4, H + rise - 0.3, -2.4), 0.03), box(1.05, 0.18, 1.05, M.snowCap, 4.4, H + rise + 1.35, -2.4));
-  house.add(box(3.6, 0.14, 1.8, M.darkWood, 0, 0.07, fz + 1.0), ol(box(3.9, 0.12, 2.0, M.hullRoof, 0, 2.95, fz + 1.0), 0.03), box(4.0, 0.2, 2.1, M.snowCap, 0, 3.1, fz + 1.0));
-  for (const x of [-1.75, 1.75]) house.add(ol(box(0.16, 2.9, 0.16, M.steel, x, 1.45, fz + 1.85), 0.02));
-  circles.push({ x: -1.75, z: fz + 1.85, r: 0.15 }, { x: 1.75, z: fz + 1.85, r: 0.15 });
-  // lareira
-  house.add(ol(box(0.9, 1.9, 2.4, M.stone, HW - 0.45, 0.95, 0), 0.03), box(0.35, 0.8, 1.2, M.darkMetal, HW - 0.82, 0.5, 0), ol(box(1.1, 0.14, 2.7, M.darkWood, HW - 0.5, 1.95, 0), 0.02));
-  for (let i = 0; i < 3; i++) { const f = mesh(new THREE.ConeGeometry(0.2, 0.62, 6), i ? M.glowYellow : M.glowOrange, HW - 0.85, 0.4, (i - 1) * 0.24, false); f.scale.setScalar(i ? 0.7 : 1); house.add(f); flames.push(f); }
-  fireLight = new THREE.PointLight(0xff9a50, 16, 13, 1.6); fireLight.position.set(HW - 1.4, 0.9, 0); house.add(fireLight);
-  addWall(HW - 0.95, HW, -1.25, 1.25);
-  for (const z of [-1.4, 1.4]) { const c = group(3.4, 0, z, house); c.rotation.y = z > 0 ? -2.2 : -0.94; c.add(ol(box(0.9, 0.42, 0.85, M.sofa, 0, 0.32, 0), 0.025), ol(box(0.9, 0.7, 0.18, M.sofa, 0, 0.75, -0.36), 0.025)); circles.push({ x: 3.4, z, r: 0.55 }); }
-  // computador da loja
-  house.add(ol(box(2.4, 0.1, 1.0, M.wood, -3.6, 0.85, -HD + 0.75), 0.02));
-  for (const [x, z] of [[-4.7, -HD + 0.35], [-2.5, -HD + 0.35], [-4.7, -HD + 1.15], [-2.5, -HD + 1.15]]) house.add(box(0.08, 0.85, 0.08, M.darkWood, x, 0.42, z));
-  const mon = ol(box(0.82, 0.58, 0.42, M.darkMetal, -3.9, 1.22, -HD + 0.55), 0.02); house.add(mon);
-  const screen = mesh(new THREE.PlaneGeometry(0.7, 0.46), new THREE.MeshBasicMaterial({ map: textTexture([['LOJA', 52], ['toque para abrir', 20]]), toneMapped: false }), -3.9, 1.23, -HD + 0.765, false);
-  house.add(screen); terminal.meshes.push(mon, screen); addWall(-4.9, -2.3, -HD, -HD + 1.3);
-  // bancada de fabricação + parede de ferramentas
-  const bt = ol(box(3.0, 0.14, 1.1, M.darkWood, 1.0, 0.95, -HD + 0.75), 0.02); house.add(bt);
-  for (const [x, z] of [[-0.4, -HD + 0.3], [2.4, -HD + 0.3], [-0.4, -HD + 1.2], [2.4, -HD + 1.2]]) house.add(box(0.12, 0.95, 0.12, M.darkWood, x, 0.47, z));
-  const vise = ol(box(0.3, 0.25, 0.3, M.blue, 2.0, 1.15, -HD + 0.6), 0.015), anvil = ol(box(0.5, 0.25, 0.25, M.metal, 0.2, 1.15, -HD + 0.65), 0.015);
-  const sign = mesh(new THREE.PlaneGeometry(1.4, 0.36), new THREE.MeshBasicMaterial({ map: textTexture([['BANCADA', 40]], 256, 64, '#4a2c16', '#ffe7b0'), toneMapped: false }), 1.0, 2.95, -HD + 0.12, false);
-  house.add(vise, anvil, sign); bench.meshes.push(bt, vise, anvil);
-  addWall(-0.6, 2.6, -HD, -HD + 1.35);
-  house.add(ol(box(4.6, 1.3, 0.08, M.steel, 1.0, 2.1, -HD + 0.06), 0.02));
-  for (let n = 0; n < 5; n++) rackSlots.push(group(-0.8 + n * 0.9, 2.1, -HD + 0.16, house));
-  // quadro de progresso grande, sem sombreamento (sempre legível)
-  boardCanvas = document.createElement('canvas'); boardCanvas.width = 512; boardCanvas.height = 300;
-  boardTex = new THREE.CanvasTexture(boardCanvas); boardTex.colorSpace = THREE.SRGBColorSpace;
-  const board = mesh(new THREE.PlaneGeometry(2.6, 1.52), new THREE.MeshBasicMaterial({ map: boardTex, toneMapped: false }), -HW + 0.13, 1.95, -1.3, false);
-  board.rotation.y = Math.PI / 2; house.add(board, ol(box(0.06, 1.7, 2.8, M.darkWood, -HW + 0.08, 1.95, -1.3), 0.02));
-  house.add(ol(box(1.4, 0.5, 2.3, M.steel, -HW + 0.85, 0.25, 3.0), 0.025), box(1.35, 0.14, 2.1, M.blanket, -HW + 0.85, 0.57, 3.1), box(0.9, 0.14, 0.42, M.pillow, -HW + 0.85, 0.6, 2.05));
-  addWall(-HW, -HW + 1.6, 1.8, HD - 0.1);
-  house.add(ball(0.14, 0.14, 0.14, M.bulb, -2.5, H - 0.55, 0), ball(0.14, 0.14, 0.14, M.bulb, 2.5, H - 0.55, 0));
-  house.add(mesh(new THREE.PlaneGeometry(1.5, 0.46), toon({ map: textTexture([['BASE PIP-7', 40]], 256, 80, '#1d3a52', '#9fe6ff') }), 0, 2.8, fz + 0.1, false));
+  ship.add(ol(mesh(new THREE.CapsuleGeometry(2.3, 6.4, 10, 26).rotateZ(Math.PI / 2), M.hull, 0, 3.5, 0, false), 0.05));
+  for (const x of [-1.8, 2.4]) { const r = mesh(new THREE.TorusGeometry(2.33, 0.13, 8, 34), M.hullOr, x, 3.5, 0, false); r.rotation.y = Math.PI / 2; ship.add(r); }
+  const cp = ol(mesh(new THREE.SphereGeometry(1.45, 22, 14), M.cockpit, -4.0, 4.25, 0, false), 0.03); cp.scale.set(1.3, 0.72, 1); ship.add(cp);
+  for (const sz of [-1, 1]) {
+    const wing = ol(box(3.4, 0.28, 3.4, M.hull, 1.4, 2.7, sz * 3.4), 0.04); wing.rotation.y = sz * 0.35; ship.add(wing);
+    ship.add(ol(box(1.2, 0.32, 0.6, M.hullOr, 2.4, 2.7, sz * 5.0), 0.02));
+    const eng = ol(cyl(0.85, 0.95, 2.2, M.hullDark, 5.0, 3.0, sz * 1.35, 18), 0.03); eng.rotation.z = Math.PI / 2; ship.add(eng);
+    const glow = cyl(0.62, 0.62, 0.1, M.glowCyan, 6.15, 3.0, sz * 1.35, 18); glow.rotation.z = Math.PI / 2; ship.add(glow);
+    for (const sx of [-1, 1]) { const leg = ol(cyl(0.12, 0.16, 2.2, M.hullDark, sx * 2.8, 1.1, sz * 1.7, 8), 0.015); leg.rotation.x = sz * 0.25; ship.add(leg, ol(cyl(0.45, 0.5, 0.15, M.hullDark, sx * 2.8, 0.08, sz * 2.0, 14), 0.015));
+      const th = mesh(new THREE.ConeGeometry(0.5, 2.4, 12), M.glowOrange, sx * 2.6, -0.4, sz * 1.4, false); th.rotation.x = Math.PI; th.visible = false; ship.add(th); ship.userData.thr.push(th); }
+    const lamp = mesh(new THREE.SphereGeometry(0.16, 10, 8), sz > 0 ? M.glowOrange : M.glowCyan, 2.6, 2.95, sz * 5.3, false); ship.add(lamp); ship.userData['lamp' + sz] = lamp;
+  }
+  ship.add(ol(box(1.8, 2.0, 0.22, M.hullOr, 4.3, 5.7, 0), 0.03));
+  const dishG = group(-0.8, 5.9, 0, ship); dishG.add(cyl(0.06, 0.06, 0.7, M.hullDark, 0, 0, 0, 6)); const dish = ol(mesh(new THREE.SphereGeometry(0.7, 16, 8, 0, TAU, 0, Math.PI / 3), M.hull, 0, 0.35, 0, false), 0.02); dish.rotation.x = Math.PI * 0.75; dishG.add(dish); ship.userData.dish = dishG;
+  ship.add(box(1.7, 2.0, 0.2, M.hullDark, 0, 2.35, 2.25), ol(box(1.9, 0.14, 0.3, M.hullOr, 0, 3.4, 2.25), 0.01));
+  const ramp = ol(box(1.8, 0.14, 4.0, M.metal, 0, 0.75, 4.1), 0.02); ramp.rotation.x = 0.36; ship.add(ramp);
+  ship.add(mesh(new THREE.PlaneGeometry(1.4, 0.4), new THREE.MeshBasicMaterial({ map: textTexture([['PIP-7 · CDI', 40]], 256, 64, '#1d3a52', '#9fe6ff'), toneMapped: false }), 2.0, 4.8, 2.32, false));
+  ship.traverse(o => { if (o.isMesh && o.material !== OUTLINE) o.castShadow = true; });
+  addWall(-6.4, 6.6, -3.6, 1.2, BASE_Y + 5.5);
+  // terminal holográfico da oficina, ao pé da rampa
+  const ped = ol(cyl(0.35, 0.45, 1.0, M.hullDark, TERM.x, BASE_Y + 0.5, TERM.z, 14), 0.02); scene.add(ped);
+  const holo = mesh(new THREE.PlaneGeometry(1.3, 0.8), new THREE.MeshBasicMaterial({ map: textTexture([['OFICINA', 46], ['toque para abrir', 20]], 256, 150, '#06202e', '#7fe9ff'), toneMapped: false, transparent: true, opacity: 0.88, side: THREE.DoubleSide }), TERM.x, BASE_Y + 1.75, TERM.z, false);
+  scene.add(holo); terminal.meshes.push(ped, holo); terminal.holo = holo; circles.push({ x: TERM.x, z: TERM.z, r: 0.45, y1: BASE_Y + 1.2 });
 }
 function drawBoard() {
   const g = boardCanvas.getContext('2d'), w = 512, h = 300;
@@ -998,10 +991,8 @@ function drawBoard() {
 const melter = group(MELT.x, BASE_Y, MELT.z); scene.add(melter);
 { // plataforma de madeira sobre palafitas
   const w = DECK.x1 - DECK.x0, d = DECK.z1 - DECK.z0, cx = (DECK.x0 + DECK.x1) / 2, cz = (DECK.z0 + DECK.z1) / 2;
-  scene.add(ol(box(w, 0.3, d, M.metal, cx, BASE_Y - 0.16, cz), 0.03));
-  for (let x = DECK.x0 + 0.3; x < DECK.x1; x += 3.2) for (let z = DECK.z0 + 0.3; z < DECK.z1; z += 3.2) { const g0 = groundAt(x, z); scene.add(ol(box(0.3, BASE_Y - g0, 0.3, M.darkMetal, x, (BASE_Y + g0) / 2 - 0.15, z), 0.02)); }
-  for (const [x0, z0, x1, z1] of [[DECK.x0, DECK.z0, DECK.x1, DECK.z0], [DECK.x0, DECK.z1, DECK.x1, DECK.z1], [DECK.x0, DECK.z0, DECK.x0, DECK.z1], [DECK.x1, DECK.z0, DECK.x1, DECK.z1]]) {
-    const L = Math.hypot(x1 - x0, z1 - z0); scene.add(box(x1 === x0 ? 0.12 : L, 0.12, z1 === z0 ? 0.12 : L, M.lightWood, (x0 + x1) / 2, BASE_Y + 0.55, (z0 + z1) / 2)); }
+  scene.add(ol(box(w, 0.3, d, M.metal, cx, BASE_Y - 0.16, cz), 0.03), box(w - 1.2, 0.02, 0.3, M.yellow, cx, BASE_Y + 0.01, DECK.z0 + 0.6), box(w - 1.2, 0.02, 0.3, M.yellow, cx, BASE_Y + 0.01, DECK.z1 - 0.6));
+
 }
 let melterDoor;
 {
@@ -1447,7 +1438,8 @@ const FALL_N = IS_TOUCH ? 800 : 1300, FALL_R = 24, fallPos = new Float32Array(FA
 for (let i = 0; i < FALL_N; i++) { fallPos[i * 3] = fr(-FALL_R, FALL_R); fallPos[i * 3 + 1] = fr(0, 16); fallPos[i * 3 + 2] = fr(-FALL_R, FALL_R); }
 const fallGeo = new THREE.BufferGeometry(); fallGeo.setAttribute('position', new THREE.BufferAttribute(fallPos, 3));
 const fall = new THREE.Points(fallGeo, new THREE.PointsMaterial({ size: 0.11, map: flakeTex, color: 0xffffff, transparent: true, opacity: 0.9, depthWrite: false })); fall.frustumCulled = false; scene.add(fall);
-function updateSnowfall(dt, t) { for (let i = 0; i < FALL_N; i++) { const o = i * 3; fallPos[o + 1] -= dt * (0.7 + (i % 7) * 0.07); fallPos[o] += Math.sin(t * 0.7 + i) * dt * 0.35; if (fallPos[o + 1] < -2) { fallPos[o + 1] = 16; fallPos[o] = fr(-FALL_R, FALL_R); fallPos[o + 2] = fr(-FALL_R, FALL_R); } } fall.position.set(camera.position.x, camera.position.y - 4, camera.position.z); fallGeo.attributes.position.needsUpdate = true; }
+function updateSnowfall(dt, t) { const wx = WX.wind.x * WX.k.storm * 9, wz = WX.wind.y * WX.k.storm * 9; fall.visible = WX.k.fall > 0.03; fall.material.opacity = 0.95 * WX.k.fall; fall.material.size = 0.11 + 0.07 * WX.k.storm; if (!fall.visible) return;
+  for (let i = 0; i < FALL_N; i++) { const o = i * 3; fallPos[o + 1] -= dt * (0.7 + (i % 7) * 0.07) * (1 + WX.k.storm); fallPos[o] += Math.sin(t * 0.7 + i) * dt * 0.35 + wx * dt; fallPos[o + 2] += wz * dt; if (fallPos[o] > FALL_R) fallPos[o] -= 2 * FALL_R; if (fallPos[o] < -FALL_R) fallPos[o] += 2 * FALL_R; if (fallPos[o + 2] > FALL_R) fallPos[o + 2] -= 2 * FALL_R; if (fallPos[o + 2] < -FALL_R) fallPos[o + 2] += 2 * FALL_R; if (fallPos[o + 1] < -2) { fallPos[o + 1] = 16; fallPos[o] = fr(-FALL_R, FALL_R); fallPos[o + 2] = fr(-FALL_R, FALL_R); } } fall.position.set(camera.position.x, camera.position.y - 4, camera.position.z); fallGeo.attributes.position.needsUpdate = true; }
 const reticle = new THREE.Group();
 const retRing = new THREE.Mesh(new THREE.RingGeometry(0.88, 1, 56).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x8fe4ff, transparent: true, opacity: 0.9, depthWrite: false, toneMapped: false }));
 const retFill = new THREE.Mesh(new THREE.CircleGeometry(0.88, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x8fe4ff, transparent: true, opacity: 0.13, depthWrite: false, toneMapped: false }));
@@ -1541,7 +1533,7 @@ function collide(o, R) {
   for (const bl of balls) { if (bl.att || bl.melt) continue; const dx = o.x - bl.x, dz = o.z - bl.z, min = bl.r + R, d = Math.hypot(dx, dz); if (d < min && d > 1e-6) { o.x = bl.x + dx / d * min; o.z = bl.z + dz / d * min; } }
   const b = ZONES[state.zone] - 0.4; o.x = clamp(o.x, -b, b); o.z = clamp(o.z, -b, b);
 }
-const inHouse = () => player.x > HOUSE.x0 && player.x < HOUSE.x1 && player.z > HOUSE.z0 && player.z < HOUSE.z1;
+const inHouse = () => false;
 
 /* =====================================================================
    ENTRADA
@@ -1616,14 +1608,15 @@ const dispPct = () => Math.min(100, pct() / 0.985);
 let zoneFrac = 1;
 const dispZone = () => Math.min(100, (1 - zoneFrac) / 0.97 * 100);
 const OBJECTIVES = [
-  () => 'Saia da base e cave a neve: você está em cima dela', () => 'Leve a neve ao Derretedor na plataforma',
-  () => 'Compre a Pá de Madeira no terminal da base', () => 'Limpe uma seção inteira (veja o % na mira)',
+  () => 'Desça da nave e tire a neve rasa em volta', () => 'Leve a neve ao Coletor da nave (o tanque laranja)',
+  () => 'Compre uma ferramenta melhor na Oficina (holograma ao pé da rampa)', () => 'Limpe uma seção inteira (veja o % na mira)',
   () => 'Compre uma Fogueira e posicione: onde é quente, a neve não volta', () => 'Cave até a motoneve (feixe vermelho) e ache a Vela de Ignição',
   () => `Degele o planeta: ${dispPct().toFixed(1)}%`,
 ];
 function advance(step) { if (state.step === step) { state.step++; chime(660); } }
 const combo = { v: 0, idle: 0, lvl: 0 }; const comboMult = () => 1 + combo.lvl * 0.1;
 let shownCoins = 0;
+let lastObj = '', objT = 0;
 function refreshHUD() {
   if (state.step === 2 && state.owned.some((o, i) => o && i > 0)) state.step = 3;
   if (state.step === 3 && state.sections > 0) state.step = 4;
@@ -1638,7 +1631,7 @@ function refreshHUD() {
   const rz = zoneRing(player.x, player.z), tH = inHouse() ? 20 : tempAt(player.x, player.z); $('prog').innerHTML = `${REGIONS[rz]} · ${Math.round(tH)} °C · Planeta ${dispPct().toFixed(1)}%`;
   $('coldBar').style.display = state.cold < 99 ? 'block' : 'none'; $('coldBar').querySelector('.fill').style.width = state.cold + '%'; $('coldText').innerHTML = ic('radiator') + `Calor ${Math.round(state.cold)}%`;
   const hinv = state.heatInv.reduce((a, b) => a + b, 0); $('btnPlace').style.display = hinv > 0 && !drv && !inHouse() ? 'flex' : 'none'; if (hinv) { let ti = 0; for (let n = 2; n >= 0; n--) if (state.heatInv[n]) { ti = n; break; } $('btnPlace').innerHTML = ic(HEATERS[ti].id) + `<span id="placeCnt">${hinv}</span>`; } $('starsPill').innerHTML = ic('star') + state.stars;
-  $('objective').innerHTML = drv && state.ballM < BALL_MISSIONS.length ? ic('ball') + `Missão: bola de ${BALL_MISSIONS[state.ballM][0]} m no Derretedor (+${fmt(BALL_MISSIONS[state.ballM][1])})` : state.step < OBJECTIVES.length ? ic('radius') + OBJECTIVES[state.step]() : '';
+  const objHtml = drv && state.ballM < BALL_MISSIONS.length ? ic('ball') + `Missão: bola de ${BALL_MISSIONS[state.ballM][0]} m no Derretedor (+${fmt(BALL_MISSIONS[state.ballM][1])})` : state.step < OBJECTIVES.length ? ic('radius') + OBJECTIVES[state.step]() : ''; if (objHtml !== lastObj) { lastObj = objHtml; objT = 9; $('objective').innerHTML = objHtml; $('objective').classList.remove('fade'); } else if ((objT -= 0.25) <= 0) $('objective').classList.add('fade');
   $('btnHeat').style.display = state.heat >= 0 && !drv ? 'flex' : 'none';
   if (shopOpen) renderShop();
 }
@@ -1909,8 +1902,6 @@ function updateClimate(dt, t) {
   if (dispPct() > 1) comm('p1', 'Um por cento do planeta degelado. Parece pouco, mas é o primeiro por cento em trezentos anos.');
   if (dispPct() > 5) comm('p5', 'Cinco por cento! Os sensores captam um leve pulso de calor vindo do Templo. Interessante...');
   // nevadas comuns: a neve volta devagar onde está frio (no máximo uma camada fina, nunca enterra o progresso)
-  if (snowRet.t > 0) { snowRet.t -= dt; if (snowRet.t <= 0) { fall.material.opacity = 0.9; snowRet.next = fr(150, 230); } }
-  else if ((snowRet.next -= dt) <= 0 && blz.t <= 0) { snowRet.t = 40; fall.material.opacity = 1; toast('Começou a nevar. Onde está frio, uma camada fina volta. Aquecedores protegem.', 4, 'snow'); }
   const now = t, per = IS_TOUCH ? 4 : 6;
   for (let n = 0; n < per; n++) {
     const c = chunks[regrowIdx++ % chunks.length]; const el = Math.min(5, now - (c.lastT ?? now)); c.lastT = now; if (el <= 0) continue;
@@ -1918,7 +1909,7 @@ function updateClimate(dt, t) {
     for (let jj = 0; jj < CH; jj++) for (let ii = 0; ii < CH; ii++) {
       const i = c.ci * CH + ii, j = c.cj * CH + jj; if (i >= N || j >= N) continue; const k = j * N + i, p = patchOf(k);
       if (meltP[p] > 0) { if (depth[k] > 0) { const m = Math.min(depth[k], meltP[p] * el); depth[k] -= m; pCur[p] -= m; vol += m; changed = true; } }
-      else if (snowRet.t > 0 && tempP[p] < 0 && depth[k] < 0.3 && gH[k] !== BASE_Y) { const a = Math.min(0.3 - depth[k], 0.008 * el); depth[k] += a; pCur[p] += a; totalVol += a * CELL_A; changed = true; }
+      else if (WX.k.fall > 0.5 && tempP[p] < 0 && depth[k] < 0.3 && gH[k] !== BASE_Y) { const a = Math.min(0.3 - depth[k], 0.008 * el); depth[k] += a; pCur[p] += a; totalVol += a * CELL_A; changed = true; }
     }
     if (vol > 0) { totalVol = Math.max(0, totalVol - vol * CELL_A); heatIncome += vol * CELL_A * UNITS * stat.value() * 0.5; }
     if (changed) dirtyChunks.add(c.cj * NC + c.ci);
@@ -1931,6 +1922,7 @@ function updateClimate(dt, t) {
   if (prev > 0 && state.cold <= 0) toast('Robô congelando: lento até se aquecer.', 3, 'radiator');
   $('frost').style.opacity = String((1 - state.cold / 100) * 0.9);
   const rz = zoneRing(player.x, player.z); if (rz !== lastRegion) { if (lastRegion >= 0) toast(`${REGIONS[rz]} · ${TEMP_Z[rz]} °C`, 3, rz > lastRegion ? 'radiator' : 'snow'); lastRegion = rz; }
+  ship.userData.dish.rotation.y += dt * 0.6; ship.userData.lamp1.visible = (t % 1.2) < 0.6; ship.userData['lamp-1'].visible = ((t + 0.6) % 1.2) < 0.6; if (terminal.holo) { terminal.holo.lookAt(camera.position.x, terminal.holo.position.y, camera.position.z); terminal.holo.material.opacity = 0.75 + Math.sin(t * 5) * 0.1; }
   heaterMeshes.forEach((g, i) => { const h = state.heaters[i]; g.position.set(h.x, surfAt(h.x, h.z), h.z); g.userData.fl.forEach((f, n) => { const s = 1 + Math.sin(t * 12 + n * 2) * 0.12; f.scale.set(s, s * (1 + Math.sin(t * 17 + n) * 0.15), s); });
     if (h.t === 1 && Math.random() < dt * 2) emitSteam(h.x + 0.3, g.position.y + 2.6, h.z + 0.2, 0.2, 1.2, 0, 2.5); });
 }
@@ -1947,8 +1939,9 @@ function updateComm(dt) {
 }
 $('comm').addEventListener('click', () => { if (!commCur) return; if (commCur.n < commCur.text.length) commCur.n = commCur.text.length; else commCur.hold = 99; });
 const intro = { on: false, t: 0, pod: null, said: 0 };
-const POD = { x: 8.6, z: -3.2 };
-function buildPod() {
+const POD = { x: 0, z: -1.2 };
+function buildPod() { const g = ship; g.position.y = 140; g.userData.fl = { set visible(v) { ship.userData.thr.forEach(t => t.visible = v); }, scale: { set() {} } }; return g; }
+function buildPodOld() {
   const g = group(POD.x, 140, POD.z); scene.add(g);
   g.add(ol(mesh(new THREE.CapsuleGeometry(0.95, 1.3, 8, 20), M.hull, 0, 1.6, 0, false), 0.04), mesh(new THREE.TorusGeometry(0.97, 0.09, 8, 30), M.hullRoof, 0, 1.4, 0, false).rotateX(Math.PI / 2));
   const win = cyl(0.42, 0.42, 0.1, M.glowCyan, 0, 2.1, 0.9, 18); win.rotation.x = Math.PI / 2; g.add(win);
@@ -1963,20 +1956,20 @@ function startIntro() {
 }
 function endIntro() {
   if (!intro.on) return; intro.on = false; $('skipIntro').style.display = 'none'; $('hud').style.visibility = ''; $('touchUI').style.visibility = ''; if (intro.pod) { intro.pod.position.y = BASE_Y; intro.pod.userData.fl.visible = false; }
-  started = true; camT = 0; player.x = 0; player.z = -1.5; player.yaw = Math.PI; player.pitch = -0.05; player.y = BASE_Y + 1;
+  started = true; camT = 1; player.x = 0; player.z = 4.2; player.yaw = Math.PI; player.pitch = -0.12; player.y = BASE_Y + 2.4;
   const f = $('flash'); f.style.transition = 'none'; f.style.opacity = 1; requestAnimationFrame(() => { f.style.transition = 'opacity 1.2s'; f.style.opacity = 0; });
-  showHelp(10); comm('', 'Você está dentro da base. Lá fora, a neve cobre tudo: você vai estar EM CIMA dela. Saia pela escotilha e dê uma olhada.');
+  showHelp(10); comm('', 'Escotilha aberta! Perto da nave a neve é rasa: comece por aqui. Lá longe ficam as montanhas de neve. Um dia vamos chegar lá.');
 }
 $('skipIntro').addEventListener('click', () => { commQ.length = 0; commCur = null; $('comm').style.display = 'none'; endIntro(); });
 function updateIntro(dt) {
   intro.t += dt; const t = intro.t, pod = intro.pod;
   const fallT = clamp(t / 5.5, 0, 1), y = BASE_Y + (140 - BASE_Y) * Math.pow(1 - fallT, 2.2);
   pod.position.y = y; pod.rotation.y = t * 0.6 * (1 - fallT); pod.userData.fl.visible = fallT < 1; pod.userData.fl.scale.set(1, 0.8 + Math.random() * 0.5, 1);
-  if (fallT < 1) for (let n = 0; n < 4; n++) flame(POD.x + fr(-.3, .3), y - 1.2, POD.z + fr(-.3, .3), fr(-1, 1), fr(2, 6), fr(-1, 1), 0.5 + Math.random() * 0.5, 0.6, 0);
+  if (fallT < 1) for (let n = 0; n < 6; n++) flame(POD.x + fr(-3, 3), y - 0.6, POD.z + fr(-1.5, 1.5), fr(-1, 1), fr(-3, 1), fr(-1, 1), 0.6 + Math.random() * 0.6, 0.6, 0);
   if (fallT >= 1 && !intro.landed) { intro.landed = true; thump(0.35, 90); crunch(0.25, 300, 0.5); vibrate([60, 40, 90]); wave(POD.x, BASE_Y + 0.1, POD.z, 14); for (let n = 0; n < 40; n++) spawn(blocks, POD.x + fr(-3, 3), BASE_Y + 0.5, POD.z + fr(-3, 3), fr(-5, 5), fr(3, 9), fr(-5, 5), fr(0.12, 0.3), 1.6); for (let n = 0; n < 10; n++) spawn(puffs, POD.x + fr(-3, 3), BASE_Y + 0.4, POD.z + fr(-3, 3), fr(-2, 2), fr(0.5, 2), fr(-2, 2), fr(0.4, 0.8), fr(0.8, 1.3)); }
   // câmera: acompanha a queda e depois se aproxima da base
-  const a = 0.7 + t * 0.06, r = lerp(34, 16, smooth(4, 16, t)), cy2 = lerp(y * 0.6 + 8, BASE_Y + 5, smooth(3, 7, t));
-  camera.position.set(POD.x + Math.cos(a) * r, cy2, POD.z + Math.sin(a) * r); camera.lookAt(POD.x - 4 * smooth(6, 16, t), lerp(y, BASE_Y + 1.5, smooth(4, 6, t)), POD.z);
+  const a = 1.0 + t * 0.05, r = lerp(40, 20, smooth(4, 16, t)), cy2 = lerp(y * 0.6 + 10, BASE_Y + 6, smooth(3, 7, t));
+  camera.position.set(POD.x + Math.cos(a) * r, cy2, POD.z + Math.sin(a) * r); camera.lookAt(POD.x, lerp(y + 3, BASE_Y + 3, smooth(4, 6, t)), POD.z + 3 * smooth(8, 18, t));
   const lines = [[1.0, 'Unidade PIP-7, aqui é a MÃE-SOL, da Companhia Degelo Interestelar. Bem-vindo a Glacira!'],
     [6.5, 'Há trezentos anos este planeta congelou. Os Lúmens, o povo que vivia aqui, desapareceram debaixo da neve.'],
     [11.5, 'Seu contrato: tirar a neve, reacender o calor e descobrir o que aconteceu. Você é pequeno, mas foi feito para isso.']];
@@ -2203,7 +2196,7 @@ function update(dt, t) {
   const tool = TOOLS[state.tool], cap = stat.cap();
   let clearing = false, heating = false, ret = null, ctx = '';
   if (!drv) {
-    const atShop = lookingAt(terminal.meshes), atBench = !atShop && lookingAt(bench.meshes), vi = nearVehicle();
+    const atShop = Math.hypot(player.x - TERM.x, player.z - TERM.z) < 2.6, atBench = false, vi = nearVehicle();
     if (atShop) { ctx = `${ic('shop')}Abrir loja`; if (actPressed) toggleShop(true, 'loja'); }
     else if (atBench) { ctx = `${ic('bench')}Abrir bancada`; if (actPressed) toggleShop(true, 'bancada'); }
     else if (vi >= 0) { const v = VEH[vi]; ctx = `${ic(v.st.fixed ? 'enter' : 'wrench')}${v.st.fixed ? 'Dirigir ' + v.name : 'Consertar ' + v.name}`; if (actPressed) useVehicle(vi); if (!v.st.found) { v.st.found = true; toast(`Você achou: ${v.name}!`, 3, v.icon); chime(659, 5); } }
@@ -2236,7 +2229,7 @@ function update(dt, t) {
   }
   actPressed = false;
   if (ret) { reticle.visible = true; reticle.position.set(ret.x, ret.y + 0.04, ret.z); const r = ret.r * (1 + Math.sin(t * 8) * 0.03); reticle.scale.set(r, 1, r); retRing.material.color.set(ret.heat ? 0xffa040 : ret.full ? 0xff6b6b : clearing ? 0xffffff : 0x8fe4ff); } else reticle.visible = false;
-  if (ret && ret.k >= 0) { const p = patchOf(ret.k); if (pInit[p] > 1) { const v = pDone[p] ? 100 : clamp((1 - pCur[p] / pInit[p]) / 0.96 * 100, 0, 99); $('section').style.display = 'flex'; $('section').style.setProperty('--p', v + '%'); $('secText').textContent = pDone[p] ? 'Seção limpa!' : `Seção ${v.toFixed(0)}%`; } else $('section').style.display = 'none'; } else $('section').style.display = 'none';
+  if (ret && ret.k >= 0) { const p = patchOf(ret.k); if (pInit[p] > 1) { const v = pDone[p] ? 100 : clamp((1 - pCur[p] / pInit[p]) / 0.96 * 100, 0, 99); $('section').style.display = v > 0.5 && !pDone[p] ? 'flex' : 'none'; $('section').style.setProperty('--p', v + '%'); $('secText').textContent = pDone[p] ? 'Seção limpa!' : `Seção ${v.toFixed(0)}%`; } else $('section').style.display = 'none'; } else $('section').style.display = 'none';
   const ctxEl = $('ctx'); if (ctxEl.dataset.v !== ctx) { ctxEl.dataset.v = ctx; ctxEl.innerHTML = ctx; ctxEl.style.display = ctx ? 'flex' : 'none'; }
   const actIcon = drv ? 'exit' : ctx.includes('loja') ? 'shop' : ctx.includes('bancada') ? 'bench' : ctx ? (ctx.includes('Dirigir') ? 'enter' : 'wrench') : tool.id;
   if ($('btnAct').dataset.i !== actIcon) { $('btnAct').dataset.i = actIcon; $('btnAct').innerHTML = ic(actIcon); }
@@ -2266,7 +2259,7 @@ function update(dt, t) {
   if (Math.random() < dt * 1.5) emitSteam(MELT.x + 0.75, 4.4, MELT.z + 0.4, fr(-.2, .2), 1.2, fr(-.2, .2), 2.2);
 
   // --- robôs, moedas e peças enterradas ---
-  updateRobots(dt, t); updateDrones(dt, t); updateWorld(dt, t); updateClimate(dt, t); updateBot(dt, t, moving, clearing, heating);
+  updateRobots(dt, t); updateDrones(dt, t); updateWorld(dt, t); updateClimate(dt, t); updateWeather(dt); if (WX.k.storm > 0.3 && state.driving < 0) { player.x += WX.wind.x * WX.k.storm * 0.9 * dt; player.z += WX.wind.y * WX.k.storm * 0.9 * dt; } updateBot(dt, t, moving, clearing, heating);
   robotT -= dt; if (robotT <= 0) { robotT = 4; robotIncome += droneIncome; droneIncome = 0; if (robotIncome >= 1 && (robots.length || drones.length)) { floatText(`+${fmt(robotIncome)}`, camera.position.clone().add(new THREE.Vector3(0, 0.6, 0)).addScaledVector(_dir, 2), '#9fe6ff', 15, 'robot'); robotIncome = 0; bumpCoins(); } }
   treasureT -= dt;
   if (treasureT <= 0) {
@@ -2316,7 +2309,7 @@ function loop() {
   if (!paused) { update(dt, clock.elapsedTime); updateDay(dt); }
   else if (!intro.on) { if (!started) camera.position.set(player.x, player.y + 1.62, player.z); camera.rotation.set(player.pitch, player.yaw, 0); if (!started) { player.yaw += dt * 0.05; updateDay(dt * 4); } }
   skyU.uTime.value = clock.elapsedTime; if (snowMat.userData.sh) { snowMat.userData.sh.uniforms.uNight.value = DAY.night; snowMat.userData.sh.uniforms.uGold.value = damp(snowMat.userData.sh.uniforms.uGold.value, blz.t > 0 ? 1 : 0, 2, dt); }
-  updateBits(dt); updateSimple(puffs, dt, -0.2, 'puff'); updateSimple(stars, dt, 6, 'star'); updateSimple(coins3, dt, 12, 'coin'); updateFlames(dt); updateBlocks(dt);
+  updateBits(dt); updateSimple(puffs, dt, -0.2, 'puff'); updateSimple(stars, dt, 6, 'star'); updateSimple(coins3, dt, 12, 'coin'); updateFlames(dt); updateBlocks(dt); updateMeteors(dt);
   updateWaves(dt); updateSteam(dt); updateSnowfall(dt, clock.elapsedTime); updateFloats(dt); tickCoins(dt); flushSnow();
   sky.position.copy(camera.position);
   sun.position.set(player.x, 0, player.z).addScaledVector(DAY.lightDir, 80); sun.target.position.set(player.x, 0, player.z);
@@ -2332,13 +2325,13 @@ function loop() {
 const loaded = load();
 (state.balls || []).forEach(([x, z, v]) => makeBall(x, z, v));
 state.zone = 4; state.heaters.forEach(h => heaterMeshes.push(buildHeater(h))); recomputeTemp();
-if (loaded) { const pd = buildPod(); pd.position.y = BASE_Y; pd.userData.fl.visible = false; }
+
 buildFence(); syncRobots(); syncDrones(); initHouses(); fillQuests(); equipTool(state.tool); equipHeat(state.heat); markAll(); updateDay(0);
 VEH.forEach(v => { v.beam.visible = !v.st.fixed; });
 drawBoard();
 $('btnSound').innerHTML = ic(state.muted ? 'mute' : 'sound'); $('btnCam').innerHTML = ic('cam');
 $('coins').textContent = fmt(state.coins);
-if (!loaded) { player.x = 3; player.z = 18; player.yaw = Math.PI * 1.12; player.pitch = -0.02; player.y = surfAt(3, 18); }
+if (!loaded) { player.x = 6; player.z = 22; player.yaw = Math.PI * 0.05; player.pitch = 0.12; player.y = surfAt(6, 22) + 1; }
 else $('btnStart').textContent = 'CONTINUAR';
 $('btnStart').addEventListener('click', () => {
   $('start').style.display = 'none'; initAudio();
